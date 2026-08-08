@@ -1,2 +1,15 @@
 <Solution>
+  <Folder Name="/apps/" />
+  <Folder Name="/apps/api/">
+    <Project Path="apps/api/AssignmentSubmissionSystem.Api/AssignmentSubmissionSystem.Api.csproj" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/AssignmentSubmissionSystem.Application/AssignmentSubmissionSystem.Application.csproj" />
+    <Project Path="src/AssignmentSubmissionSystem.Domain/AssignmentSubmissionSystem.Domain.csproj" />
+    <Project Path="src/AssignmentSubmissionSystem.Infrastructure/AssignmentSubmissionSystem.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/AssignmentSubmissionSystem.Api.IntegrationTests/AssignmentSubmissionSystem.Api.IntegrationTests.csproj" />
+    <Project Path="tests/AssignmentSubmissionSystem.Domain.UnitTests/AssignmentSubmissionSystem.Domain.UnitTests.csproj" />
+  </Folder>
 </Solution>
