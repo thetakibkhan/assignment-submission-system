@@ -280,3 +280,51 @@ body {
   .login-card,
   .login-grid-lines span { animation: none; }
 }
+
+
+.login-submit-button:disabled {
+  cursor: wait;
+  opacity: 0.72;
+  transform: none;
+}
+
+.role-dashboard-shell {
+  align-items: center;
+  display: grid;
+  min-height: 100vh;
+  padding: 2rem;
+  place-items: center;
+}
+
+.role-dashboard-card {
+  backdrop-filter: blur(18px);
+  background: rgba(24, 24, 27, 0.72);
+  border: 1px solid #27272a;
+  border-radius: 0.75rem;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.38);
+  max-width: 34rem;
+  padding: 2rem;
+  width: 100%;
+}
+
+.role-dashboard-card h1 {
+  font-size: 1.75rem;
+  letter-spacing: -0.04em;
+  margin: 0;
+}
+
+.role-dashboard-card > p:not(.login-card__eyebrow) {
+  color: #a1a1aa;
+  line-height: 1.5;
+  margin: 0.75rem 0 0;
+}
+
+.role-dashboard-status {
+  border-top: 1px solid #27272a;
+  color: #d4d4d8 !important;
+  font-family: "Courier New", monospace;
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+  padding-top: 1rem;
+  text-transform: uppercase;
+}

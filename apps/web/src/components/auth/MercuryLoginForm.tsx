@@ -2,6 +2,11 @@
 
 import { type FormEvent, useEffect, useRef, useState } from "react";
 
+interface LoginResponse {
+  redirectPath: string;
+  role: string;
+}
+
 interface Particle {
   opacity: number;
   speed: number;
@@ -9,9 +14,24 @@ interface Particle {
   y: number;
 }
 
+const roleRoutes = new Set(["/admin", "/teacher", "/student"]);
+
+function isLoginResponse(value: unknown): value is LoginResponse {
+  if (typeof value !== "object" || value === null) {
+    return false;
+  }
+
+  const response = value as Record<string, unknown>;
+
+  return typeof response.redirectPath === "string"
+    && typeof response.role === "string"
+    && roleRoutes.has(response.redirectPath);
+}
+
 export function MercuryLoginForm() {
   const canvasReference = useRef<HTMLCanvasElement | null>(null);
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
   useEffect(() => {
@@ -67,9 +87,44 @@ export function MercuryLoginForm() {
     };
   }, []);
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setMessage("Sign-in is being connected to the secure API.");
+    setIsSubmitting(true);
+    setMessage(null);
+
+    const formData = new FormData(event.currentTarget);
+    const email = String(formData.get("email") ?? "");
+    const password = String(formData.get("password") ?? "");
+    const apiBaseUrl = (process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:5112").replace(/\/$/, "");
+
+    try {
+      const response = await fetch(apiBaseUrl + "/api/auth/login", {
+        body: JSON.stringify({ email, password }),
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        method: "POST",
+      });
+
+      if (!response.ok) {
+        setMessage("Sign-in failed. Check your email and password, or contact an administrator.");
+        return;
+      }
+
+      const result: unknown = await response.json();
+
+      if (!isLoginResponse(result)) {
+        setMessage("Sign-in could not be completed. Please try again.");
+        return;
+      }
+
+      window.location.assign(result.redirectPath);
+    } catch {
+      setMessage("The secure sign-in service is unavailable. Please try again shortly.");
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -97,7 +152,7 @@ export function MercuryLoginForm() {
           <p>Sign in to manage assignments, submissions, and academic progress.</p>
         </header>
 
-        <form noValidate onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit}>
           <div className="login-field">
             <label htmlFor="email">Email</label>
             <input autoComplete="email" id="email" name="email" placeholder="you@school.edu" required type="email" />
@@ -113,7 +168,9 @@ export function MercuryLoginForm() {
             </div>
           </div>
 
-          <button className="login-submit-button" type="submit">Sign in</button>
+          <button className="login-submit-button" disabled={isSubmitting} type="submit">
+            {isSubmitting ? "Signing in…" : "Sign in"}
+          </button>
         </form>
 
         <p aria-live="polite" className="login-message">{message}</p>
