@@ -1,36 +1,70 @@
 "use client";
 
-import { type CSSProperties, type FormEvent, useEffect, useRef, useState } from "react";
+import { type FormEvent, useEffect, useRef, useState } from "react";
 
-const blobs = [
-  { size: 230, left: "7%", top: "10%", delay: "-8s", duration: "21s" },
-  { size: 170, left: "72%", top: "12%", delay: "-14s", duration: "26s" },
-  { size: 270, left: "64%", top: "65%", delay: "-3s", duration: "24s" },
-  { size: 150, left: "15%", top: "71%", delay: "-18s", duration: "19s" },
-  { size: 195, left: "41%", top: "42%", delay: "-11s", duration: "28s" },
-  { size: 125, left: "87%", top: "46%", delay: "-6s", duration: "22s" },
-];
+interface Particle {
+  opacity: number;
+  speed: number;
+  x: number;
+  y: number;
+}
 
 export function MercuryLoginForm() {
-  const blobReferences = useRef<Array<HTMLDivElement | null>>([]);
+  const canvasReference = useRef<HTMLCanvasElement | null>(null);
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    function handlePointerMove(event: PointerEvent) {
-      const offsetX = event.clientX / window.innerWidth - 0.5;
-      const offsetY = event.clientY / window.innerHeight - 0.5;
+    const canvas = canvasReference.current;
+    const context = canvas?.getContext("2d");
 
-      blobReferences.current.forEach((blob, index) => {
-        if (blob) {
-          const speed = (index + 1) * 9;
-          blob.style.setProperty("--pointer-x", `${offsetX * speed}px`);
-          blob.style.setProperty("--pointer-y", `${offsetY * speed}px`);
-        }
-      });
+    if (!canvas || !context) {
+      return;
     }
 
-    window.addEventListener("pointermove", handlePointerMove);
-    return () => window.removeEventListener("pointermove", handlePointerMove);
+    const canvasElement = canvas;
+    const drawingContext = context;
+    let animationFrameId = 0;
+    let particles: Particle[] = [];
+
+    function resizeCanvas() {
+      canvasElement.width = window.innerWidth;
+      canvasElement.height = window.innerHeight;
+      const particleCount = Math.max(24, Math.floor((canvasElement.width * canvasElement.height) / 12000));
+
+      particles = Array.from({ length: particleCount }, (_, index) => ({
+        opacity: 0.15 + (index % 5) * 0.05,
+        speed: 0.08 + (index % 6) * 0.035,
+        x: ((index * 97) % canvasElement.width) + 0.5,
+        y: ((index * 193) % canvasElement.height) + 0.5,
+      }));
+    }
+
+    function drawParticles() {
+      drawingContext.clearRect(0, 0, canvasElement.width, canvasElement.height);
+
+      for (const particle of particles) {
+        particle.y -= particle.speed;
+
+        if (particle.y < 0) {
+          particle.y = canvasElement.height;
+        }
+
+        drawingContext.fillStyle = "rgba(250, 250, 250, " + particle.opacity + ")";
+        drawingContext.fillRect(particle.x, particle.y, 1, 2);
+      }
+
+      animationFrameId = window.requestAnimationFrame(drawParticles);
+    }
+
+    resizeCanvas();
+    animationFrameId = window.requestAnimationFrame(drawParticles);
+    window.addEventListener("resize", resizeCanvas);
+
+    return () => {
+      window.cancelAnimationFrame(animationFrameId);
+      window.removeEventListener("resize", resizeCanvas);
+    };
   }, []);
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -39,78 +73,51 @@ export function MercuryLoginForm() {
   }
 
   return (
-    <main className="mercury-login">
-      <svg aria-hidden="true" className="sr-only">
-        <defs>
-          <filter id="mercury-goo">
-            <feGaussianBlur in="SourceGraphic" result="blur" stdDeviation="12" />
-            <feColorMatrix
-              in="blur"
-              mode="matrix"
-              result="goo"
-              values="1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 19 -9"
-            />
-            <feComposite in="SourceGraphic" in2="goo" operator="atop" />
-          </filter>
-        </defs>
-      </svg>
-
-      <div aria-hidden="true" className="mercury-stage">
-        {blobs.map((blob, index) => (
-          <div
-            className="mercury-blob"
-            key={`${blob.left}-${blob.top}`}
-            ref={(element) => {
-              blobReferences.current[index] = element;
-            }}
-            style={{
-              "--blob-size": `${blob.size}px`,
-              "--blob-left": blob.left,
-              "--blob-top": blob.top,
-              "--blob-delay": blob.delay,
-              "--blob-duration": blob.duration,
-            } as CSSProperties}
-          />
-        ))}
+    <main className="login-shell">
+      <div aria-hidden="true" className="login-vignette" />
+      <div aria-hidden="true" className="login-grid-lines">
+        <span />
+        <span />
+        <span />
+        <span />
+        <span />
+        <span />
       </div>
+      <canvas aria-hidden="true" className="login-particles" ref={canvasReference} />
 
-      <section aria-labelledby="login-heading" className="mercury-card">
-        <header className="mb-12">
-          <p className="mercury-kicker">Assignment System · Secure Access</p>
-          <h1 id="login-heading" className="mercury-title">
-            WELCOME
-            <br />
-            BACK
-          </h1>
-          <p className="mt-5 max-w-sm text-sm leading-6 text-white/55">
-            Sign in to manage assignments, submissions, and academic progress.
-          </p>
+      <header className="login-header">
+        <span>Assignment Submission System</span>
+        <span>Secure academic workspace</span>
+      </header>
+
+      <section aria-labelledby="login-heading" className="login-card">
+        <header className="login-card__header">
+          <p className="login-card__eyebrow">Account access</p>
+          <h1 id="login-heading">Welcome back</h1>
+          <p>Sign in to manage assignments, submissions, and academic progress.</p>
         </header>
 
         <form noValidate onSubmit={handleSubmit}>
-          <label className="mercury-field">
-            <span>Email address</span>
-            <input autoComplete="email" name="email" placeholder="name@school.edu" required type="email" />
-          </label>
+          <div className="login-field">
+            <label htmlFor="email">Email</label>
+            <input autoComplete="email" id="email" name="email" placeholder="you@school.edu" required type="email" />
+          </div>
 
-          <label className="mercury-field">
-            <span>Password</span>
-            <input autoComplete="current-password" name="password" placeholder="••••••••" required type="password" />
-          </label>
+          <div className="login-field">
+            <label htmlFor="password">Password</label>
+            <div className="login-password-input">
+              <input autoComplete="current-password" id="password" name="password" placeholder="••••••••" required type={isPasswordVisible ? "text" : "password"} />
+              <button aria-label={isPasswordVisible ? "Hide password" : "Show password"} className="login-password-toggle" onClick={() => setIsPasswordVisible((isVisible) => !isVisible)} type="button">
+                {isPasswordVisible ? "Hide" : "Show"}
+              </button>
+            </div>
+          </div>
 
-          <button className="mercury-button" type="submit">
-            <span>Sign in securely</span>
-          </button>
+          <button className="login-submit-button" type="submit">Sign in</button>
         </form>
 
-        <p aria-live="polite" className="mt-6 min-h-5 text-xs text-white/55">
-          {message}
-        </p>
-
-        <footer className="mercury-footer">
-          <span>Protected academic workspace</span>
-          <span>Role-based access</span>
-        </footer>
+        <p aria-live="polite" className="login-message">{message}</p>
+        <footer className="login-card__footer">Accounts are created and managed by an administrator.</footer>
       </section>
     </main>
   );
