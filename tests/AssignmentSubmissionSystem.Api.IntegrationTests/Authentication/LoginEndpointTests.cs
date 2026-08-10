@@ -13,6 +13,34 @@ public sealed class LoginEndpointTests : IClassFixture<WebApplicationFactory<Pro
         _client = factory.CreateClient();
     }
 
+    [Theory]
+    [InlineData("admin@assignment.local", "Admin123!", "Admin", "/admin")]
+    [InlineData("teacher@assignment.local", "Teacher123!", "Teacher", "/teacher")]
+    [InlineData("student@assignment.local", "Student123!", "Student", "/student")]
+    public async Task Login_ShouldReturnRoleSpecificDestination_WhenCredentialsAreValid(
+        string email,
+        string password,
+        string expectedRole,
+        string expectedRedirectPath)
+    {
+        HttpResponseMessage response = await _client.PostAsJsonAsync(
+            "/api/auth/login",
+            new
+            {
+                email,
+                password
+            });
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        LoginResponse? loginResponse = await response.Content.ReadFromJsonAsync<LoginResponse>();
+
+        Assert.NotNull(loginResponse);
+        Assert.Equal(expectedRole, loginResponse.Role);
+        Assert.Equal(expectedRedirectPath, loginResponse.RedirectPath);
+        Assert.Contains("access_token=", response.Headers.GetValues("Set-Cookie").Single());
+    }
+
     [Fact]
     public async Task Login_ShouldReturnUnauthorized_WhenCredentialsAreInvalid()
     {
@@ -25,5 +53,12 @@ public sealed class LoginEndpointTests : IClassFixture<WebApplicationFactory<Pro
             });
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    private sealed class LoginResponse
+    {
+        public string RedirectPath { get; init; } = string.Empty;
+
+        public string Role { get; init; } = string.Empty;
     }
 }
