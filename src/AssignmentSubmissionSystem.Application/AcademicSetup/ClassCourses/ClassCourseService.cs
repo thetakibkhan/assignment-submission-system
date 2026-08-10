@@ -11,6 +11,14 @@ public sealed class ClassCourseService : IClassCourseService
         _classCourseRepository = classCourseRepository;
     }
 
+    public async Task<ClassCourse> ArchiveAsync(Guid id, CancellationToken cancellationToken)
+    {
+        ClassCourse classCourse = await GetRequiredAsync(id, cancellationToken);
+        classCourse.Archive();
+        await _classCourseRepository.UpdateAsync(classCourse, cancellationToken);
+        return classCourse;
+    }
+
     public async Task<ClassCourse> CreateAsync(
         CreateClassCourseCommand command,
         CancellationToken cancellationToken)
@@ -26,5 +34,26 @@ public sealed class ClassCourseService : IClassCourseService
         await _classCourseRepository.AddAsync(classCourse, cancellationToken);
 
         return classCourse;
+    }
+
+    public async Task<ClassCourse> UpdateAsync(Guid id, CreateClassCourseCommand command, CancellationToken cancellationToken)
+    {
+        ClassCourse classCourse = await GetRequiredAsync(id, cancellationToken);
+        string code = command.Code.Trim().ToUpperInvariant();
+
+        if (classCourse.Code != code && await _classCourseRepository.ExistsByCodeAsync(code, cancellationToken))
+        {
+            throw new DuplicateClassCourseCodeException(code);
+        }
+
+        classCourse.Update(command.Name, code);
+        await _classCourseRepository.UpdateAsync(classCourse, cancellationToken);
+        return classCourse;
+    }
+
+    private async Task<ClassCourse> GetRequiredAsync(Guid id, CancellationToken cancellationToken)
+    {
+        return await _classCourseRepository.GetByIdAsync(id, cancellationToken)
+            ?? throw new KeyNotFoundException("The requested Class/Course was not found.");
     }
 }

@@ -19,6 +19,17 @@ public sealed class ClassCourseRepository : IClassCourseRepository
         await _databaseContext.SaveChangesAsync(cancellationToken);
     }
 
+    public Task<ClassCourse?> GetByIdAsync(Guid id, CancellationToken cancellationToken)
+    {
+        return _databaseContext.ClassCourses.SingleOrDefaultAsync(classCourse => classCourse.Id == id, cancellationToken);
+    }
+
+    public async Task UpdateAsync(ClassCourse classCourse, CancellationToken cancellationToken)
+    {
+        _databaseContext.ClassCourses.Update(classCourse);
+        await _databaseContext.SaveChangesAsync(cancellationToken);
+    }
+
     public Task<bool> ExistsByCodeAsync(string code, CancellationToken cancellationToken)
     {
         return _databaseContext.ClassCourses.AnyAsync(

@@ -45,6 +45,41 @@ public sealed class ClassCoursesController : ControllerBase
         }
     }
 
+
+    [HttpPost("{id:guid}/archive")]
+    public async Task<IActionResult> ArchiveAsync(Guid id, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await _classCourseService.ArchiveAsync(id, cancellationToken);
+            return NoContent();
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound();
+        }
+    }
+
+    [HttpPut("{id:guid}")]
+    public async Task<ActionResult<ClassCourseResponse>> UpdateAsync(
+        Guid id,
+        CreateClassCourseRequest request,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            AssignmentSubmissionSystem.Domain.Academics.ClassCourse classCourse = await _classCourseService.UpdateAsync(id, new CreateClassCourseCommand { Code = request.Code, Name = request.Name }, cancellationToken);
+            return Ok(ToResponse(classCourse));
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound();
+        }
+        catch (DuplicateClassCourseCodeException exception)
+        {
+            return Conflict(new ProblemDetails { Detail = exception.Message, Status = StatusCodes.Status409Conflict, Title = "Class/Course code already exists" });
+        }
+    }
     private static ClassCourseResponse ToResponse(
         AssignmentSubmissionSystem.Domain.Academics.ClassCourse classCourse)
     {
