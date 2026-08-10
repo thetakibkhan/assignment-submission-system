@@ -20,7 +20,7 @@ public sealed class ClassCourseEndpointTests : IClassFixture<AuthWebApplicationF
     {
         using HttpClient client = await CreateAuthenticatedClientAsync("ADM-001", "Admin123!");
 
-        string code = "CLS-" + Guid.CreateVersion7().ToString("N")[..8].ToUpperInvariant();
+        string code = "CLS-" + Guid.NewGuid().ToString("N").ToUpperInvariant();
 
         HttpResponseMessage response = await client.PostAsJsonAsync(
             "/api/admin/classes-courses",
@@ -56,6 +56,35 @@ public sealed class ClassCourseEndpointTests : IClassFixture<AuthWebApplicationF
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
     }
 
+
+    [Fact]
+    public async Task UpdateAndArchive_ShouldPreserveClassCourseIdentity_WhenRequestedByAdmin()
+    {
+        using HttpClient client = await CreateAuthenticatedClientAsync("ADM-001", "Admin123!");
+        ClassCourseResponse classCourse = await CreateClassCourseAsync(client);
+
+        HttpResponseMessage updateResponse = await client.PutAsJsonAsync(
+            "/api/admin/classes-courses/" + classCourse.Id,
+            new
+            {
+                code = classCourse.Code,
+                name = "Updated Class Name"
+            });
+
+        Assert.Equal(HttpStatusCode.OK, updateResponse.StatusCode);
+
+        ClassCourseResponse? updatedClassCourse = await updateResponse.Content.ReadFromJsonAsync<ClassCourseResponse>();
+
+        Assert.NotNull(updatedClassCourse);
+        Assert.Equal(classCourse.Id, updatedClassCourse.Id);
+        Assert.Equal("Updated Class Name", updatedClassCourse.Name);
+
+        HttpResponseMessage archiveResponse = await client.PostAsync(
+            "/api/admin/classes-courses/" + classCourse.Id + "/archive",
+            null);
+
+        Assert.Equal(HttpStatusCode.NoContent, archiveResponse.StatusCode);
+    }
     private async Task<HttpClient> CreateAuthenticatedClientAsync(string institutionalId, string password)
     {
         HttpClient client = _factory.CreateClient(new WebApplicationFactoryClientOptions
@@ -78,9 +107,28 @@ public sealed class ClassCourseEndpointTests : IClassFixture<AuthWebApplicationF
         return client;
     }
 
+
+    private static async Task<ClassCourseResponse> CreateClassCourseAsync(HttpClient client)
+    {
+        string code = "CLS-" + Guid.NewGuid().ToString("N").ToUpperInvariant();
+        HttpResponseMessage response = await client.PostAsJsonAsync(
+            "/api/admin/classes-courses",
+            new
+            {
+                code,
+                name = "Class Nine"
+            });
+
+        response.EnsureSuccessStatusCode();
+
+        return await response.Content.ReadFromJsonAsync<ClassCourseResponse>()
+            ?? throw new InvalidOperationException("The Class/Course response was empty.");
+    }
     private sealed class ClassCourseResponse
     {
         public string Code { get; init; } = string.Empty;
+
+        public Guid Id { get; init; }
 
         public bool IsArchived { get; init; }
 
