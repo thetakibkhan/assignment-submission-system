@@ -1,3 +1,4 @@
+using AssignmentSubmissionSystem.Domain.Academics;
 using AssignmentSubmissionSystem.Infrastructure.Authentication;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
@@ -12,6 +13,8 @@ public sealed class ApplicationDbContext : IdentityDbContext<ApplicationUser, Id
     {
     }
 
+    public DbSet<ClassCourse> ClassCourses => Set<ClassCourse>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
@@ -21,6 +24,18 @@ public sealed class ApplicationDbContext : IdentityDbContext<ApplicationUser, Id
             entity.Property(user => user.FullName)
                 .HasMaxLength(200)
                 .IsRequired();
+        });
+
+        builder.Entity<ClassCourse>(entity =>
+        {
+            entity.Property(classCourse => classCourse.Code)
+                .HasMaxLength(50)
+                .IsRequired();
+            entity.Property(classCourse => classCourse.Name)
+                .HasMaxLength(200)
+                .IsRequired();
+            entity.HasIndex(classCourse => classCourse.Code)
+                .IsUnique();
         });
     }
 }

@@ -1,7 +1,9 @@
 using System.Security.Claims;
 using System.Text;
+using AssignmentSubmissionSystem.Application.AcademicSetup.ClassCourses;
 using AssignmentSubmissionSystem.Infrastructure.Authentication;
 using AssignmentSubmissionSystem.Infrastructure.Persistence;
+using AssignmentSubmissionSystem.Infrastructure.Persistence.Repositories;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -43,6 +45,8 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole<Guid>>(options =>
 builder.Services.Configure<DemoAccountOptions>(builder.Configuration.GetSection(DemoAccountOptions.SectionName));
 builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection(JwtOptions.SectionName));
 builder.Services.AddScoped<DatabaseInitializer>();
+builder.Services.AddScoped<IClassCourseRepository, ClassCourseRepository>();
+builder.Services.AddScoped<IClassCourseService, ClassCourseService>();
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
 builder.Services.AddAuthentication(options =>
     {

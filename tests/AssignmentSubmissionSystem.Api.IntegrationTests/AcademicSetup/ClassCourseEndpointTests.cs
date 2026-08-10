@@ -20,11 +20,13 @@ public sealed class ClassCourseEndpointTests : IClassFixture<AuthWebApplicationF
     {
         using HttpClient client = await CreateAuthenticatedClientAsync("ADM-001", "Admin123!");
 
+        string code = "CLS-" + Guid.CreateVersion7().ToString("N")[..8].ToUpperInvariant();
+
         HttpResponseMessage response = await client.PostAsJsonAsync(
             "/api/admin/classes-courses",
             new
             {
-                code = "CLS-9",
+                code,
                 name = "Class Nine"
             });
 
@@ -33,7 +35,7 @@ public sealed class ClassCourseEndpointTests : IClassFixture<AuthWebApplicationF
         ClassCourseResponse? classCourse = await response.Content.ReadFromJsonAsync<ClassCourseResponse>();
 
         Assert.NotNull(classCourse);
-        Assert.Equal("CLS-9", classCourse.Code);
+        Assert.Equal(code, classCourse.Code);
         Assert.Equal("Class Nine", classCourse.Name);
         Assert.False(classCourse.IsArchived);
     }

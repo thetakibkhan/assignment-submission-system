@@ -24,17 +24,17 @@ public sealed class TeacherResponsibility
         AssignedAt = assignedAt;
     }
 
-    public Guid Id { get; }
+    public Guid Id { get; private set; }
 
-    public Guid TeacherUserId { get; }
+    public Guid TeacherUserId { get; private set; }
 
-    public Guid ClassCourseId { get; }
+    public Guid ClassCourseId { get; private set; }
 
-    public Guid SubjectId { get; }
+    public Guid SubjectId { get; private set; }
 
-    public Guid AssignedByUserId { get; }
+    public Guid AssignedByUserId { get; private set; }
 
-    public DateTimeOffset AssignedAt { get; }
+    public DateTimeOffset AssignedAt { get; private set; }
 
     public Guid? RevokedByUserId { get; private set; }
 

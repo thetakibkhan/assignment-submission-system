@@ -21,15 +21,15 @@ public sealed class StudentEnrollment
         EnrolledAt = enrolledAt;
     }
 
-    public Guid Id { get; }
+    public Guid Id { get; private set; }
 
-    public Guid StudentUserId { get; }
+    public Guid StudentUserId { get; private set; }
 
-    public Guid ClassCourseId { get; }
+    public Guid ClassCourseId { get; private set; }
 
-    public Guid EnrolledByUserId { get; }
+    public Guid EnrolledByUserId { get; private set; }
 
-    public DateTimeOffset EnrolledAt { get; }
+    public DateTimeOffset EnrolledAt { get; private set; }
 
     public Guid? EndedByUserId { get; private set; }
 

@@ -1,0 +1,59 @@
+using AssignmentSubmissionSystem.Application.AcademicSetup.ClassCourses;
+using AssignmentSubmissionSystem.Infrastructure.Authentication;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+
+namespace AssignmentSubmissionSystem.Api.Administration;
+
+[Authorize(Roles = RoleNames.Admin)]
+[ApiController]
+[Route("api/admin/classes-courses")]
+public sealed class ClassCoursesController : ControllerBase
+{
+    private readonly IClassCourseService _classCourseService;
+
+    public ClassCoursesController(IClassCourseService classCourseService)
+    {
+        _classCourseService = classCourseService;
+    }
+
+    [HttpPost]
+    public async Task<ActionResult<ClassCourseResponse>> CreateAsync(
+        CreateClassCourseRequest request,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            AssignmentSubmissionSystem.Domain.Academics.ClassCourse classCourse = await _classCourseService.CreateAsync(
+                new CreateClassCourseCommand
+                {
+                    Code = request.Code,
+                    Name = request.Name
+                },
+                cancellationToken);
+
+            return StatusCode(StatusCodes.Status201Created, ToResponse(classCourse));
+        }
+        catch (DuplicateClassCourseCodeException exception)
+        {
+            return Conflict(new ProblemDetails
+            {
+                Detail = exception.Message,
+                Status = StatusCodes.Status409Conflict,
+                Title = "Class/Course code already exists"
+            });
+        }
+    }
+
+    private static ClassCourseResponse ToResponse(
+        AssignmentSubmissionSystem.Domain.Academics.ClassCourse classCourse)
+    {
+        return new ClassCourseResponse
+        {
+            Code = classCourse.Code,
+            Id = classCourse.Id,
+            IsArchived = classCourse.IsArchived,
+            Name = classCourse.Name
+        };
+    }
+}

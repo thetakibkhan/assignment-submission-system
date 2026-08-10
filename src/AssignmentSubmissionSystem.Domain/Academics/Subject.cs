@@ -11,7 +11,7 @@ public sealed class Subject
         Code = NormalizeRequiredText(code, nameof(code));
     }
 
-    public Guid Id { get; }
+    public Guid Id { get; private set; }
 
     public string Name { get; private set; }
 
