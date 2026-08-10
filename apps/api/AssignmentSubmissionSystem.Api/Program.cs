@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using System.Text;
 using AssignmentSubmissionSystem.Infrastructure.Authentication;
 using AssignmentSubmissionSystem.Infrastructure.Persistence;
@@ -41,10 +42,14 @@ builder.Services.Configure<DemoAccountOptions>(builder.Configuration.GetSection(
 builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection(JwtOptions.SectionName));
 builder.Services.AddScoped<DatabaseInitializer>();
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+builder.Services.AddAuthentication(options =>
+    {
+        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+    })
     .AddJwtBearer(options =>
     {
-        options.MapInboundClaims = false;
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ClockSkew = TimeSpan.FromMinutes(1),
@@ -62,9 +67,34 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         {
             OnMessageReceived = context =>
             {
-                context.Token = context.Request.Cookies["access_token"];
+                if (context.Request.Cookies.TryGetValue("access_token", out string? accessToken))
+                {
+                    context.Token = accessToken;
+                }
+
                 return Task.CompletedTask;
-            }
+            },
+            OnTokenValidated = async context =>
+            {
+                string? userId = context.Principal?
+                    .FindFirst(ClaimTypes.NameIdentifier)?
+                    .Value;
+
+                if (!Guid.TryParse(userId, out Guid parsedUserId))
+                {
+                    context.Fail("The access token subject is invalid.");
+                    return;
+                }
+
+                UserManager<ApplicationUser> userManager = context.HttpContext.RequestServices
+                    .GetRequiredService<UserManager<ApplicationUser>>();
+                ApplicationUser? user = await userManager.FindByIdAsync(parsedUserId.ToString());
+
+                if (user is null || !user.IsActive)
+                {
+                    context.Fail("The user account is inactive.");
+                }
+            },
         };
     });
 builder.Services.AddAuthorization();

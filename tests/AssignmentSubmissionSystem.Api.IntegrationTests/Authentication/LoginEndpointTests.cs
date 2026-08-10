@@ -1,4 +1,5 @@
 using System.Net;
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using AssignmentSubmissionSystem.Api.IntegrationTests.Infrastructure;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -77,19 +78,37 @@ public sealed class LoginEndpointTests : IClassFixture<AuthWebApplicationFactory
             });
 
         Assert.Equal(HttpStatusCode.OK, adminLoginResponse.StatusCode);
+        string adminCookie = adminLoginResponse.Headers.GetValues("Set-Cookie").Single().Split(";")[0];
+        string accessToken = adminCookie["access_token=".Length..];
+        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
         Assert.Equal(HttpStatusCode.OK, (await _client.GetAsync("/api/dashboard/admin")).StatusCode);
         Assert.Equal(HttpStatusCode.Forbidden, (await _client.GetAsync("/api/dashboard/teacher")).StatusCode);
+
+        using HttpClient studentClient = _factory.CreateClient(new WebApplicationFactoryClientOptions
+        {
+            HandleCookies = true
+        });
+        HttpResponseMessage studentLoginResponse = await studentClient.PostAsJsonAsync(
+            "/api/auth/login",
+            new
+            {
+                email = "student@assignment.local",
+                password = "Student123!"
+            });
+        string studentCookie = studentLoginResponse.Headers.GetValues("Set-Cookie").Single().Split(";")[0];
+        string studentAccessToken = studentCookie["access_token=".Length..];
+        studentClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", studentAccessToken);
+
+        Assert.Equal(HttpStatusCode.OK, studentLoginResponse.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await studentClient.GetAsync("/api/dashboard/student")).StatusCode);
 
         HttpResponseMessage deactivationResponse = await _client.PutAsJsonAsync(
             "/api/admin/users/student@assignment.local/activation",
             new { isActive = false });
 
         Assert.Equal(HttpStatusCode.NoContent, deactivationResponse.StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await studentClient.GetAsync("/api/dashboard/student")).StatusCode);
 
-        using HttpClient studentClient = _factory.CreateClient(new WebApplicationFactoryClientOptions
-        {
-            HandleCookies = true
-        });
         HttpResponseMessage inactiveLoginResponse = await studentClient.PostAsJsonAsync(
             "/api/auth/login",
             new

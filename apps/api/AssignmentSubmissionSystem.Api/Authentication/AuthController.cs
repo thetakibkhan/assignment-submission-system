@@ -64,7 +64,8 @@ public sealed class AuthController : ControllerBase
             IsEssential = true,
             SameSite = SameSiteMode.Strict,
             Secure = !HttpContext.RequestServices.GetRequiredService<IHostEnvironment>().IsDevelopment(),
-            MaxAge = TimeSpan.FromMinutes(15)
+            MaxAge = TimeSpan.FromMinutes(15),
+            Path = "/"
         });
         _logger.LogInformation("User {UserId} signed in with role {Role}.", user.Id, role);
 
