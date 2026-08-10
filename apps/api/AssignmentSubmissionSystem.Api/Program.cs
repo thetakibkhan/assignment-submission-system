@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using System.Text;
 using AssignmentSubmissionSystem.Application.AcademicSetup.ClassCourses;
+using AssignmentSubmissionSystem.Application.AcademicSetup.Subjects;
 using AssignmentSubmissionSystem.Infrastructure.Authentication;
 using AssignmentSubmissionSystem.Infrastructure.Persistence;
 using AssignmentSubmissionSystem.Infrastructure.Persistence.Repositories;
@@ -47,6 +48,8 @@ builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection(JwtOptio
 builder.Services.AddScoped<DatabaseInitializer>();
 builder.Services.AddScoped<IClassCourseRepository, ClassCourseRepository>();
 builder.Services.AddScoped<IClassCourseService, ClassCourseService>();
+builder.Services.AddScoped<ISubjectRepository, SubjectRepository>();
+builder.Services.AddScoped<ISubjectService, SubjectService>();
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
 builder.Services.AddAuthentication(options =>
     {

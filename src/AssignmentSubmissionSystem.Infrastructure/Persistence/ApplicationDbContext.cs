@@ -15,6 +15,8 @@ public sealed class ApplicationDbContext : IdentityDbContext<ApplicationUser, Id
 
     public DbSet<ClassCourse> ClassCourses => Set<ClassCourse>();
 
+    public DbSet<Subject> Subjects => Set<Subject>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
@@ -35,6 +37,18 @@ public sealed class ApplicationDbContext : IdentityDbContext<ApplicationUser, Id
                 .HasMaxLength(200)
                 .IsRequired();
             entity.HasIndex(classCourse => classCourse.Code)
+                .IsUnique();
+        });
+
+        builder.Entity<Subject>(entity =>
+        {
+            entity.Property(subject => subject.Code)
+                .HasMaxLength(50)
+                .IsRequired();
+            entity.Property(subject => subject.Name)
+                .HasMaxLength(200)
+                .IsRequired();
+            entity.HasIndex(subject => subject.Code)
                 .IsUnique();
         });
     }
