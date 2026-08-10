@@ -21,11 +21,11 @@ public sealed class LoginEndpointTests : IClassFixture<AuthWebApplicationFactory
     }
 
     [Theory]
-    [InlineData("admin@assignment.local", "Admin123!", "Admin", "/admin")]
-    [InlineData("teacher@assignment.local", "Teacher123!", "Teacher", "/teacher")]
-    [InlineData("student@assignment.local", "Student123!", "Student", "/student")]
+    [InlineData("ADM-001", "Admin123!", "Admin", "/admin")]
+    [InlineData("TCH-001", "Teacher123!", "Teacher", "/teacher")]
+    [InlineData("STU-001", "Student123!", "Student", "/student")]
     public async Task Login_ShouldReturnRoleSpecificDestination_WhenCredentialsAreValid(
-        string email,
+        string institutionalId,
         string password,
         string expectedRole,
         string expectedRedirectPath)
@@ -34,7 +34,7 @@ public sealed class LoginEndpointTests : IClassFixture<AuthWebApplicationFactory
             "/api/auth/login",
             new
             {
-                email,
+                institutionalId,
                 password
             });
 
@@ -55,7 +55,7 @@ public sealed class LoginEndpointTests : IClassFixture<AuthWebApplicationFactory
             "/api/auth/login",
             new
             {
-                email = "student@example.test",
+                institutionalId = "STU-404",
                 password = "IncorrectPassword1"
             });
 
@@ -73,7 +73,7 @@ public sealed class LoginEndpointTests : IClassFixture<AuthWebApplicationFactory
             "/api/auth/login",
             new
             {
-                email = "admin@assignment.local",
+                institutionalId = "ADM-001",
                 password = "Admin123!"
             });
 
@@ -92,7 +92,7 @@ public sealed class LoginEndpointTests : IClassFixture<AuthWebApplicationFactory
             "/api/auth/login",
             new
             {
-                email = "student@assignment.local",
+                institutionalId = "STU-001",
                 password = "Student123!"
             });
         string studentCookie = studentLoginResponse.Headers.GetValues("Set-Cookie").Single().Split(";")[0];
@@ -103,7 +103,7 @@ public sealed class LoginEndpointTests : IClassFixture<AuthWebApplicationFactory
         Assert.Equal(HttpStatusCode.OK, (await studentClient.GetAsync("/api/dashboard/student")).StatusCode);
 
         HttpResponseMessage deactivationResponse = await _client.PutAsJsonAsync(
-            "/api/admin/users/student@assignment.local/activation",
+            "/api/admin/users/STU-001/activation",
             new { isActive = false });
 
         Assert.Equal(HttpStatusCode.NoContent, deactivationResponse.StatusCode);
@@ -113,14 +113,14 @@ public sealed class LoginEndpointTests : IClassFixture<AuthWebApplicationFactory
             "/api/auth/login",
             new
             {
-                email = "student@assignment.local",
+                institutionalId = "STU-001",
                 password = "Student123!"
             });
 
         Assert.Equal(HttpStatusCode.Unauthorized, inactiveLoginResponse.StatusCode);
 
         HttpResponseMessage reactivationResponse = await _client.PutAsJsonAsync(
-            "/api/admin/users/student@assignment.local/activation",
+            "/api/admin/users/STU-001/activation",
             new { isActive = true });
 
         Assert.Equal(HttpStatusCode.NoContent, reactivationResponse.StatusCode);
