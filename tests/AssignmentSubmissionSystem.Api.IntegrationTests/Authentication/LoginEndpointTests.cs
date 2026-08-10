@@ -1,14 +1,14 @@
 using System.Net;
 using System.Net.Http.Json;
-using Microsoft.AspNetCore.Mvc.Testing;
+using AssignmentSubmissionSystem.Api.IntegrationTests.Infrastructure;
 
 namespace AssignmentSubmissionSystem.Api.IntegrationTests.Authentication;
 
-public sealed class LoginEndpointTests : IClassFixture<WebApplicationFactory<Program>>
+public sealed class LoginEndpointTests : IClassFixture<AuthWebApplicationFactory>
 {
     private readonly HttpClient _client;
 
-    public LoginEndpointTests(WebApplicationFactory<Program> factory)
+    public LoginEndpointTests(AuthWebApplicationFactory factory)
     {
         _client = factory.CreateClient();
     }
