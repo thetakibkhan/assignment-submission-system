@@ -93,13 +93,13 @@ export function MercuryLoginForm() {
     setMessage(null);
 
     const formData = new FormData(event.currentTarget);
-    const email = String(formData.get("email") ?? "");
+    const institutionalId = String(formData.get("institutionalId") ?? "");
     const password = String(formData.get("password") ?? "");
     const apiBaseUrl = (process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:5112").replace(/\/$/, "");
 
     try {
       const response = await fetch(apiBaseUrl + "/api/auth/login", {
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ institutionalId, password }),
         credentials: "include",
         headers: {
           "Content-Type": "application/json",
@@ -108,7 +108,7 @@ export function MercuryLoginForm() {
       });
 
       if (!response.ok) {
-        setMessage("Sign-in failed. Check your email and password, or contact an administrator.");
+        setMessage("Sign-in failed. Check your institutional ID and password, or contact an administrator.");
         return;
       }
 
@@ -154,8 +154,8 @@ export function MercuryLoginForm() {
 
         <form onSubmit={handleSubmit}>
           <div className="login-field">
-            <label htmlFor="email">Email</label>
-            <input autoComplete="email" id="email" name="email" placeholder="you@school.edu" required type="email" />
+            <label htmlFor="institutionalId">Institutional ID</label>
+            <input autoComplete="username" id="institutionalId" name="institutionalId" placeholder="STU-2026-001" required type="text" />
           </div>
 
           <div className="login-field">

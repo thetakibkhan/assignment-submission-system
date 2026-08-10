@@ -26,16 +26,15 @@ public sealed class AuthController : ControllerBase
 
     [HttpPost("login")]
     public async Task<ActionResult<LoginResponse>> LoginAsync(
-        LoginRequest request,
-        CancellationToken cancellationToken)
+        LoginRequest request)
     {
-        ApplicationUser? user = await _userManager.FindByEmailAsync(request.Email.Trim());
+        ApplicationUser? user = await _userManager.FindByNameAsync(request.InstitutionalId.Trim());
 
         if (user is null || !user.IsActive || !await _userManager.CheckPasswordAsync(user, request.Password))
         {
             return Unauthorized(new ProblemDetails
             {
-                Detail = "The email or password is incorrect, or the account is inactive.",
+                Detail = "The institutional ID or password is incorrect, or the account is inactive.",
                 Status = StatusCodes.Status401Unauthorized,
                 Title = "Sign-in failed"
             });

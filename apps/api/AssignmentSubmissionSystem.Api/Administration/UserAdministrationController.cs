@@ -21,13 +21,12 @@ public sealed class UserAdministrationController : ControllerBase
         _userManager = userManager;
     }
 
-    [HttpPut("{email}/activation")]
+    [HttpPut("{institutionalId}/activation")]
     public async Task<IActionResult> UpdateActivationAsync(
-        string email,
-        UpdateAccountStatusRequest request,
-        CancellationToken cancellationToken)
+        string institutionalId,
+        UpdateAccountStatusRequest request)
     {
-        ApplicationUser? user = await _userManager.FindByEmailAsync(email.Trim());
+        ApplicationUser? user = await _userManager.FindByNameAsync(institutionalId.Trim());
 
         if (user is null)
         {

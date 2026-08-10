@@ -38,9 +38,9 @@ public sealed class DatabaseInitializer
         await EnsureRoleAsync(RoleNames.Admin);
         await EnsureRoleAsync(RoleNames.Teacher);
         await EnsureRoleAsync(RoleNames.Student);
-        await EnsureUserAsync("Nusrat Jahan", "admin@assignment.local", _demoAccounts.AdminPassword, RoleNames.Admin);
-        await EnsureUserAsync("Rafiq Hasan", "teacher@assignment.local", _demoAccounts.TeacherPassword, RoleNames.Teacher);
-        await EnsureUserAsync("Ayesha Rahman", "student@assignment.local", _demoAccounts.StudentPassword, RoleNames.Student);
+        await EnsureUserAsync("Nusrat Jahan", "ADM-001", "admin@assignment.local", _demoAccounts.AdminPassword, RoleNames.Admin);
+        await EnsureUserAsync("Rafiq Hasan", "TCH-001", "teacher@assignment.local", _demoAccounts.TeacherPassword, RoleNames.Teacher);
+        await EnsureUserAsync("Ayesha Rahman", "STU-001", "student@assignment.local", _demoAccounts.StudentPassword, RoleNames.Student);
     }
 
     private async Task EnsureRoleAsync(string roleName)
@@ -58,7 +58,12 @@ public sealed class DatabaseInitializer
         }
     }
 
-    private async Task EnsureUserAsync(string fullName, string email, string password, string roleName)
+    private async Task EnsureUserAsync(
+        string fullName,
+        string institutionalId,
+        string email,
+        string password,
+        string roleName)
     {
         if (string.IsNullOrWhiteSpace(password))
         {
@@ -76,7 +81,7 @@ public sealed class DatabaseInitializer
                 EmailConfirmed = true,
                 FullName = fullName,
                 IsActive = true,
-                UserName = email
+                UserName = institutionalId
             };
 
             IdentityResult createResult = await _userManager.CreateAsync(user, password);
@@ -84,6 +89,17 @@ public sealed class DatabaseInitializer
             if (!createResult.Succeeded)
             {
                 throw new InvalidOperationException("A required demo account could not be created.");
+            }
+        }
+
+        if (!string.Equals(user.UserName, institutionalId, StringComparison.Ordinal))
+        {
+            user.UserName = institutionalId;
+            IdentityResult updateResult = await _userManager.UpdateAsync(user);
+
+            if (!updateResult.Succeeded)
+            {
+                throw new InvalidOperationException("A required demo account institutional ID could not be updated.");
             }
         }
 
