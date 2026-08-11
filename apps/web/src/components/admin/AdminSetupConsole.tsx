@@ -1,6 +1,11 @@
 "use client";
 
 import type { DashboardSection } from "@/components/app-shell";
+import {
+  academicStructureActions,
+  type AcademicStructureAction,
+  getAcademicStructurePanelVisibility,
+} from "@/components/admin/academic-structure-actions";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 
@@ -64,6 +69,7 @@ export function AdminSetupConsole({ activeSection }: { activeSection: DashboardS
   const [message, setMessage] = useState("Loading academic setup…");
   const [temporaryCredential, setTemporaryCredential] = useState<CreatedAccount | null>(null);
   const [accountAction, setAccountAction] = useState<AccountAction | null>(null);
+  const [academicAction, setAcademicAction] = useState<AcademicStructureAction | null>(null);
   const [selectedAccountId, setSelectedAccountId] = useState("");
   const [selectedClassCourseId, setSelectedClassCourseId] = useState("");
   const [selectedSubjectId, setSelectedSubjectId] = useState("");
@@ -85,6 +91,7 @@ export function AdminSetupConsole({ activeSection }: { activeSection: DashboardS
   const activeTeachers = accounts.filter((account) => account.isActive && account.role === "Teacher");
   const availableClassCourses = classCourses.filter((classCourse) => !classCourse.isArchived);
   const availableSubjects = subjects.filter((subject) => !subject.isArchived);
+  const academicPanelVisibility = getAcademicStructurePanelVisibility(academicAction);
 
   const loadSetup = useCallback(async () => {
     try {
@@ -293,12 +300,30 @@ export function AdminSetupConsole({ activeSection }: { activeSection: DashboardS
       )}
 
       {activeSection === "accounts" && (
-        <div className="account-actions-wrap">
-          <p className="account-actions__intro">Choose an account task to continue.</p>
-          <div aria-label="Account actions" className="account-actions">
+        <div className="workflow-actions">
+          <p className="workflow-actions__intro">Choose an account task to continue.</p>
+          <div aria-label="Account actions" className="workflow-actions__buttons">
             <button className={accountAction === "create" ? "is-active" : ""} onClick={() => setAccountAction("create")} type="button">Create account</button>
             <button className={accountAction === "manage" ? "is-active" : ""} onClick={() => setAccountAction("manage")} type="button">Manage accounts</button>
             <button className={accountAction === "update" ? "is-active" : ""} onClick={() => setAccountAction("update")} type="button">Update account</button>
+          </div>
+        </div>
+      )}
+
+      {activeSection === "academic" && (
+        <div className="workflow-actions">
+          <p className="workflow-actions__intro">Choose an academic structure task to continue.</p>
+          <div aria-label="Academic structure actions" className="workflow-actions__buttons">
+            {academicStructureActions.map((action) => (
+              <button
+                className={academicAction === action.id ? "is-active" : ""}
+                key={action.id}
+                onClick={() => setAcademicAction(action.id)}
+                type="button"
+              >
+                {action.label}
+              </button>
+            ))}
           </div>
         </div>
       )}
@@ -325,39 +350,55 @@ export function AdminSetupConsole({ activeSection }: { activeSection: DashboardS
           </form>
         </article>}
 
-        <article className="admin-panel admin-panel--academic">
+        {academicPanelVisibility.create && <article className="admin-panel admin-panel--academic">
           <h2>Create class/course</h2>
           <form onSubmit={(event) => void submitAcademicRecord(event, "/api/admin/classes-courses", "Class/Course")}>
             <label>Name<input name="name" required /></label>
             <label>Code<input name="code" required /></label>
             <button type="submit">Add class/course</button>
           </form>
-          <div className="admin-list">{classCourses.map((classCourse) => <p key={classCourse.id}><b>{classCourse.code}</b> {classCourse.name}{classCourse.isArchived ? " · archived" : ""}{!classCourse.isArchived && <button onClick={() => void archiveAcademicRecord("/api/admin/classes-courses", classCourse.id, "Class/Course")} type="button">Archive</button>}</p>)}</div>
-          {selectedClassCourse && <form className="record-edit" key={selectedClassCourse.id} onSubmit={(event) => void submitAcademicUpdate(event, "/api/admin/classes-courses", "Class/Course")}>
-            <input name="recordId" type="hidden" value={selectedClassCourse.id} />
-            <label>Manage class/course<select onChange={(event) => setSelectedClassCourseId(event.target.value)} value={selectedClassCourseId}>{classCourses.map((classCourse) => <option key={classCourse.id} value={classCourse.id}>{classCourse.name} · {classCourse.code}</option>)}</select></label>
-            <label>Name<input defaultValue={selectedClassCourse.name} name="name" required /></label>
-            <label>Code<input defaultValue={selectedClassCourse.code} name="code" required /></label>
-            <button disabled={selectedClassCourse.isArchived} type="submit">Save class/course</button>
-          </form>}
-        </article>
+        </article>}
 
-        <article className="admin-panel admin-panel--academic">
+        {academicPanelVisibility.create && <article className="admin-panel admin-panel--academic">
           <h2>Create subject</h2>
           <form onSubmit={(event) => void submitAcademicRecord(event, "/api/admin/subjects", "Subject")}>
             <label>Name<input name="name" required /></label>
             <label>Code<input name="code" required /></label>
             <button type="submit">Add subject</button>
           </form>
+        </article>}
+
+        {academicPanelVisibility.manage && <article className="admin-panel admin-panel--academic">
+          <h2>Manage classes/courses</h2>
+          <div className="admin-list">{classCourses.map((classCourse) => <p key={classCourse.id}><b>{classCourse.code}</b> {classCourse.name}{classCourse.isArchived ? " · archived" : ""}{!classCourse.isArchived && <button onClick={() => void archiveAcademicRecord("/api/admin/classes-courses", classCourse.id, "Class/Course")} type="button">Archive</button>}</p>)}</div>
+        </article>}
+
+        {academicPanelVisibility.manage && <article className="admin-panel admin-panel--academic">
+          <h2>Manage subjects</h2>
           <div className="admin-list">{subjects.map((subject) => <p key={subject.id}><b>{subject.code}</b> {subject.name}{subject.isArchived ? " · archived" : ""}{!subject.isArchived && <button onClick={() => void archiveAcademicRecord("/api/admin/subjects", subject.id, "Subject")} type="button">Archive</button>}</p>)}</div>
-          {selectedSubject && <form className="record-edit" key={selectedSubject.id} onSubmit={(event) => void submitAcademicUpdate(event, "/api/admin/subjects", "Subject")}>
+        </article>}
+
+        {academicPanelVisibility.update && <article className="admin-panel admin-panel--academic">
+          <h2>Update class/course</h2>
+          {selectedClassCourse && <form key={selectedClassCourse.id} onSubmit={(event) => void submitAcademicUpdate(event, "/api/admin/classes-courses", "Class/Course")}>
+            <input name="recordId" type="hidden" value={selectedClassCourse.id} />
+            <label>Class/course<select onChange={(event) => setSelectedClassCourseId(event.target.value)} value={selectedClassCourseId}>{classCourses.map((classCourse) => <option key={classCourse.id} value={classCourse.id}>{classCourse.name} · {classCourse.code}</option>)}</select></label>
+            <label>Name<input defaultValue={selectedClassCourse.name} name="name" required /></label>
+            <label>Code<input defaultValue={selectedClassCourse.code} name="code" required /></label>
+            <button disabled={selectedClassCourse.isArchived} type="submit">Save class/course</button>
+          </form>}
+        </article>}
+
+        {academicPanelVisibility.update && <article className="admin-panel admin-panel--academic">
+          <h2>Update subject</h2>
+          {selectedSubject && <form key={selectedSubject.id} onSubmit={(event) => void submitAcademicUpdate(event, "/api/admin/subjects", "Subject")}>
             <input name="recordId" type="hidden" value={selectedSubject.id} />
-            <label>Manage subject<select onChange={(event) => setSelectedSubjectId(event.target.value)} value={selectedSubjectId}>{subjects.map((subject) => <option key={subject.id} value={subject.id}>{subject.name} · {subject.code}</option>)}</select></label>
+            <label>Subject<select onChange={(event) => setSelectedSubjectId(event.target.value)} value={selectedSubjectId}>{subjects.map((subject) => <option key={subject.id} value={subject.id}>{subject.name} · {subject.code}</option>)}</select></label>
             <label>Name<input defaultValue={selectedSubject.name} name="name" required /></label>
             <label>Code<input defaultValue={selectedSubject.code} name="code" required /></label>
             <button disabled={selectedSubject.isArchived} type="submit">Save subject</button>
           </form>}
-        </article>
+        </article>}
 
         <article className="admin-panel admin-panel--enrollment">
           <h2>Enroll student</h2>
