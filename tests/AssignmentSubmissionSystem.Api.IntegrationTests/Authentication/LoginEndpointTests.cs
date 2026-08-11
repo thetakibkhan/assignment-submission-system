@@ -62,6 +62,27 @@ public sealed class LoginEndpointTests : IClassFixture<AuthWebApplicationFactory
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 
+
+    [Fact]
+    public async Task Logout_ShouldClearTheAccessTokenCookie()
+    {
+        HttpResponseMessage loginResponse = await _client.PostAsJsonAsync(
+            "/api/auth/login",
+            new
+            {
+                institutionalId = "ADM-001",
+                password = "Admin123!"
+            });
+
+        loginResponse.EnsureSuccessStatusCode();
+
+        HttpResponseMessage logoutResponse = await _client.PostAsync("/api/auth/logout", null);
+
+        Assert.Equal(HttpStatusCode.NoContent, logoutResponse.StatusCode);
+        Assert.Contains("access_token=", logoutResponse.Headers.GetValues("Set-Cookie").Single());
+        Assert.Equal(HttpStatusCode.Unauthorized, (await _client.GetAsync("/api/dashboard/admin")).StatusCode);
+    }
+
     [Fact]
     public async Task AccountDeactivation_ShouldImmediatelyBlockLoginAndProtectedAccess()
     {
