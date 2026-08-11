@@ -1,3 +1,4 @@
+using AssignmentSubmissionSystem.Domain.Academics;
 using AssignmentSubmissionSystem.Infrastructure.Authentication;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -41,6 +42,7 @@ public sealed class DatabaseInitializer
         await EnsureUserAsync("Nusrat Jahan", "ADM-001", "admin@assignment.local", _demoAccounts.AdminPassword, RoleNames.Admin);
         await EnsureUserAsync("Rafiq Hasan", "TCH-001", "teacher@assignment.local", _demoAccounts.TeacherPassword, RoleNames.Teacher);
         await EnsureUserAsync("Ayesha Rahman", "STU-001", "student@assignment.local", _demoAccounts.StudentPassword, RoleNames.Student);
+        await EnsureMockAcademicDataAsync(cancellationToken);
     }
 
     private async Task EnsureRoleAsync(string roleName)
@@ -55,6 +57,55 @@ public sealed class DatabaseInitializer
         if (!result.Succeeded)
         {
             throw new InvalidOperationException("The required application role could not be created.");
+        }
+    }
+
+    private async Task EnsureMockAcademicDataAsync(CancellationToken cancellationToken)
+    {
+        ClassCourse[] mockClassCourses =
+        [
+            new ClassCourse(Guid.CreateVersion7(), "Class Nine", "CLS-09"),
+            new ClassCourse(Guid.CreateVersion7(), "Class Ten", "CLS-10")
+        ];
+        Subject[] mockSubjects =
+        [
+            new Subject(Guid.CreateVersion7(), "Mathematics", "SUB-MAT"),
+            new Subject(Guid.CreateVersion7(), "English", "SUB-ENG"),
+            new Subject(Guid.CreateVersion7(), "Science", "SUB-SCI")
+        ];
+
+        HashSet<string> existingClassCourseCodes = (await _databaseContext.ClassCourses
+            .Select(classCourse => classCourse.Code)
+            .ToListAsync(cancellationToken))
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        HashSet<string> existingSubjectCodes = (await _databaseContext.Subjects
+            .Select(subject => subject.Code)
+            .ToListAsync(cancellationToken))
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        foreach (ClassCourse classCourse in mockClassCourses)
+        {
+            if (existingClassCourseCodes.Contains(classCourse.Code))
+            {
+                continue;
+            }
+
+            _databaseContext.ClassCourses.Add(classCourse);
+        }
+
+        foreach (Subject subject in mockSubjects)
+        {
+            if (existingSubjectCodes.Contains(subject.Code))
+            {
+                continue;
+            }
+
+            _databaseContext.Subjects.Add(subject);
+        }
+
+        if (_databaseContext.ChangeTracker.HasChanges())
+        {
+            await _databaseContext.SaveChangesAsync(cancellationToken);
         }
     }
 
