@@ -19,6 +19,14 @@ public sealed class SubjectsController : ControllerBase
         _subjectService = subjectService;
     }
 
+    [HttpGet]
+    public async Task<ActionResult<IReadOnlyList<SubjectResponse>>> GetAllAsync(CancellationToken cancellationToken)
+    {
+        IReadOnlyList<Subject> subjects = await _subjectService.GetAllAsync(cancellationToken);
+
+        return Ok(subjects.Select(ToResponse).ToList());
+    }
+
     [HttpPost]
     public async Task<ActionResult<SubjectResponse>> CreateAsync(
         CreateSubjectRequest request,

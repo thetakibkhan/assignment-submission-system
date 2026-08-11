@@ -19,6 +19,14 @@ public sealed class ClassCourseRepository : IClassCourseRepository
         await _databaseContext.SaveChangesAsync(cancellationToken);
     }
 
+    public async Task<IReadOnlyList<ClassCourse>> GetAllAsync(CancellationToken cancellationToken)
+    {
+        return await _databaseContext.ClassCourses
+            .AsNoTracking()
+            .OrderBy(classCourse => classCourse.Name)
+            .ToListAsync(cancellationToken);
+    }
+
     public Task<ClassCourse?> GetByIdAsync(Guid id, CancellationToken cancellationToken)
     {
         return _databaseContext.ClassCourses.SingleOrDefaultAsync(classCourse => classCourse.Id == id, cancellationToken);

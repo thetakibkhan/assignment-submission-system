@@ -24,6 +24,14 @@ public sealed class SubjectRepository : ISubjectRepository
         return _databaseContext.Subjects.AnyAsync(subject => subject.Code == code, cancellationToken);
     }
 
+    public async Task<IReadOnlyList<Subject>> GetAllAsync(CancellationToken cancellationToken)
+    {
+        return await _databaseContext.Subjects
+            .AsNoTracking()
+            .OrderBy(subject => subject.Name)
+            .ToListAsync(cancellationToken);
+    }
+
     public Task<Subject?> GetByIdAsync(Guid id, CancellationToken cancellationToken)
     {
         return _databaseContext.Subjects.SingleOrDefaultAsync(subject => subject.Id == id, cancellationToken);

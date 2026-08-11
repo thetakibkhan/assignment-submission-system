@@ -36,6 +36,11 @@ public sealed class ClassCourseService : IClassCourseService
         return classCourse;
     }
 
+    public Task<IReadOnlyList<ClassCourse>> GetAllAsync(CancellationToken cancellationToken)
+    {
+        return _classCourseRepository.GetAllAsync(cancellationToken);
+    }
+
     public async Task<ClassCourse> UpdateAsync(Guid id, CreateClassCourseCommand command, CancellationToken cancellationToken)
     {
         ClassCourse classCourse = await GetRequiredAsync(id, cancellationToken);

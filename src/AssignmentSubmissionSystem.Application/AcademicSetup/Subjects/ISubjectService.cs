@@ -8,5 +8,7 @@ public interface ISubjectService
 
     Task<Subject> CreateAsync(CreateSubjectCommand command, CancellationToken cancellationToken);
 
+    Task<IReadOnlyList<Subject>> GetAllAsync(CancellationToken cancellationToken);
+
     Task<Subject> UpdateAsync(Guid id, CreateSubjectCommand command, CancellationToken cancellationToken);
 }

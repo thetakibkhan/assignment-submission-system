@@ -8,6 +8,8 @@ public interface ISubjectRepository
 
     Task<bool> ExistsByCodeAsync(string code, CancellationToken cancellationToken);
 
+    Task<IReadOnlyList<Subject>> GetAllAsync(CancellationToken cancellationToken);
+
     Task<Subject?> GetByIdAsync(Guid id, CancellationToken cancellationToken);
 
     Task UpdateAsync(Subject subject, CancellationToken cancellationToken);

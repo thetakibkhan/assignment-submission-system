@@ -37,6 +37,11 @@ public sealed class SubjectService : ISubjectService
         return subject;
     }
 
+    public Task<IReadOnlyList<Subject>> GetAllAsync(CancellationToken cancellationToken)
+    {
+        return _subjectRepository.GetAllAsync(cancellationToken);
+    }
+
     public async Task<Subject> UpdateAsync(
         Guid id,
         CreateSubjectCommand command,

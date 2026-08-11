@@ -18,6 +18,14 @@ public sealed class ClassCoursesController : ControllerBase
         _classCourseService = classCourseService;
     }
 
+    [HttpGet]
+    public async Task<ActionResult<IReadOnlyList<ClassCourseResponse>>> GetAllAsync(CancellationToken cancellationToken)
+    {
+        IReadOnlyList<AssignmentSubmissionSystem.Domain.Academics.ClassCourse> classCourses = await _classCourseService.GetAllAsync(cancellationToken);
+
+        return Ok(classCourses.Select(ToResponse).ToList());
+    }
+
     [HttpPost]
     public async Task<ActionResult<ClassCourseResponse>> CreateAsync(
         CreateClassCourseRequest request,
