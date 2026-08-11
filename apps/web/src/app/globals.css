@@ -686,11 +686,6 @@ body {
 }
 
 .account-actions button.is-active { background: #fafafa; border-color: #fafafa; color: #18181b; font-weight: 700; }
-.admin-console[data-section="accounts"]:not([data-account-action]) .account-panel--accounts,
-.admin-console[data-section="accounts"][data-account-action="create"] .account-panel--accounts:not(.account-panel--create),
-.admin-console[data-section="accounts"][data-account-action="manage"] .account-panel--accounts:not(.account-panel--manage),
-.admin-console[data-section="accounts"][data-account-action="update"] .account-panel--accounts:not(.account-panel--update) { display: none; }
-
 .account-panel__hint { color: #a1a1aa; font-size: 0.8rem; line-height: 1.5; margin: -0.35rem 0 1rem; }
 .app-shell__bottom { margin-top: auto; }
 .app-shell__sign-out {

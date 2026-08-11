@@ -268,7 +268,7 @@ export function AdminSetupConsole({ activeSection }: { activeSection: DashboardS
   }
 
   return (
-    <main className="admin-console" data-account-action={accountAction} data-section={activeSection}>
+    <main className="admin-console" data-section={activeSection}>
       <header className="admin-console__header">
         <div>
           <p className="login-card__eyebrow">Administration</p>
@@ -314,7 +314,7 @@ export function AdminSetupConsole({ activeSection }: { activeSection: DashboardS
           </div>
           <p className="overview-note">Set up accounts first, then academic structure, enrollment, and teacher scope.</p>
         </article>
-        <article className="admin-panel admin-panel--accounts account-panel--create">
+        {accountAction === "create" && <article className="admin-panel admin-panel--accounts">
           <h2>Create account</h2>
           <form onSubmit={submitAccount}>
             <label>Full name<input name="fullName" required /></label>
@@ -323,7 +323,7 @@ export function AdminSetupConsole({ activeSection }: { activeSection: DashboardS
             <label>Role<select defaultValue="Student" name="role"><option>Student</option><option>Teacher</option></select></label>
             <button type="submit">Create account</button>
           </form>
-        </article>
+        </article>}
 
         <article className="admin-panel admin-panel--academic">
           <h2>Create class/course</h2>
@@ -378,12 +378,12 @@ export function AdminSetupConsole({ activeSection }: { activeSection: DashboardS
           </form>
         </article>
 
-        <article className="admin-panel admin-panel--accounts admin-panel--wide account-panel--manage">
+        {accountAction === "manage" && <article className="admin-panel admin-panel--accounts admin-panel--wide">
           <h2>Manage accounts</h2>
           <div className="account-table">{accounts.map((account) => <div className="account-row" key={account.id}><div><strong>{account.fullName}</strong><span>{account.institutionalId} · {account.role}</span></div><div><span className={account.isActive ? "status status--active" : "status"}>{account.isActive ? "Active" : "Inactive"}</span><button onClick={() => void updateActivation(account)} type="button">{account.isActive ? "Deactivate" : "Reactivate"}</button></div></div>)}</div>
-        </article>
+        </article>}
 
-        <article className="admin-panel admin-panel--accounts admin-panel--wide account-panel--update">
+        {accountAction === "update" && <article className="admin-panel admin-panel--accounts admin-panel--wide">
           <h2>Update account</h2>
           <p className="account-panel__hint">Roles are fixed after account creation. An institutional ID must remain unique.</p>
           {selectedAccount && <form className="account-edit" key={selectedAccount.id} onSubmit={submitAccountUpdate}>
@@ -393,7 +393,7 @@ export function AdminSetupConsole({ activeSection }: { activeSection: DashboardS
             <label>Contact email<input defaultValue={selectedAccount.email ?? ""} name="email" type="email" /></label>
             <button type="submit">Save profile</button>
           </form>}
-        </article>
+        </article>}
       </section>
     </main>
   );
