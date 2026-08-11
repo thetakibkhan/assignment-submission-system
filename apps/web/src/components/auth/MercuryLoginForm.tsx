@@ -3,6 +3,7 @@
 import { type FormEvent, useEffect, useRef, useState } from "react";
 
 interface LoginResponse {
+  requiresPasswordChange: boolean;
   redirectPath: string;
   role: string;
 }
@@ -14,7 +15,7 @@ interface Particle {
   y: number;
 }
 
-const roleRoutes = new Set(["/admin", "/teacher", "/student"]);
+const roleRoutes = new Set(["/admin", "/change-password", "/teacher", "/student"]);
 
 function isLoginResponse(value: unknown): value is LoginResponse {
   if (typeof value !== "object" || value === null) {
@@ -25,6 +26,7 @@ function isLoginResponse(value: unknown): value is LoginResponse {
 
   return typeof response.redirectPath === "string"
     && typeof response.role === "string"
+    && typeof response.requiresPasswordChange === "boolean"
     && roleRoutes.has(response.redirectPath);
 }
 

@@ -1,10 +1,10 @@
-import { RoleDashboard } from "@/components/dashboard/RoleDashboard";
+import { AdminSetupConsole } from "@/components/admin/AdminSetupConsole";
 import { DarkGradientBg } from "@/components/layout/DarkGradientBg";
 
 export default function AdminPage() {
   return (
     <DarkGradientBg>
-      <RoleDashboard endpoint="/api/dashboard/admin" role="Admin" />
+      <AdminSetupConsole />
     </DarkGradientBg>
   );
 }

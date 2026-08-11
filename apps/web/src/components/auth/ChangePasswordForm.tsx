@@ -1,0 +1,103 @@
+"use client";
+
+import { type FormEvent, useState } from "react";
+
+interface ChangePasswordResponse {
+  redirectPath: string;
+}
+
+function isChangePasswordResponse(value: unknown): value is ChangePasswordResponse {
+  if (typeof value !== "object" || value === null) {
+    return false;
+  }
+
+  const response = value as Record<string, unknown>;
+
+  return typeof response.redirectPath === "string";
+}
+
+export function ChangePasswordForm() {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setIsSubmitting(true);
+    setMessage(null);
+
+    const formData = new FormData(event.currentTarget);
+    const currentPassword = String(formData.get("currentPassword") ?? "");
+    const newPassword = String(formData.get("newPassword") ?? "");
+    const confirmPassword = String(formData.get("confirmPassword") ?? "");
+
+    if (newPassword !== confirmPassword) {
+      setMessage("The new password and confirmation do not match.");
+      setIsSubmitting(false);
+      return;
+    }
+
+    const apiBaseUrl = (process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:5112").replace(/\/$/, "");
+
+    try {
+      const response = await fetch(apiBaseUrl + "/api/auth/change-password", {
+        body: JSON.stringify({ currentPassword, newPassword }),
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        method: "POST",
+      });
+
+      if (!response.ok) {
+        setMessage("The password could not be changed. Check the current password and password requirements.");
+        return;
+      }
+
+      const result: unknown = await response.json();
+
+      if (!isChangePasswordResponse(result)) {
+        setMessage("The password was changed, but the next page could not be determined.");
+        return;
+      }
+
+      window.location.assign(result.redirectPath);
+    } catch {
+      setMessage("The secure sign-in service is unavailable. Please try again shortly.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  return (
+    <main className="login-shell">
+      <section aria-labelledby="change-password-heading" className="login-card">
+        <header className="login-card__header">
+          <p className="login-card__eyebrow">Required account step</p>
+          <h1 id="change-password-heading">Set a new password</h1>
+          <p>Your administrator issued a temporary password. Choose a new private password to continue.</p>
+        </header>
+
+        <form onSubmit={handleSubmit}>
+          <div className="login-field">
+            <label htmlFor="currentPassword">Temporary password</label>
+            <input autoComplete="current-password" id="currentPassword" name="currentPassword" required type="password" />
+          </div>
+          <div className="login-field">
+            <label htmlFor="newPassword">New password</label>
+            <input autoComplete="new-password" id="newPassword" minLength={8} name="newPassword" required type="password" />
+          </div>
+          <div className="login-field">
+            <label htmlFor="confirmPassword">Confirm new password</label>
+            <input autoComplete="new-password" id="confirmPassword" minLength={8} name="confirmPassword" required type="password" />
+          </div>
+
+          <button className="login-submit-button" disabled={isSubmitting} type="submit">
+            {isSubmitting ? "Updating password…" : "Continue securely"}
+          </button>
+        </form>
+
+        <p aria-live="polite" className="login-message">{message}</p>
+      </section>
+    </main>
+  );
+}
