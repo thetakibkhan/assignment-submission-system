@@ -154,6 +154,33 @@ public sealed class AccountManagementEndpointTests : IClassFixture<AuthWebApplic
         Assert.Contains(AccountAuditEventType.PasswordReset, auditEventTypes);
     }
 
+
+    [Fact]
+    public async Task Update_ShouldRejectDuplicateInstitutionalId()
+    {
+        using HttpClient adminClient = await CreateAuthenticatedClientAsync("ADM-001", "Admin123!");
+        string firstInstitutionalId = "STU-" + Guid.NewGuid().ToString("N").ToUpperInvariant();
+        string secondInstitutionalId = "TCH-" + Guid.NewGuid().ToString("N").ToUpperInvariant();
+        await CreateManagedAccountAsync(adminClient, firstInstitutionalId, "Student");
+        await CreateManagedAccountAsync(adminClient, secondInstitutionalId, "Teacher");
+
+        HttpResponseMessage response = await adminClient.PutAsJsonAsync(
+            "/api/admin/users/" + secondInstitutionalId,
+            new
+            {
+                email = secondInstitutionalId.ToLowerInvariant() + "@example.test",
+                fullName = "Managed User",
+                institutionalId = firstInstitutionalId
+            });
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+
+        ProblemDetailsResponse? problemDetails = await response.Content.ReadFromJsonAsync<ProblemDetailsResponse>();
+
+        Assert.NotNull(problemDetails);
+        Assert.Equal("The institutional ID is already in use.", problemDetails.Detail);
+    }
+
     [Fact]
     public async Task Create_ShouldRejectTeacher()
     {
@@ -233,6 +260,11 @@ public sealed class AccountManagementEndpointTests : IClassFixture<AuthWebApplic
         public bool RequiresPasswordChange { get; init; }
 
         public string RedirectPath { get; init; } = string.Empty;
+    }
+
+    private sealed class ProblemDetailsResponse
+    {
+        public string Detail { get; init; } = string.Empty;
     }
 
     private sealed class ResetPasswordResponse
