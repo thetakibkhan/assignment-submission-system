@@ -15,7 +15,11 @@ public sealed class ApplicationDbContext : IdentityDbContext<ApplicationUser, Id
 
     public DbSet<ClassCourse> ClassCourses => Set<ClassCourse>();
 
+    public DbSet<StudentEnrollment> StudentEnrollments => Set<StudentEnrollment>();
+
     public DbSet<Subject> Subjects => Set<Subject>();
+
+    public DbSet<TeacherResponsibility> TeacherResponsibilities => Set<TeacherResponsibility>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -50,6 +54,58 @@ public sealed class ApplicationDbContext : IdentityDbContext<ApplicationUser, Id
                 .IsRequired();
             entity.HasIndex(subject => subject.Code)
                 .IsUnique();
+        });
+
+        builder.Entity<StudentEnrollment>(entity =>
+        {
+            entity.Ignore(enrollment => enrollment.IsActive);
+            entity.HasIndex(enrollment => new { enrollment.StudentUserId, enrollment.ClassCourseId })
+                .HasFilter("\"EndedAt\" IS NULL")
+                .IsUnique();
+            entity.HasOne<ClassCourse>()
+                .WithMany()
+                .HasForeignKey(enrollment => enrollment.ClassCourseId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne<ApplicationUser>()
+                .WithMany()
+                .HasForeignKey(enrollment => enrollment.StudentUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne<ApplicationUser>()
+                .WithMany()
+                .HasForeignKey(enrollment => enrollment.EnrolledByUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne<ApplicationUser>()
+                .WithMany()
+                .HasForeignKey(enrollment => enrollment.EndedByUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        builder.Entity<TeacherResponsibility>(entity =>
+        {
+            entity.Ignore(responsibility => responsibility.IsActive);
+            entity.HasIndex(responsibility => new { responsibility.ClassCourseId, responsibility.SubjectId })
+                .HasFilter("\"RevokedAt\" IS NULL")
+                .IsUnique();
+            entity.HasOne<ClassCourse>()
+                .WithMany()
+                .HasForeignKey(responsibility => responsibility.ClassCourseId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne<Subject>()
+                .WithMany()
+                .HasForeignKey(responsibility => responsibility.SubjectId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne<ApplicationUser>()
+                .WithMany()
+                .HasForeignKey(responsibility => responsibility.TeacherUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne<ApplicationUser>()
+                .WithMany()
+                .HasForeignKey(responsibility => responsibility.AssignedByUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne<ApplicationUser>()
+                .WithMany()
+                .HasForeignKey(responsibility => responsibility.RevokedByUserId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
     }
 }
