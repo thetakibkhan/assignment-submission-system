@@ -1,10 +1,13 @@
 using System.Security.Claims;
+using AssignmentSubmissionSystem.Api.Authentication;
 using System.Text;
+using AssignmentSubmissionSystem.Application.AccountManagement;
 using AssignmentSubmissionSystem.Application.AcademicSetup;
 using AssignmentSubmissionSystem.Application.AcademicSetup.ClassCourses;
 using AssignmentSubmissionSystem.Application.AcademicSetup.Enrollments;
 using AssignmentSubmissionSystem.Application.AcademicSetup.Subjects;
 using AssignmentSubmissionSystem.Application.AcademicSetup.TeacherResponsibilities;
+using AssignmentSubmissionSystem.Infrastructure.AccountManagement;
 using AssignmentSubmissionSystem.Infrastructure.AcademicSetup;
 using AssignmentSubmissionSystem.Infrastructure.Authentication;
 using AssignmentSubmissionSystem.Infrastructure.Persistence;
@@ -50,6 +53,7 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole<Guid>>(options =>
 builder.Services.Configure<DemoAccountOptions>(builder.Configuration.GetSection(DemoAccountOptions.SectionName));
 builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection(JwtOptions.SectionName));
 builder.Services.AddScoped<DatabaseInitializer>();
+builder.Services.AddScoped<IAccountManagementService, AccountManagementService>();
 builder.Services.AddScoped<IClassCourseRepository, ClassCourseRepository>();
 builder.Services.AddScoped<IClassCourseService, ClassCourseService>();
 builder.Services.AddScoped<IAcademicUserDirectory, AcademicUserDirectory>();
@@ -111,11 +115,24 @@ builder.Services.AddAuthentication(options =>
                 if (user is null || !user.IsActive)
                 {
                     context.Fail("The user account is inactive.");
+                    return;
+                }
+
+                if (user.MustChangePassword && context.Principal?.Identity is ClaimsIdentity identity)
+                {
+                    identity.AddClaim(new Claim(AuthorizationPolicies.PasswordChangeRequiredClaim, "true"));
                 }
             },
         };
     });
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy(AuthorizationPolicies.NormalAccess, policy =>
+    {
+        policy.RequireAuthenticatedUser();
+        policy.RequireAssertion(context => !context.User.HasClaim(AuthorizationPolicies.PasswordChangeRequiredClaim, "true"));
+    });
+});
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("WebApplication", policy =>

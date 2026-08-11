@@ -2,7 +2,11 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using AssignmentSubmissionSystem.Api.IntegrationTests.Infrastructure;
+using AssignmentSubmissionSystem.Domain.Accounts;
+using AssignmentSubmissionSystem.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace AssignmentSubmissionSystem.Api.IntegrationTests.Administration;
 
@@ -104,12 +108,14 @@ public sealed class AccountManagementEndpointTests : IClassFixture<AuthWebApplic
             "/api/admin/users/" + originalInstitutionalId,
             new
             {
-                email = "corrected.teacher@example.test",
+                email = correctedInstitutionalId.ToLowerInvariant() + "@example.test",
                 fullName = "Corrected Teacher Name",
                 institutionalId = correctedInstitutionalId
             });
 
-        Assert.Equal(HttpStatusCode.OK, updateResponse.StatusCode);
+        Assert.True(
+            updateResponse.StatusCode == HttpStatusCode.OK,
+            await updateResponse.Content.ReadAsStringAsync());
 
         HttpResponseMessage deactivateResponse = await adminClient.PutAsJsonAsync(
             "/api/admin/users/" + correctedInstitutionalId + "/activation",
@@ -130,6 +136,22 @@ public sealed class AccountManagementEndpointTests : IClassFixture<AuthWebApplic
 
         Assert.NotNull(resetPassword);
         Assert.False(string.IsNullOrWhiteSpace(resetPassword.TemporaryPassword));
+
+        using IServiceScope scope = _factory.Services.CreateScope();
+        ApplicationDbContext databaseContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        Guid targetUserId = await databaseContext.Users
+            .Where(user => user.UserName == correctedInstitutionalId)
+            .Select(user => user.Id)
+            .SingleAsync();
+        List<AccountAuditEventType> auditEventTypes = await databaseContext.AccountAuditEvents
+            .Where(auditEvent => auditEvent.TargetUserId == targetUserId)
+            .Select(auditEvent => auditEvent.EventType)
+            .ToListAsync();
+
+        Assert.Contains(AccountAuditEventType.AccountCreated, auditEventTypes);
+        Assert.Contains(AccountAuditEventType.ProfileUpdated, auditEventTypes);
+        Assert.Contains(AccountAuditEventType.ActivationChanged, auditEventTypes);
+        Assert.Contains(AccountAuditEventType.PasswordReset, auditEventTypes);
     }
 
     [Fact]

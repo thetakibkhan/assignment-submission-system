@@ -1,3 +1,4 @@
+using AssignmentSubmissionSystem.Domain.Accounts;
 using AssignmentSubmissionSystem.Domain.Academics;
 using AssignmentSubmissionSystem.Infrastructure.Authentication;
 using Microsoft.AspNetCore.Identity;
@@ -15,6 +16,8 @@ public sealed class ApplicationDbContext : IdentityDbContext<ApplicationUser, Id
 
     public DbSet<ClassCourse> ClassCourses => Set<ClassCourse>();
 
+    public DbSet<AccountAuditEvent> AccountAuditEvents => Set<AccountAuditEvent>();
+
     public DbSet<StudentEnrollment> StudentEnrollments => Set<StudentEnrollment>();
 
     public DbSet<Subject> Subjects => Set<Subject>();
@@ -30,6 +33,26 @@ public sealed class ApplicationDbContext : IdentityDbContext<ApplicationUser, Id
             entity.Property(user => user.FullName)
                 .HasMaxLength(200)
                 .IsRequired();
+        });
+
+        builder.Entity<AccountAuditEvent>(entity =>
+        {
+            entity.Property(auditEvent => auditEvent.ChangeSummary)
+                .HasMaxLength(500)
+                .IsRequired();
+            entity.Property(auditEvent => auditEvent.EventType)
+                .HasConversion<string>()
+                .HasMaxLength(50)
+                .IsRequired();
+            entity.HasIndex(auditEvent => new { auditEvent.TargetUserId, auditEvent.OccurredAt });
+            entity.HasOne<ApplicationUser>()
+                .WithMany()
+                .HasForeignKey(auditEvent => auditEvent.ActorUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne<ApplicationUser>()
+                .WithMany()
+                .HasForeignKey(auditEvent => auditEvent.TargetUserId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
 
         builder.Entity<ClassCourse>(entity =>

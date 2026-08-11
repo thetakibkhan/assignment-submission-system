@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace AssignmentSubmissionSystem.Api.Administration;
 
-[Authorize(Roles = RoleNames.Admin)]
+[Authorize(Policy = AuthorizationPolicies.NormalAccess, Roles = RoleNames.Admin)]
 [ApiController]
 [Route("api/admin/enrollments")]
 public sealed class EnrollmentsController : ControllerBase
