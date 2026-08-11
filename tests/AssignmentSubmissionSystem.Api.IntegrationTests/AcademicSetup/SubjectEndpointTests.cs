@@ -56,6 +56,23 @@ public sealed class SubjectEndpointTests : IClassFixture<AuthWebApplicationFacto
     }
 
     [Fact]
+    public async Task GetAll_ShouldIncludeCreatedSubject_WhenRequestedByAdmin()
+    {
+        using HttpClient client = await CreateAuthenticatedClientAsync("ADM-001", "Admin123!");
+        SubjectResponse createdSubject = await CreateSubjectAsync(client);
+
+        HttpResponseMessage response = await client.GetAsync("/api/admin/subjects");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        List<SubjectResponse>? subjects = await response.Content.ReadFromJsonAsync<List<SubjectResponse>>();
+
+        Assert.NotNull(subjects);
+        Assert.Contains(subjects, subject => subject.Id == createdSubject.Id);
+    }
+
+
+    [Fact]
     public async Task UpdateAndArchive_ShouldPreserveSubjectIdentity_WhenRequestedByAdmin()
     {
         using HttpClient client = await CreateAuthenticatedClientAsync("ADM-001", "Admin123!");

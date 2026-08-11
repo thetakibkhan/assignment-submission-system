@@ -58,6 +58,23 @@ public sealed class ClassCourseEndpointTests : IClassFixture<AuthWebApplicationF
 
 
     [Fact]
+    public async Task GetAll_ShouldIncludeCreatedClassCourse_WhenRequestedByAdmin()
+    {
+        using HttpClient client = await CreateAuthenticatedClientAsync("ADM-001", "Admin123!");
+        ClassCourseResponse createdClassCourse = await CreateClassCourseAsync(client);
+
+        HttpResponseMessage response = await client.GetAsync("/api/admin/classes-courses");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        List<ClassCourseResponse>? classCourses = await response.Content.ReadFromJsonAsync<List<ClassCourseResponse>>();
+
+        Assert.NotNull(classCourses);
+        Assert.Contains(classCourses, classCourse => classCourse.Id == createdClassCourse.Id);
+    }
+
+
+    [Fact]
     public async Task UpdateAndArchive_ShouldPreserveClassCourseIdentity_WhenRequestedByAdmin()
     {
         using HttpClient client = await CreateAuthenticatedClientAsync("ADM-001", "Admin123!");
