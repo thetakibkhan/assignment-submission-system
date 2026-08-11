@@ -453,3 +453,22 @@ body {
   .admin-panel--wide { grid-column: span 1; }
   .account-edit { grid-template-columns: 1fr; }
 }
+
+.record-edit {
+  border-top: 1px solid #27272a;
+  margin-top: 1rem;
+  padding-top: 1rem;
+}
+
+.admin-list button {
+  background: transparent;
+  border: 0;
+  color: #d4d4d8;
+  cursor: pointer;
+  float: right;
+  font: inherit;
+  font-size: 0.7rem;
+  padding: 0;
+}
+
+.admin-list button:hover { color: #ffffff; text-decoration: underline; }

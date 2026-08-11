@@ -61,10 +61,20 @@ export function AdminSetupConsole() {
   const [message, setMessage] = useState("Loading academic setup…");
   const [temporaryCredential, setTemporaryCredential] = useState<CreatedAccount | null>(null);
   const [selectedAccountId, setSelectedAccountId] = useState("");
+  const [selectedClassCourseId, setSelectedClassCourseId] = useState("");
+  const [selectedSubjectId, setSelectedSubjectId] = useState("");
 
   const selectedAccount = useMemo(
     () => accounts.find((account) => account.id === selectedAccountId),
     [accounts, selectedAccountId],
+  );
+  const selectedClassCourse = useMemo(
+    () => classCourses.find((classCourse) => classCourse.id === selectedClassCourseId),
+    [classCourses, selectedClassCourseId],
+  );
+  const selectedSubject = useMemo(
+    () => subjects.find((subject) => subject.id === selectedSubjectId),
+    [subjects, selectedSubjectId],
   );
 
   const activeStudents = accounts.filter((account) => account.isActive && account.role === "Student");
@@ -83,6 +93,8 @@ export function AdminSetupConsole() {
       setClassCourses(loadedClassCourses);
       setSubjects(loadedSubjects);
       setSelectedAccountId((currentId) => currentId || loadedAccounts[0]?.id || "");
+      setSelectedClassCourseId((currentId) => currentId || loadedClassCourses[0]?.id || "");
+      setSelectedSubjectId((currentId) => currentId || loadedSubjects[0]?.id || "");
       setMessage("Academic setup is ready.");
     } catch (error) {
       if (error instanceof Error && /unauthor|forbidden/i.test(error.message)) {
@@ -184,6 +196,36 @@ export function AdminSetupConsole() {
     }
   }
 
+  async function submitAcademicUpdate(event: FormEvent<HTMLFormElement>, path: string, label: string) {
+    event.preventDefault();
+    const form = new FormData(event.currentTarget);
+    const recordId = String(form.get("recordId") ?? "");
+
+    try {
+      await request<AcademicRecord>(path + "/" + recordId, {
+        body: JSON.stringify({
+          code: String(form.get("code") ?? ""),
+          name: String(form.get("name") ?? ""),
+        }),
+        method: "PUT",
+      });
+      await loadSetup();
+      setMessage(label + " updated.");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : label + " could not be updated.");
+    }
+  }
+
+  async function archiveAcademicRecord(path: string, id: string, label: string) {
+    try {
+      await request<void>(path + "/" + id + "/archive", { method: "POST" });
+      await loadSetup();
+      setMessage(label + " archived. Historical records remain available.");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : label + " could not be archived.");
+    }
+  }
+
   async function submitEnrollment(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
@@ -265,7 +307,14 @@ export function AdminSetupConsole() {
             <label>Code<input name="code" required /></label>
             <button type="submit">Add class/course</button>
           </form>
-          <div className="admin-list">{classCourses.map((classCourse) => <p key={classCourse.id}><b>{classCourse.code}</b> {classCourse.name}{classCourse.isArchived ? " · archived" : ""}</p>)}</div>
+          <div className="admin-list">{classCourses.map((classCourse) => <p key={classCourse.id}><b>{classCourse.code}</b> {classCourse.name}{classCourse.isArchived ? " · archived" : ""}{!classCourse.isArchived && <button onClick={() => void archiveAcademicRecord("/api/admin/classes-courses", classCourse.id, "Class/Course")} type="button">Archive</button>}</p>)}</div>
+          {selectedClassCourse && <form className="record-edit" key={selectedClassCourse.id} onSubmit={(event) => void submitAcademicUpdate(event, "/api/admin/classes-courses", "Class/Course")}>
+            <input name="recordId" type="hidden" value={selectedClassCourse.id} />
+            <label>Manage class/course<select onChange={(event) => setSelectedClassCourseId(event.target.value)} value={selectedClassCourseId}>{classCourses.map((classCourse) => <option key={classCourse.id} value={classCourse.id}>{classCourse.name} · {classCourse.code}</option>)}</select></label>
+            <label>Name<input defaultValue={selectedClassCourse.name} name="name" required /></label>
+            <label>Code<input defaultValue={selectedClassCourse.code} name="code" required /></label>
+            <button disabled={selectedClassCourse.isArchived} type="submit">Save class/course</button>
+          </form>}
         </article>
 
         <article className="admin-panel">
@@ -275,7 +324,14 @@ export function AdminSetupConsole() {
             <label>Code<input name="code" required /></label>
             <button type="submit">Add subject</button>
           </form>
-          <div className="admin-list">{subjects.map((subject) => <p key={subject.id}><b>{subject.code}</b> {subject.name}{subject.isArchived ? " · archived" : ""}</p>)}</div>
+          <div className="admin-list">{subjects.map((subject) => <p key={subject.id}><b>{subject.code}</b> {subject.name}{subject.isArchived ? " · archived" : ""}{!subject.isArchived && <button onClick={() => void archiveAcademicRecord("/api/admin/subjects", subject.id, "Subject")} type="button">Archive</button>}</p>)}</div>
+          {selectedSubject && <form className="record-edit" key={selectedSubject.id} onSubmit={(event) => void submitAcademicUpdate(event, "/api/admin/subjects", "Subject")}>
+            <input name="recordId" type="hidden" value={selectedSubject.id} />
+            <label>Manage subject<select onChange={(event) => setSelectedSubjectId(event.target.value)} value={selectedSubjectId}>{subjects.map((subject) => <option key={subject.id} value={subject.id}>{subject.name} · {subject.code}</option>)}</select></label>
+            <label>Name<input defaultValue={selectedSubject.name} name="name" required /></label>
+            <label>Code<input defaultValue={selectedSubject.code} name="code" required /></label>
+            <button disabled={selectedSubject.isArchived} type="submit">Save subject</button>
+          </form>}
         </article>
 
         <article className="admin-panel">
