@@ -75,6 +75,25 @@ public sealed class ClassCourseEndpointTests : IClassFixture<AuthWebApplicationF
 
 
     [Fact]
+    public async Task GetAll_ShouldIncludeMockAcademicData_WhenRequestedByAdmin()
+    {
+        using HttpClient client = await CreateAuthenticatedClientAsync("ADM-001", "Admin123!");
+
+        List<ClassCourseResponse>? classCourses = await client.GetFromJsonAsync<List<ClassCourseResponse>>(
+            "/api/admin/classes-courses");
+        List<ClassCourseResponse>? subjects = await client.GetFromJsonAsync<List<ClassCourseResponse>>(
+            "/api/admin/subjects");
+
+        Assert.NotNull(classCourses);
+        Assert.NotNull(subjects);
+        Assert.Contains(classCourses, classCourse => classCourse.Code == "CLS-09" && classCourse.Name == "Class Nine");
+        Assert.Contains(classCourses, classCourse => classCourse.Code == "CLS-10" && classCourse.Name == "Class Ten");
+        Assert.Contains(subjects, subject => subject.Code == "SUB-MAT" && subject.Name == "Mathematics");
+        Assert.Contains(subjects, subject => subject.Code == "SUB-ENG" && subject.Name == "English");
+        Assert.Contains(subjects, subject => subject.Code == "SUB-SCI" && subject.Name == "Science");
+    }
+
+    [Fact]
     public async Task UpdateAndArchive_ShouldPreserveClassCourseIdentity_WhenRequestedByAdmin()
     {
         using HttpClient client = await CreateAuthenticatedClientAsync("ADM-001", "Admin123!");
