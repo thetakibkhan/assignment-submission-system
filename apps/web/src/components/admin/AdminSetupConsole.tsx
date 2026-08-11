@@ -21,6 +21,8 @@ type AcademicRecord = {
   name: string;
 };
 
+type AccountAction = "create" | "manage" | "update";
+
 type CreatedAccount = {
   institutionalId: string;
   role: string;
@@ -61,6 +63,7 @@ export function AdminSetupConsole({ activeSection }: { activeSection: DashboardS
   const [subjects, setSubjects] = useState<AcademicRecord[]>([]);
   const [message, setMessage] = useState("Loading academic setup…");
   const [temporaryCredential, setTemporaryCredential] = useState<CreatedAccount | null>(null);
+  const [accountAction, setAccountAction] = useState<AccountAction | null>(null);
   const [selectedAccountId, setSelectedAccountId] = useState("");
   const [selectedClassCourseId, setSelectedClassCourseId] = useState("");
   const [selectedSubjectId, setSelectedSubjectId] = useState("");
@@ -265,7 +268,7 @@ export function AdminSetupConsole({ activeSection }: { activeSection: DashboardS
   }
 
   return (
-    <main className="admin-console" data-section={activeSection}>
+    <main className="admin-console" data-account-action={accountAction} data-section={activeSection}>
       <header className="admin-console__header">
         <div>
           <p className="login-card__eyebrow">Administration</p>
@@ -289,6 +292,17 @@ export function AdminSetupConsole({ activeSection }: { activeSection: DashboardS
         </section>
       )}
 
+      {activeSection === "accounts" && (
+        <div className="account-actions-wrap">
+          <p className="account-actions__intro">Choose an account task to continue.</p>
+          <div aria-label="Account actions" className="account-actions">
+            <button className={accountAction === "create" ? "is-active" : ""} onClick={() => setAccountAction("create")} type="button">Create account</button>
+            <button className={accountAction === "manage" ? "is-active" : ""} onClick={() => setAccountAction("manage")} type="button">Manage accounts</button>
+            <button className={accountAction === "update" ? "is-active" : ""} onClick={() => setAccountAction("update")} type="button">Update account</button>
+          </div>
+        </div>
+      )}
+
       <section className="admin-console__grid">
         <article className="admin-panel admin-panel--overview">
           <h2>Institution overview</h2>
@@ -300,7 +314,7 @@ export function AdminSetupConsole({ activeSection }: { activeSection: DashboardS
           </div>
           <p className="overview-note">Set up accounts first, then academic structure, enrollment, and teacher scope.</p>
         </article>
-        <article className="admin-panel admin-panel--accounts">
+        <article className="admin-panel admin-panel--accounts account-panel--create">
           <h2>Create account</h2>
           <form onSubmit={submitAccount}>
             <label>Full name<input name="fullName" required /></label>
@@ -364,9 +378,14 @@ export function AdminSetupConsole({ activeSection }: { activeSection: DashboardS
           </form>
         </article>
 
-        <article className="admin-panel admin-panel--accounts admin-panel--wide">
+        <article className="admin-panel admin-panel--accounts admin-panel--wide account-panel--manage">
           <h2>Manage accounts</h2>
           <div className="account-table">{accounts.map((account) => <div className="account-row" key={account.id}><div><strong>{account.fullName}</strong><span>{account.institutionalId} · {account.role}</span></div><div><span className={account.isActive ? "status status--active" : "status"}>{account.isActive ? "Active" : "Inactive"}</span><button onClick={() => void updateActivation(account)} type="button">{account.isActive ? "Deactivate" : "Reactivate"}</button></div></div>)}</div>
+        </article>
+
+        <article className="admin-panel admin-panel--accounts admin-panel--wide account-panel--update">
+          <h2>Update account</h2>
+          <p className="account-panel__hint">Roles are fixed after account creation. An institutional ID must remain unique.</p>
           {selectedAccount && <form className="account-edit" key={selectedAccount.id} onSubmit={submitAccountUpdate}>
             <label>Account<select onChange={(event) => setSelectedAccountId(event.target.value)} value={selectedAccountId}>{accounts.map((account) => <option key={account.id} value={account.id}>{account.fullName} · {account.institutionalId}</option>)}</select></label>
             <label>Full name<input defaultValue={selectedAccount.fullName} name="fullName" required /></label>

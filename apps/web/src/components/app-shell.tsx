@@ -1,6 +1,7 @@
 "use client";
 
-import { BookOpen, LayoutDashboard, type LucideIcon, ShieldCheck, UserRoundPlus, Users } from "lucide-react";
+import { BookOpen, LayoutDashboard, LogOut, type LucideIcon, ShieldCheck, UserRoundPlus, Users } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { createContext, type ReactNode, useContext, useState } from "react";
 
 export type DashboardSection = "overview" | "accounts" | "academic" | "enrollment" | "responsibilities";
@@ -20,7 +21,30 @@ const navigation: Array<{ icon: LucideIcon; label: string; section: DashboardSec
 ];
 
 export function AppShell({ children }: { children: ReactNode }) {
+  const router = useRouter();
   const [activeSection, setActiveSection] = useState<DashboardSection>("overview");
+  const [isSigningOut, setIsSigningOut] = useState(false);
+
+  async function signOut() {
+    setIsSigningOut(true);
+
+    try {
+      const apiBaseUrl = (process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:5112").replace(/\/$/, "");
+      const response = await fetch(apiBaseUrl + "/api/auth/logout", {
+        credentials: "include",
+        method: "POST",
+      });
+
+      if (!response.ok) {
+        throw new Error("Sign out failed.");
+      }
+
+      router.replace("/");
+      router.refresh();
+    } catch {
+      setIsSigningOut(false);
+    }
+  }
 
   return (
     <AppShellContext.Provider value={{ activeSection }}>
@@ -48,7 +72,13 @@ export function AppShell({ children }: { children: ReactNode }) {
               );
             })}
           </nav>
-          <p className="app-shell__footer">Single-institution workspace</p>
+          <div className="app-shell__bottom">
+            <button className="app-shell__sign-out" disabled={isSigningOut} onClick={() => void signOut()} type="button">
+              <LogOut aria-hidden="true" size={16} strokeWidth={1.75} />
+              {isSigningOut ? "Signing out…" : "Sign out"}
+            </button>
+            <p className="app-shell__footer">Single-institution workspace</p>
+          </div>
         </aside>
         <section className="app-shell__content">{children}</section>
       </div>
