@@ -1,5 +1,6 @@
 "use client";
 
+import type { DashboardSection } from "@/components/app-shell";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 
@@ -53,7 +54,7 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
   return response.json() as Promise<T>;
 }
 
-export function AdminSetupConsole() {
+export function AdminSetupConsole({ activeSection }: { activeSection: DashboardSection }) {
   const router = useRouter();
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [classCourses, setClassCourses] = useState<AcademicRecord[]>([]);
@@ -264,12 +265,12 @@ export function AdminSetupConsole() {
   }
 
   return (
-    <main className="admin-console">
+    <main className="admin-console" data-section={activeSection}>
       <header className="admin-console__header">
         <div>
           <p className="login-card__eyebrow">Administration</p>
-          <h1>Academic setup</h1>
-          <p>Configure institutional accounts and the academic relationships they can use.</p>
+          <h1>{activeSection === "overview" ? "Admin dashboard" : activeSection === "accounts" ? "Account management" : activeSection === "academic" ? "Academic structure" : activeSection === "enrollment" ? "Student enrollments" : "Teacher responsibilities"}</h1>
+          <p>Use the navigation to focus on one administration workflow at a time.</p>
         </div>
         <button className="admin-console__refresh" onClick={() => void loadSetup()} type="button">Refresh</button>
       </header>
@@ -289,7 +290,17 @@ export function AdminSetupConsole() {
       )}
 
       <section className="admin-console__grid">
-        <article className="admin-panel">
+        <article className="admin-panel admin-panel--overview">
+          <h2>Institution overview</h2>
+          <div className="overview-metrics">
+            <p><strong>{accounts.length}</strong><span>Accounts</span></p>
+            <p><strong>{availableClassCourses.length}</strong><span>Active classes/courses</span></p>
+            <p><strong>{availableSubjects.length}</strong><span>Active subjects</span></p>
+            <p><strong>{activeTeachers.length}</strong><span>Active teachers</span></p>
+          </div>
+          <p className="overview-note">Set up accounts first, then academic structure, enrollment, and teacher scope.</p>
+        </article>
+        <article className="admin-panel admin-panel--accounts">
           <h2>Create account</h2>
           <form onSubmit={submitAccount}>
             <label>Full name<input name="fullName" required /></label>
@@ -300,7 +311,7 @@ export function AdminSetupConsole() {
           </form>
         </article>
 
-        <article className="admin-panel">
+        <article className="admin-panel admin-panel--academic">
           <h2>Create class/course</h2>
           <form onSubmit={(event) => void submitAcademicRecord(event, "/api/admin/classes-courses", "Class/Course")}>
             <label>Name<input name="name" required /></label>
@@ -317,7 +328,7 @@ export function AdminSetupConsole() {
           </form>}
         </article>
 
-        <article className="admin-panel">
+        <article className="admin-panel admin-panel--academic">
           <h2>Create subject</h2>
           <form onSubmit={(event) => void submitAcademicRecord(event, "/api/admin/subjects", "Subject")}>
             <label>Name<input name="name" required /></label>
@@ -334,7 +345,7 @@ export function AdminSetupConsole() {
           </form>}
         </article>
 
-        <article className="admin-panel">
+        <article className="admin-panel admin-panel--enrollment">
           <h2>Enroll student</h2>
           <form onSubmit={submitEnrollment}>
             <label>Student<select name="studentInstitutionalId" required>{activeStudents.map((student) => <option key={student.id} value={student.institutionalId}>{student.fullName} · {student.institutionalId}</option>)}</select></label>
@@ -343,7 +354,7 @@ export function AdminSetupConsole() {
           </form>
         </article>
 
-        <article className="admin-panel">
+        <article className="admin-panel admin-panel--responsibilities">
           <h2>Assign teacher</h2>
           <form onSubmit={submitResponsibility}>
             <label>Teacher<select name="teacherInstitutionalId" required>{activeTeachers.map((teacher) => <option key={teacher.id} value={teacher.institutionalId}>{teacher.fullName} · {teacher.institutionalId}</option>)}</select></label>
@@ -353,7 +364,7 @@ export function AdminSetupConsole() {
           </form>
         </article>
 
-        <article className="admin-panel admin-panel--wide">
+        <article className="admin-panel admin-panel--accounts admin-panel--wide">
           <h2>Manage accounts</h2>
           <div className="account-table">{accounts.map((account) => <div className="account-row" key={account.id}><div><strong>{account.fullName}</strong><span>{account.institutionalId} · {account.role}</span></div><div><span className={account.isActive ? "status status--active" : "status"}>{account.isActive ? "Active" : "Inactive"}</span><button onClick={() => void updateActivation(account)} type="button">{account.isActive ? "Deactivate" : "Reactivate"}</button></div></div>)}</div>
           {selectedAccount && <form className="account-edit" key={selectedAccount.id} onSubmit={submitAccountUpdate}>
