@@ -1,10 +1,3 @@
-import { RoleDashboard } from "@/components/dashboard/RoleDashboard";
 import { DarkGradientBg } from "@/components/layout/DarkGradientBg";
-
-export default function StudentPage() {
-  return (
-    <DarkGradientBg>
-      <RoleDashboard endpoint="/api/dashboard/student" role="Student" />
-    </DarkGradientBg>
-  );
-}
+import { StudentAssignmentWorkspace } from "@/components/student/StudentAssignmentWorkspace";
+export default function StudentPage() { return <DarkGradientBg><StudentAssignmentWorkspace /></DarkGradientBg>; }
