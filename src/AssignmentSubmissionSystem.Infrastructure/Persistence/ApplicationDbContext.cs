@@ -1,5 +1,6 @@
 using AssignmentSubmissionSystem.Domain.Accounts;
 using AssignmentSubmissionSystem.Domain.Academics;
+using AssignmentSubmissionSystem.Domain.Assignments;
 using AssignmentSubmissionSystem.Infrastructure.Authentication;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
@@ -17,6 +18,8 @@ public sealed class ApplicationDbContext : IdentityDbContext<ApplicationUser, Id
     public DbSet<ClassCourse> ClassCourses => Set<ClassCourse>();
 
     public DbSet<AccountAuditEvent> AccountAuditEvents => Set<AccountAuditEvent>();
+
+    public DbSet<Assignment> Assignments => Set<Assignment>();
 
     public DbSet<StudentEnrollment> StudentEnrollments => Set<StudentEnrollment>();
 
@@ -53,6 +56,18 @@ public sealed class ApplicationDbContext : IdentityDbContext<ApplicationUser, Id
                 .WithMany()
                 .HasForeignKey(auditEvent => auditEvent.TargetUserId)
                 .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        builder.Entity<Assignment>(entity =>
+        {
+            entity.Property(assignment => assignment.Title).HasMaxLength(200).IsRequired();
+            entity.Property(assignment => assignment.Description).HasMaxLength(5000);
+            entity.Property(assignment => assignment.MaximumMarks).HasPrecision(10, 2);
+            entity.Property(assignment => assignment.Status).HasConversion<string>().HasMaxLength(20).IsRequired();
+            entity.HasIndex(assignment => new { assignment.TeacherUserId, assignment.UpdatedAt });
+            entity.HasOne<ApplicationUser>().WithMany().HasForeignKey(assignment => assignment.TeacherUserId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne<ClassCourse>().WithMany().HasForeignKey(assignment => assignment.ClassCourseId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne<Subject>().WithMany().HasForeignKey(assignment => assignment.SubjectId).OnDelete(DeleteBehavior.Restrict);
         });
 
         builder.Entity<ClassCourse>(entity =>
