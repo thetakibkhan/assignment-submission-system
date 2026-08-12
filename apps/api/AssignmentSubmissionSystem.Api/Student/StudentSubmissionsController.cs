@@ -19,6 +19,25 @@ public sealed class StudentSubmissionsController : ControllerBase
         _submissionService = submissionService;
     }
 
+    [HttpGet]
+    public async Task<ActionResult<StudentSubmissionResponse>> GetAsync(
+        Guid assignmentId,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            Submission submission = await _submissionService.GetAsync(
+                assignmentId,
+                User.GetRequiredUserId(),
+                cancellationToken);
+            return Ok(StudentSubmissionResponse.From(submission));
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound();
+        }
+    }
+
     [HttpPost]
     public Task<ActionResult<StudentSubmissionResponse>> CreateAsync(Guid assignmentId, [FromForm] StudentSubmissionRequest request, CancellationToken cancellationToken)
     {

@@ -52,6 +52,18 @@ public sealed class SubmissionService : ISubmissionService
         return submission;
     }
 
+    public async Task<Submission> GetAsync(
+        Guid assignmentId,
+        Guid studentUserId,
+        CancellationToken cancellationToken)
+    {
+        return await _submissionRepository.GetByAssignmentAndStudentAsync(
+            assignmentId,
+            studentUserId,
+            cancellationToken)
+            ?? throw new KeyNotFoundException("The requested submission was not found.");
+    }
+
     public async Task<Submission> UpdateAsync(
         Guid assignmentId,
         CreateSubmissionCommand command,

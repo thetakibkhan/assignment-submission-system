@@ -40,9 +40,13 @@ public sealed class StudentAssignmentQuery : IStudentAssignmentQuery
                    on assignment.SubjectId equals subject.Id
                join teacher in _databaseContext.Users.AsNoTracking()
                    on assignment.TeacherUserId equals teacher.Id
+               join submissionEntry in _databaseContext.Submissions.AsNoTracking()
+                   on new { AssignmentId = assignment.Id, StudentUserId = studentUserId }
+                   equals new { submissionEntry.AssignmentId, submissionEntry.StudentUserId } into submissionEntries
+               from submission in submissionEntries.DefaultIfEmpty()
                where assignment.Status == AssignmentStatus.Published
                    && enrollment.StudentUserId == studentUserId
-                   && enrollment.EndedAt == null
+                   && (enrollment.EndedAt == null || submission != null)
                select new StudentAssignmentItem
                {
                    AllowSubmissionUpdates = assignment.AllowSubmissionUpdates ?? false,
@@ -52,8 +56,11 @@ public sealed class StudentAssignmentQuery : IStudentAssignmentQuery
                    Description = assignment.Description ?? string.Empty,
                    Id = assignment.Id,
                    MaximumMarks = assignment.MaximumMarks ?? 0m,
-                   StudentState = "Not submitted",
-                   Submission = null,
+                   StudentState = submission == null ? "Not submitted" : submission.Status.ToString(),
+                   Submission = submission == null ? null : new StudentSubmissionSummary
+                   {
+                       Status = submission.Status.ToString()
+                   },
                    SubjectName = subject.Name,
                    TeacherName = teacher.FullName,
                    Title = assignment.Title

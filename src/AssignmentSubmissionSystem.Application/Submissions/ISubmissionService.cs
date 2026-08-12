@@ -10,6 +10,11 @@ public interface ISubmissionService
         Guid studentUserId,
         CancellationToken cancellationToken);
 
+    Task<Submission> GetAsync(
+        Guid assignmentId,
+        Guid studentUserId,
+        CancellationToken cancellationToken);
+
     Task<Submission> UpdateAsync(
         Guid assignmentId,
         CreateSubmissionCommand command,
