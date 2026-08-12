@@ -1,6 +1,7 @@
 using AssignmentSubmissionSystem.Domain.Accounts;
 using AssignmentSubmissionSystem.Domain.Academics;
 using AssignmentSubmissionSystem.Domain.Assignments;
+using AssignmentSubmissionSystem.Domain.Submissions;
 using AssignmentSubmissionSystem.Infrastructure.Authentication;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
@@ -22,6 +23,8 @@ public sealed class ApplicationDbContext : IdentityDbContext<ApplicationUser, Id
     public DbSet<Assignment> Assignments => Set<Assignment>();
 
     public DbSet<StudentEnrollment> StudentEnrollments => Set<StudentEnrollment>();
+
+    public DbSet<Submission> Submissions => Set<Submission>();
 
     public DbSet<Subject> Subjects => Set<Subject>();
 
@@ -68,6 +71,25 @@ public sealed class ApplicationDbContext : IdentityDbContext<ApplicationUser, Id
             entity.HasOne<ApplicationUser>().WithMany().HasForeignKey(assignment => assignment.TeacherUserId).OnDelete(DeleteBehavior.Restrict);
             entity.HasOne<ClassCourse>().WithMany().HasForeignKey(assignment => assignment.ClassCourseId).OnDelete(DeleteBehavior.Restrict);
             entity.HasOne<Subject>().WithMany().HasForeignKey(assignment => assignment.SubjectId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        builder.Entity<Submission>(entity =>
+        {
+            entity.Property(submission => submission.Status)
+                .HasConversion<string>()
+                .HasMaxLength(20)
+                .IsRequired();
+            entity.Property(submission => submission.TextAnswer).HasMaxLength(10000);
+            entity.HasIndex(submission => new { submission.AssignmentId, submission.StudentUserId })
+                .IsUnique();
+            entity.HasOne<Assignment>()
+                .WithMany()
+                .HasForeignKey(submission => submission.AssignmentId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne<ApplicationUser>()
+                .WithMany()
+                .HasForeignKey(submission => submission.StudentUserId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
 
         builder.Entity<ClassCourse>(entity =>
