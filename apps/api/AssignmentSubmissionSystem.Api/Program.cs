@@ -62,6 +62,7 @@ builder.Services.AddScoped<IAssignmentRepository, AssignmentRepository>();
 builder.Services.AddScoped<IAssignmentService, AssignmentService>();
 builder.Services.AddScoped<IStudentAssignmentQuery, StudentAssignmentQuery>();
 builder.Services.AddScoped<ISubmissionRepository, SubmissionRepository>();
+builder.Services.AddScoped<ISubmissionFileStorage, LocalSubmissionFileStorage>();
 builder.Services.AddScoped<ISubmissionService, SubmissionService>();
 builder.Services.AddScoped<IClassCourseRepository, ClassCourseRepository>();
 builder.Services.AddScoped<IClassCourseService, ClassCourseService>();

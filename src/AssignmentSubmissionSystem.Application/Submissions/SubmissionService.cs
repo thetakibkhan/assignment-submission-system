@@ -10,15 +10,18 @@ public sealed class SubmissionService : ISubmissionService
     private readonly IAssignmentRepository _assignmentRepository;
     private readonly IStudentEnrollmentRepository _studentEnrollmentRepository;
     private readonly ISubmissionRepository _submissionRepository;
+    private readonly ISubmissionFileStorage _submissionFileStorage;
 
     public SubmissionService(
         IAssignmentRepository assignmentRepository,
         IStudentEnrollmentRepository studentEnrollmentRepository,
-        ISubmissionRepository submissionRepository)
+        ISubmissionRepository submissionRepository,
+        ISubmissionFileStorage submissionFileStorage)
     {
         _assignmentRepository = assignmentRepository;
         _studentEnrollmentRepository = studentEnrollmentRepository;
         _submissionRepository = submissionRepository;
+        _submissionFileStorage = submissionFileStorage;
     }
 
     public async Task<Submission> CreateAsync(
@@ -41,12 +44,18 @@ public sealed class SubmissionService : ISubmissionService
             throw new InvalidOperationException("You have already submitted work for this assignment.");
         }
 
+        StoredSubmissionAttachment? attachment = command.Attachment is null
+            ? null
+            : await _submissionFileStorage.SaveAsync(command.Attachment, cancellationToken);
         Submission submission = new(
             Guid.CreateVersion7(),
             assignment.Id,
             studentUserId,
             command.TextAnswer,
-            DateTimeOffset.UtcNow);
+            DateTimeOffset.UtcNow,
+            attachment?.OriginalFileName,
+            attachment?.ContentType,
+            attachment?.StorageName);
         await _submissionRepository.AddAsync(submission, cancellationToken);
 
         return submission;
@@ -62,6 +71,35 @@ public sealed class SubmissionService : ISubmissionService
             studentUserId,
             cancellationToken)
             ?? throw new KeyNotFoundException("The requested submission was not found.");
+    }
+
+    public async Task<SubmissionAttachmentDownload> OpenAttachmentAsync(
+        Guid assignmentId,
+        Guid studentUserId,
+        CancellationToken cancellationToken)
+    {
+        Submission submission = await GetAsync(assignmentId, studentUserId, cancellationToken);
+        if (string.IsNullOrWhiteSpace(submission.AttachmentStorageName) ||
+            string.IsNullOrWhiteSpace(submission.AttachmentContentType) ||
+            string.IsNullOrWhiteSpace(submission.AttachmentFileName))
+        {
+            throw new KeyNotFoundException("The requested attachment was not found.");
+        }
+
+        Stream? content = await _submissionFileStorage.OpenReadAsync(
+            submission.AttachmentStorageName,
+            cancellationToken);
+        if (content is null)
+        {
+            throw new KeyNotFoundException("The requested attachment was not found.");
+        }
+
+        return new SubmissionAttachmentDownload
+        {
+            Content = content,
+            ContentType = submission.AttachmentContentType,
+            FileName = submission.AttachmentFileName
+        };
     }
 
     public async Task<Submission> UpdateAsync(
@@ -85,7 +123,15 @@ public sealed class SubmissionService : ISubmissionService
             studentUserId,
             cancellationToken)
             ?? throw new KeyNotFoundException("The requested submission was not found.");
-        submission.UpdateTextAnswer(command.TextAnswer, DateTimeOffset.UtcNow);
+        StoredSubmissionAttachment? attachment = command.Attachment is null
+            ? null
+            : await _submissionFileStorage.SaveAsync(command.Attachment, cancellationToken);
+        submission.UpdateContent(
+            command.TextAnswer,
+            attachment?.OriginalFileName,
+            attachment?.ContentType,
+            attachment?.StorageName,
+            DateTimeOffset.UtcNow);
         await _submissionRepository.UpdateAsync(submission, cancellationToken);
 
         return submission;

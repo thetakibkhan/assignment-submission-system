@@ -5,7 +5,7 @@ import { type FormEvent, useCallback, useEffect, useMemo, useState } from "react
 import { SignOutButton } from "@/components/auth/SignOutButton";
 
 type View = "open" | "past";
-type Submission = { id: string; status: string; submittedAt: string; textAnswer: string | null; updatedAt: string };
+type Submission = { attachmentFileName: string | null; id: string; status: string; submittedAt: string; textAnswer: string | null; updatedAt: string };
 type Assignment = { allowSubmissionUpdates: boolean; classCourseName: string; deadline: string; deadlinePassed: boolean; description: string; id: string; maximumMarks: number; studentState: string; subjectName: string; teacherName: string; title: string };
 
 const apiBaseUrl = (process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:5112").replace(/\/$/, "");
@@ -38,6 +38,7 @@ export function StudentAssignmentWorkspace() {
   const [selectedAssignment, setSelectedAssignment] = useState<Assignment | null>(null);
   const [submission, setSubmission] = useState<Submission | null>(null);
   const [submissionText, setSubmissionText] = useState("");
+  const [attachment, setAttachment] = useState<File | null>(null);
   const [isSavingSubmission, setIsSavingSubmission] = useState(false);
   const visibleAssignments = useMemo(() => assignments.filter((assignment) => assignment.deadlinePassed === (activeView === "past")), [activeView, assignments]);
 
@@ -69,12 +70,14 @@ export function StudentAssignmentWorkspace() {
     setSelectedAssignment(null);
     setSubmission(null);
     setSubmissionText("");
+    setAttachment(null);
   }
 
   async function selectAssignment(assignment: Assignment) {
     setSelectedAssignment(assignment);
     setSubmission(null);
     setSubmissionText("");
+    setAttachment(null);
     try {
       const currentSubmission = await request<Submission>("/api/student/assignments/" + assignment.id + "/submission");
       setSubmission(currentSubmission);
@@ -93,6 +96,7 @@ export function StudentAssignmentWorkspace() {
     try {
       const formData = new FormData();
       formData.append("textAnswer", submissionText);
+      if (attachment !== null) formData.append("attachment", attachment);
       const saved = await request<Submission>("/api/student/assignments/" + selectedAssignment.id + "/submission", { body: formData, method: submission === null ? "POST" : "PUT" });
       const isNewSubmission = submission === null;
       setSubmission(saved);
@@ -114,7 +118,7 @@ export function StudentAssignmentWorkspace() {
     <p aria-live="polite" className="student-console__message">{message}</p>
     <div aria-label="Assignment timing" className="student-tabs" role="tablist"><button aria-selected={activeView === "open"} className={activeView === "open" ? "is-active" : ""} onClick={() => changeView("open")} role="tab" type="button">Open</button><button aria-selected={activeView === "past"} className={activeView === "past" ? "is-active" : ""} onClick={() => changeView("past")} role="tab" type="button">Past</button></div>
     <div className="student-workspace"><section aria-label={activeView + " assignments"} className="student-assignment-list">{visibleAssignments.length === 0 ? <div className="student-empty"><h2>No {activeView} assignments</h2><p>{activeView === "open" ? "There is no current work for your active enrollments." : "Assignments appear here after their deadlines pass."}</p></div> : visibleAssignments.map((assignment) => <button aria-pressed={selectedAssignment?.id === assignment.id} className="student-assignment-row" key={assignment.id} onClick={() => void selectAssignment(assignment)} type="button"><span className="student-assignment-row__context">{assignment.classCourseName} · {assignment.subjectName}</span><strong>{assignment.title}</strong><span>{deadlineLabel(assignment)} · {assignment.studentState}</span></button>)}</section>
-      <aside aria-live="polite" className="student-detail">{selectedAssignment ? <><div className="student-detail__heading"><span className={selectedAssignment.deadlinePassed ? "student-status student-status--past" : "student-status"}>{deadlineLabel(selectedAssignment)}</span><h2>{selectedAssignment.title}</h2><p>{selectedAssignment.classCourseName} · {selectedAssignment.subjectName}</p></div><dl className="student-detail__facts"><div><dt>Deadline</dt><dd>{new Date(selectedAssignment.deadline).toLocaleString()}</dd></div><div><dt>Maximum marks</dt><dd>{selectedAssignment.maximumMarks}</dd></div><div><dt>Teacher</dt><dd>{selectedAssignment.teacherName}</dd></div><div><dt>Status</dt><dd>{selectedAssignment.studentState}</dd></div></dl><section><h3>Instructions</h3><p>{selectedAssignment.description}</p></section><p className="student-detail__policy">{selectedAssignment.allowSubmissionUpdates ? "Updates are allowed until the deadline." : "Your submission cannot be changed after it is sent."}</p><section className="student-submission-panel"><h3>{submission === null ? "Submit your work" : "Your submission"}</h3>{canEdit ? <form onSubmit={saveSubmission}><label htmlFor="submission-text">Your answer</label><textarea id="submission-text" maxLength={10000} onChange={(event) => setSubmissionText(event.target.value)} placeholder="Write your answer here…" required value={submissionText} /><button disabled={isSavingSubmission} type="submit">{isSavingSubmission ? "Saving…" : submission === null ? "Submit work" : "Update submission"}</button></form> : <p>{selectedAssignment.deadlinePassed ? "Submission is closed because the deadline has passed." : submission?.status !== "Submitted" ? "This submission is currently being reviewed." : "Your teacher has disabled submission updates for this assignment."}</p>}{submission && <p className="student-submission-panel__metadata">Submitted {new Date(submission.submittedAt).toLocaleString()}{submission.updatedAt !== submission.submittedAt ? " · Updated " + new Date(submission.updatedAt).toLocaleString() : ""}</p>}</section></> : <div className="student-detail__placeholder"><h2>Select an assignment</h2><p>Choose an item to see its instructions, deadline, marks, and submission policy.</p></div>}</aside>
+      <aside aria-live="polite" className="student-detail">{selectedAssignment ? <><div className="student-detail__heading"><span className={selectedAssignment.deadlinePassed ? "student-status student-status--past" : "student-status"}>{deadlineLabel(selectedAssignment)}</span><h2>{selectedAssignment.title}</h2><p>{selectedAssignment.classCourseName} · {selectedAssignment.subjectName}</p></div><dl className="student-detail__facts"><div><dt>Deadline</dt><dd>{new Date(selectedAssignment.deadline).toLocaleString()}</dd></div><div><dt>Maximum marks</dt><dd>{selectedAssignment.maximumMarks}</dd></div><div><dt>Teacher</dt><dd>{selectedAssignment.teacherName}</dd></div><div><dt>Status</dt><dd>{selectedAssignment.studentState}</dd></div></dl><section><h3>Instructions</h3><p>{selectedAssignment.description}</p></section><p className="student-detail__policy">{selectedAssignment.allowSubmissionUpdates ? "Updates are allowed until the deadline." : "Your submission cannot be changed after it is sent."}</p><section className="student-submission-panel"><h3>{submission === null ? "Submit your work" : "Your submission"}</h3>{canEdit ? <form onSubmit={saveSubmission}><label htmlFor="submission-text">Your answer</label><textarea id="submission-text" maxLength={10000} onChange={(event) => setSubmissionText(event.target.value)} placeholder="Write your answer here…" value={submissionText} /><label htmlFor="submission-attachment">One optional attachment</label><input accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg" id="submission-attachment" onChange={(event) => setAttachment(event.target.files?.[0] ?? null)} type="file" /><p className="student-submission-panel__hint">PDF, DOC, DOCX, TXT, PNG, JPG, or JPEG · up to 10 MB</p><button disabled={isSavingSubmission} type="submit">{isSavingSubmission ? "Saving…" : submission === null ? "Submit work" : "Update submission"}</button></form> : <p>{selectedAssignment.deadlinePassed ? "Submission is closed because the deadline has passed." : submission?.status !== "Submitted" ? "This submission is currently being reviewed." : "Your teacher has disabled submission updates for this assignment."}</p>}{submission && <div className="student-submission-panel__metadata"><p>Submitted {new Date(submission.submittedAt).toLocaleString()}{submission.updatedAt !== submission.submittedAt ? " · Updated " + new Date(submission.updatedAt).toLocaleString() : ""}</p>{submission.attachmentFileName && <a href={apiBaseUrl + "/api/student/assignments/" + selectedAssignment.id + "/submission/attachment"}>Download attachment: {submission.attachmentFileName}</a>}</div>}</section></> : <div className="student-detail__placeholder"><h2>Select an assignment</h2><p>Choose an item to see its instructions, deadline, marks, and submission policy.</p></div>}</aside>
     </div>
   </main>;
 }

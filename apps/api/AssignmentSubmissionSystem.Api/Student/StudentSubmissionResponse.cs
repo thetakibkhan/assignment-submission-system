@@ -4,6 +4,8 @@ namespace AssignmentSubmissionSystem.Api.Student;
 
 public sealed class StudentSubmissionResponse
 {
+    public string? AttachmentFileName { get; init; }
+
     public Guid Id { get; init; }
 
     public string Status { get; init; } = string.Empty;
@@ -18,6 +20,7 @@ public sealed class StudentSubmissionResponse
     {
         return new StudentSubmissionResponse
         {
+            AttachmentFileName = submission.AttachmentFileName,
             Id = submission.Id,
             Status = submission.Status.ToString(),
             SubmittedAt = submission.SubmittedAt,

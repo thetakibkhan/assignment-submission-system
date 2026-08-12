@@ -73,6 +73,28 @@ public sealed class StudentSubmissionEndpointTests : IClassFixture<AuthWebApplic
     }
 
     [Fact]
+    public async Task DownloadAttachment_ShouldReturnOnlyTheSubmittingStudentsFile()
+    {
+        Guid assignmentId = await CreatePublishedAssignmentAsync(allowSubmissionUpdates: true);
+        using HttpClient studentClient = await CreateAuthenticatedClientAsync("STU-001", "Student123!");
+        using MultipartFormDataContent content = new();
+        ByteArrayContent attachment = new("Private response"u8.ToArray());
+        attachment.Headers.ContentType = new MediaTypeHeaderValue("text/plain");
+        content.Add(attachment, "attachment", "private.txt");
+        HttpResponseMessage createResponse = await studentClient.PostAsync(
+            "/api/student/assignments/" + assignmentId + "/submission",
+            content);
+        createResponse.EnsureSuccessStatusCode();
+
+        HttpResponseMessage response = await studentClient.GetAsync(
+            "/api/student/assignments/" + assignmentId + "/submission/attachment");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal("text/plain", response.Content.Headers.ContentType?.MediaType);
+        Assert.Equal("Private response", await response.Content.ReadAsStringAsync());
+    }
+
+    [Fact]
     public async Task Create_ShouldRejectSubmission_WhenDeadlineHasPassed()
     {
         Guid assignmentId = await CreatePublishedAssignmentAsync(allowSubmissionUpdates: true);

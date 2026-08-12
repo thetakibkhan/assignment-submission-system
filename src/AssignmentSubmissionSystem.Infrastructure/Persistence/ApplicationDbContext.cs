@@ -75,6 +75,9 @@ public sealed class ApplicationDbContext : IdentityDbContext<ApplicationUser, Id
 
         builder.Entity<Submission>(entity =>
         {
+            entity.Property(submission => submission.AttachmentContentType).HasMaxLength(100);
+            entity.Property(submission => submission.AttachmentFileName).HasMaxLength(255);
+            entity.Property(submission => submission.AttachmentStorageName).HasMaxLength(100);
             entity.Property(submission => submission.Status)
                 .HasConversion<string>()
                 .HasMaxLength(20)

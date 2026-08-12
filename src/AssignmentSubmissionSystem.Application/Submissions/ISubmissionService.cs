@@ -15,6 +15,11 @@ public interface ISubmissionService
         Guid studentUserId,
         CancellationToken cancellationToken);
 
+    Task<SubmissionAttachmentDownload> OpenAttachmentAsync(
+        Guid assignmentId,
+        Guid studentUserId,
+        CancellationToken cancellationToken);
+
     Task<Submission> UpdateAsync(
         Guid assignmentId,
         CreateSubmissionCommand command,
