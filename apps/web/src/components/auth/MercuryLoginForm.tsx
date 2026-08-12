@@ -24,9 +24,9 @@ interface DemoAccount {
 const roleRoutes = new Set(["/admin", "/change-password", "/teacher", "/student"]);
 
 const demoAccounts: DemoAccount[] = [
-  { institutionalId: "ADM-001", password: "Admin123!", role: "Administrator" },
-  { institutionalId: "TCH-001", password: "Teacher123!", role: "Teacher" },
-  { institutionalId: "STU-001", password: "Student123!", role: "Student" },
+  { institutionalId: "ADM-001", password: "Admin!nVPT7mB4lxeZBUq2XwI", role: "Administrator" },
+  { institutionalId: "TCH-001", password: "Teacher!XQt7fpdAg1jQJ7fGgSw", role: "Teacher" },
+  { institutionalId: "STU-001", password: "Student!v5lVJbrqfRO0m93zrKQ", role: "Student" },
 ];
 
 function isLoginResponse(value: unknown): value is LoginResponse {
