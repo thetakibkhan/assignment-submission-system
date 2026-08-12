@@ -53,6 +53,26 @@ public sealed class StudentSubmissionEndpointTests : IClassFixture<AuthWebApplic
     }
 
     [Fact]
+    public async Task Create_ShouldAllowAnAttachmentWithoutText()
+    {
+        Guid assignmentId = await CreatePublishedAssignmentAsync(allowSubmissionUpdates: true);
+        using HttpClient studentClient = await CreateAuthenticatedClientAsync("STU-001", "Student123!");
+        using MultipartFormDataContent content = new();
+        ByteArrayContent attachment = new("Submission attachment"u8.ToArray());
+        attachment.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("text/plain");
+        content.Add(attachment, "attachment", "response.txt");
+
+        HttpResponseMessage response = await studentClient.PostAsync(
+            "/api/student/assignments/" + assignmentId + "/submission",
+            content);
+
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        SubmissionResponse? submission = await response.Content.ReadFromJsonAsync<SubmissionResponse>();
+        Assert.NotNull(submission);
+        Assert.Equal("response.txt", submission.AttachmentFileName);
+    }
+
+    [Fact]
     public async Task Create_ShouldRejectSubmission_WhenDeadlineHasPassed()
     {
         Guid assignmentId = await CreatePublishedAssignmentAsync(allowSubmissionUpdates: true);
@@ -199,5 +219,7 @@ public sealed class StudentSubmissionEndpointTests : IClassFixture<AuthWebApplic
         public string? TextAnswer { get; init; }
 
         public string Status { get; init; } = string.Empty;
+
+        public string? AttachmentFileName { get; init; }
     }
 }
