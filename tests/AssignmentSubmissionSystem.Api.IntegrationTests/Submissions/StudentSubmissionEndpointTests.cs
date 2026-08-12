@@ -86,6 +86,27 @@ public sealed class StudentSubmissionEndpointTests : IClassFixture<AuthWebApplic
         Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
     }
 
+    [Fact]
+    public async Task Get_ShouldReturnTheCurrentSubmission_ForTheSubmittingStudent()
+    {
+        Guid assignmentId = await CreatePublishedAssignmentAsync(allowSubmissionUpdates: true);
+        using HttpClient studentClient = await CreateAuthenticatedClientAsync("STU-001", "Student123!");
+        using MultipartFormDataContent content = CreateSubmissionContent("Stored response");
+        HttpResponseMessage createResponse = await studentClient.PostAsync(
+            "/api/student/assignments/" + assignmentId + "/submission",
+            content);
+        createResponse.EnsureSuccessStatusCode();
+
+        HttpResponseMessage response = await studentClient.GetAsync(
+            "/api/student/assignments/" + assignmentId + "/submission");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        SubmissionResponse? submission = await response.Content.ReadFromJsonAsync<SubmissionResponse>();
+        Assert.NotNull(submission);
+        Assert.Equal("Stored response", submission.TextAnswer);
+        Assert.Equal("Submitted", submission.Status);
+    }
+
     private async Task<Guid> CreatePublishedAssignmentAsync(bool allowSubmissionUpdates)
     {
         using HttpClient adminClient = await CreateAuthenticatedClientAsync("ADM-001", "Admin123!");
