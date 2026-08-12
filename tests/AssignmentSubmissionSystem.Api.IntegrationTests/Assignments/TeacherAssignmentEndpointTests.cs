@@ -62,6 +62,40 @@ public sealed class TeacherAssignmentEndpointTests : IClassFixture<AuthWebApplic
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
     }
 
+    [Fact]
+    public async Task Update_ShouldUpdateDraft_WhenTeacherOwnsTheAssignedScope()
+    {
+        using HttpClient adminClient = await CreateAuthenticatedClientAsync("ADM-001", "Admin123!");
+        (Guid classCourseId, Guid subjectId) = await CreateTeacherScopeAsync(adminClient);
+        using HttpClient teacherClient = await CreateAuthenticatedClientAsync("TCH-001", "Teacher123!");
+
+        HttpResponseMessage createResponse = await teacherClient.PostAsJsonAsync(
+            "/api/teacher/assignments",
+            new { classCourseId, subjectId, title = "Initial draft" });
+        AssignmentResponse? assignment = await createResponse.Content.ReadFromJsonAsync<AssignmentResponse>();
+
+        Assert.NotNull(assignment);
+
+        HttpResponseMessage updateResponse = await teacherClient.PutAsJsonAsync(
+            "/api/teacher/assignments/" + assignment.Id,
+            new
+            {
+                classCourseId,
+                subjectId,
+                title = "Updated essay brief",
+                description = "Use evidence from the assigned reading.",
+                deadline = DateTimeOffset.UtcNow.AddDays(7),
+                maximumMarks = 20m,
+                allowSubmissionUpdates = false
+            });
+
+        Assert.Equal(HttpStatusCode.OK, updateResponse.StatusCode);
+
+        AssignmentResponse? updatedAssignment = await updateResponse.Content.ReadFromJsonAsync<AssignmentResponse>();
+
+        Assert.Equal("Updated essay brief", updatedAssignment?.Title);
+    }
+
     private async Task<(Guid ClassCourseId, Guid SubjectId)> CreateTeacherScopeAsync(HttpClient adminClient)
     {
         Guid classCourseId = await CreateClassCourseAsync(adminClient);
@@ -104,5 +138,12 @@ public sealed class TeacherAssignmentEndpointTests : IClassFixture<AuthWebApplic
     }
 
     private sealed class EntityResponse { public Guid Id { get; init; } }
-    private sealed class AssignmentResponse { public Guid Id { get; init; } public string Status { get; init; } = string.Empty; }
+    private sealed class AssignmentResponse
+    {
+        public Guid Id { get; init; }
+
+        public string Status { get; init; } = string.Empty;
+
+        public string Title { get; init; } = string.Empty;
+    }
 }
