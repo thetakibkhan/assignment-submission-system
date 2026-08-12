@@ -37,12 +37,17 @@ public sealed class StudentAssignmentEndpointTests : IClassFixture<AuthWebApplic
         IReadOnlyList<StudentAssignmentResponse>? assignments = await response.Content
             .ReadFromJsonAsync<IReadOnlyList<StudentAssignmentResponse>>();
 
-        StudentAssignmentResponse assignment = Assert.Single(assignments ?? []);
+        Assert.NotNull(assignments);
+        StudentAssignmentResponse assignment = Assert.Single(
+            assignments,
+            item => item.Id == eligibleAssignmentId);
         Assert.Equal(eligibleAssignmentId, assignment.Id);
         Assert.Equal(eligibleScope.ClassCourseName, assignment.ClassCourseName);
         Assert.Equal(eligibleScope.SubjectName, assignment.SubjectName);
         Assert.Equal("Not submitted", assignment.StudentState);
         Assert.Null(assignment.Submission);
+        Assert.DoesNotContain(assignments, item => item.Title == "Hidden draft");
+        Assert.DoesNotContain(assignments, item => item.Title == "Other class work");
     }
 
     [Fact]
@@ -78,8 +83,12 @@ public sealed class StudentAssignmentEndpointTests : IClassFixture<AuthWebApplic
             .GetFromJsonAsync<IReadOnlyList<StudentAssignmentResponse>>("/api/student/assignments");
 
         Assert.NotNull(assignments);
-        Assert.Equal(openAssignmentId, assignments[0].Id);
-        Assert.False(assignments[0].DeadlinePassed);
+        int openIndex = assignments.ToList().FindIndex(item => item.Id == openAssignmentId);
+        int pastIndex = assignments.ToList().FindIndex(item => item.Id == pastAssignmentId);
+
+        Assert.True(openIndex >= 0);
+        Assert.True(pastIndex > openIndex);
+        Assert.False(assignments[openIndex].DeadlinePassed);
         StudentAssignmentResponse pastAssignment = Assert.Single(
             assignments,
             item => item.Id == pastAssignmentId);
@@ -226,6 +235,8 @@ public sealed class StudentAssignmentEndpointTests : IClassFixture<AuthWebApplic
         public string StudentState { get; init; } = string.Empty;
 
         public string SubjectName { get; init; } = string.Empty;
+
+        public string Title { get; init; } = string.Empty;
 
         public object? Submission { get; init; }
     }
