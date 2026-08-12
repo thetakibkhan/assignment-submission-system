@@ -818,3 +818,14 @@ body {
 .student-detail section h3 { font-size: .8rem; margin: 0; text-transform: uppercase; } .student-detail__policy { background: #09090b; border: 1px solid #27272a; border-radius: .55rem; color: #d4d4d8; font-size: .8rem; line-height: 1.5; margin: 1.25rem 0 0; padding: .9rem; } .student-detail__placeholder, .student-empty { padding: 1rem; }
 .student-console button:focus-visible { outline: 2px solid #fafafa; outline-offset: 2px; }
 @media (max-width:48rem) { .student-console { padding: 2rem 1rem; } .student-console__header { flex-direction: column; } .student-workspace { grid-template-columns: 1fr; } .student-detail { min-height: 18rem; } }
+
+.student-submission-panel { border-top: 1px solid #27272a; margin-top: 1.25rem; padding-top: 1.2rem; }
+.student-submission-panel h3 { font-size: .84rem; margin: 0 0 .75rem; text-transform: uppercase; }
+.student-submission-panel form { display: grid; gap: .65rem; }
+.student-submission-panel label { color: #d4d4d8; font-size: .78rem; }
+.student-submission-panel textarea { background: #09090b; border: 1px solid #3f3f46; border-radius: .5rem; color: #fafafa; font: inherit; min-height: 8rem; padding: .75rem; resize: vertical; width: 100%; }
+.student-submission-panel textarea:focus { border-color: #d4d4d8; outline: 2px solid rgba(212,212,216,.22); outline-offset: 2px; }
+.student-submission-panel button { background: #fafafa; border: 0; border-radius: .5rem; color: #18181b; cursor: pointer; font: inherit; font-size: .82rem; font-weight: 700; min-height: 2.75rem; padding: .65rem 1rem; }
+.student-submission-panel button:disabled { cursor: wait; opacity: .7; }
+.student-submission-panel > p { color: #a1a1aa; font-size: .84rem; line-height: 1.6; }
+.student-submission-panel__metadata { color: #71717a !important; font-size: .72rem !important; }
