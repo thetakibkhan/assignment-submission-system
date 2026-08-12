@@ -52,6 +52,18 @@ public sealed class Submission
 
     public DateTimeOffset UpdatedAt { get; private set; }
 
+    public SubmissionRevision CreateRevision(Guid revisionId, DateTimeOffset recordedAt)
+    {
+        return new SubmissionRevision(
+            revisionId,
+            Id,
+            TextAnswer,
+            AttachmentFileName,
+            AttachmentContentType,
+            AttachmentStorageName,
+            recordedAt);
+    }
+
     public void UpdateContent(
         string? textAnswer,
         string? attachmentFileName,

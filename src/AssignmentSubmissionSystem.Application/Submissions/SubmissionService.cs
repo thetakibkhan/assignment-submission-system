@@ -74,11 +74,15 @@ public sealed class SubmissionService : ISubmissionService
     }
 
     public async Task<SubmissionAttachmentDownload> OpenAttachmentAsync(
-        Guid assignmentId,
+        Guid submissionId,
         Guid studentUserId,
         CancellationToken cancellationToken)
     {
-        Submission submission = await GetAsync(assignmentId, studentUserId, cancellationToken);
+        Submission submission = await _submissionRepository.GetByIdAndStudentAsync(
+            submissionId,
+            studentUserId,
+            cancellationToken)
+            ?? throw new KeyNotFoundException("The requested submission was not found.");
         if (string.IsNullOrWhiteSpace(submission.AttachmentStorageName) ||
             string.IsNullOrWhiteSpace(submission.AttachmentContentType) ||
             string.IsNullOrWhiteSpace(submission.AttachmentFileName))
@@ -126,13 +130,15 @@ public sealed class SubmissionService : ISubmissionService
         StoredSubmissionAttachment? attachment = command.Attachment is null
             ? null
             : await _submissionFileStorage.SaveAsync(command.Attachment, cancellationToken);
+        DateTimeOffset updatedAt = DateTimeOffset.UtcNow;
+        SubmissionRevision revision = submission.CreateRevision(Guid.CreateVersion7(), updatedAt);
         submission.UpdateContent(
             command.TextAnswer,
             attachment?.OriginalFileName,
             attachment?.ContentType,
             attachment?.StorageName,
-            DateTimeOffset.UtcNow);
-        await _submissionRepository.UpdateAsync(submission, cancellationToken);
+            updatedAt);
+        await _submissionRepository.UpdateWithRevisionAsync(submission, revision, cancellationToken);
 
         return submission;
     }

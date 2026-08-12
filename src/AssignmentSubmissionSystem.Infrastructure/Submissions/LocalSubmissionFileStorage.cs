@@ -44,8 +44,9 @@ public sealed class LocalSubmissionFileStorage : ISubmissionFileStorage
         string storageName = Guid.CreateVersion7() + extension;
         string storagePath = Path.Combine(_storageRoot, storageName);
 
+        await using Stream source = upload.Content;
         await using FileStream destination = File.Create(storagePath);
-        await upload.Content.CopyToAsync(destination, cancellationToken);
+        await source.CopyToAsync(destination, cancellationToken);
 
         return new StoredSubmissionAttachment
         {

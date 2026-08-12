@@ -26,6 +26,8 @@ public sealed class ApplicationDbContext : IdentityDbContext<ApplicationUser, Id
 
     public DbSet<Submission> Submissions => Set<Submission>();
 
+    public DbSet<SubmissionRevision> SubmissionRevisions => Set<SubmissionRevision>();
+
     public DbSet<Subject> Subjects => Set<Subject>();
 
     public DbSet<TeacherResponsibility> TeacherResponsibilities => Set<TeacherResponsibility>();
@@ -92,6 +94,19 @@ public sealed class ApplicationDbContext : IdentityDbContext<ApplicationUser, Id
             entity.HasOne<ApplicationUser>()
                 .WithMany()
                 .HasForeignKey(submission => submission.StudentUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        builder.Entity<SubmissionRevision>(entity =>
+        {
+            entity.Property(revision => revision.AttachmentContentType).HasMaxLength(100);
+            entity.Property(revision => revision.AttachmentFileName).HasMaxLength(255);
+            entity.Property(revision => revision.AttachmentStorageName).HasMaxLength(100);
+            entity.Property(revision => revision.TextAnswer).HasMaxLength(10000);
+            entity.HasIndex(revision => new { revision.SubmissionId, revision.RecordedAt });
+            entity.HasOne<Submission>()
+                .WithMany()
+                .HasForeignKey(revision => revision.SubmissionId)
                 .OnDelete(DeleteBehavior.Restrict);
         });
 

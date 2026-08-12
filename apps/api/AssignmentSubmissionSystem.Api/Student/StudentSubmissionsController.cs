@@ -56,15 +56,15 @@ public sealed class StudentSubmissionsController : ControllerBase
         return SaveAsync(() => _submissionService.CreateAsync(assignmentId, CreateCommand(request), User.GetRequiredUserId(), cancellationToken), true);
     }
 
-    [HttpGet("attachment")]
+    [HttpGet("/api/student/submissions/{submissionId:guid}/attachment")]
     public async Task<IActionResult> DownloadAttachmentAsync(
-        Guid assignmentId,
+        Guid submissionId,
         CancellationToken cancellationToken)
     {
         try
         {
             SubmissionAttachmentDownload attachment = await _submissionService.OpenAttachmentAsync(
-                assignmentId,
+                submissionId,
                 User.GetRequiredUserId(),
                 cancellationToken);
             return File(attachment.Content, attachment.ContentType, attachment.FileName);

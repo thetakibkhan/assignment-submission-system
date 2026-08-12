@@ -85,13 +85,53 @@ public sealed class StudentSubmissionEndpointTests : IClassFixture<AuthWebApplic
             "/api/student/assignments/" + assignmentId + "/submission",
             content);
         createResponse.EnsureSuccessStatusCode();
+        SubmissionResponse submission = await createResponse.Content.ReadFromJsonAsync<SubmissionResponse>()
+            ?? throw new InvalidOperationException("The submission response was empty.");
 
         HttpResponseMessage response = await studentClient.GetAsync(
-            "/api/student/assignments/" + assignmentId + "/submission/attachment");
+            "/api/student/submissions/" + submission.Id + "/attachment");
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.Equal("text/plain", response.Content.Headers.ContentType?.MediaType);
         Assert.Equal("Private response", await response.Content.ReadAsStringAsync());
+    }
+
+    [Fact]
+    public async Task Create_ShouldAllowTextAndAttachmentTogether()
+    {
+        Guid assignmentId = await CreatePublishedAssignmentAsync(allowSubmissionUpdates: true);
+        using HttpClient studentClient = await CreateAuthenticatedClientAsync("STU-001", "Student123!");
+        using MultipartFormDataContent content = CreateSubmissionContent("Written answer");
+        content.Add(new ByteArrayContent("Evidence"u8.ToArray()), "attachment", "evidence.txt");
+
+        HttpResponseMessage response = await studentClient.PostAsync(
+            "/api/student/assignments/" + assignmentId + "/submission",
+            content);
+
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        SubmissionResponse? submission = await response.Content.ReadFromJsonAsync<SubmissionResponse>();
+        Assert.NotNull(submission);
+        Assert.Equal("Written answer", submission.TextAnswer);
+        Assert.Equal("evidence.txt", submission.AttachmentFileName);
+    }
+
+    [Fact]
+    public async Task Create_ShouldRejectDuplicateSubmission()
+    {
+        Guid assignmentId = await CreatePublishedAssignmentAsync(allowSubmissionUpdates: true);
+        using HttpClient studentClient = await CreateAuthenticatedClientAsync("STU-001", "Student123!");
+        using MultipartFormDataContent firstContent = CreateSubmissionContent("First response");
+        HttpResponseMessage firstResponse = await studentClient.PostAsync(
+            "/api/student/assignments/" + assignmentId + "/submission",
+            firstContent);
+        firstResponse.EnsureSuccessStatusCode();
+        using MultipartFormDataContent duplicateContent = CreateSubmissionContent("Duplicate response");
+
+        HttpResponseMessage duplicateResponse = await studentClient.PostAsync(
+            "/api/student/assignments/" + assignmentId + "/submission",
+            duplicateContent);
+
+        Assert.Equal(HttpStatusCode.Conflict, duplicateResponse.StatusCode);
     }
 
     [Fact]
@@ -126,6 +166,68 @@ public sealed class StudentSubmissionEndpointTests : IClassFixture<AuthWebApplic
             updatedContent);
 
         Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Update_ShouldPreserveThePreviousContentAsAnImmutableRevision()
+    {
+        Guid assignmentId = await CreatePublishedAssignmentAsync(allowSubmissionUpdates: true);
+        using HttpClient studentClient = await CreateAuthenticatedClientAsync("STU-001", "Student123!");
+        using MultipartFormDataContent originalContent = CreateSubmissionContent("Original response");
+        HttpResponseMessage createResponse = await studentClient.PostAsync(
+            "/api/student/assignments/" + assignmentId + "/submission",
+            originalContent);
+        createResponse.EnsureSuccessStatusCode();
+        SubmissionResponse submission = await createResponse.Content.ReadFromJsonAsync<SubmissionResponse>()
+            ?? throw new InvalidOperationException("The submission response was empty.");
+        using MultipartFormDataContent updatedContent = CreateSubmissionContent("Improved response");
+
+        HttpResponseMessage updateResponse = await studentClient.PutAsync(
+            "/api/student/assignments/" + assignmentId + "/submission",
+            updatedContent);
+
+        updateResponse.EnsureSuccessStatusCode();
+        using IServiceScope scope = _factory.Services.CreateScope();
+        ApplicationDbContext databaseContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        string? originalText = await databaseContext.SubmissionRevisions
+            .Where(revision => revision.SubmissionId == submission.Id)
+            .Select(revision => revision.TextAnswer)
+            .SingleAsync();
+        Assert.Equal("Original response", originalText);
+    }
+
+    [Fact]
+    public async Task Get_ShouldPreserveHistoricalAccessAfterEnrollmentEnds()
+    {
+        Guid assignmentId = await CreatePublishedAssignmentAsync(allowSubmissionUpdates: true);
+        using HttpClient studentClient = await CreateAuthenticatedClientAsync("STU-001", "Student123!");
+        using MultipartFormDataContent content = CreateSubmissionContent("Historical response");
+        HttpResponseMessage createResponse = await studentClient.PostAsync(
+            "/api/student/assignments/" + assignmentId + "/submission",
+            content);
+        createResponse.EnsureSuccessStatusCode();
+
+        using IServiceScope scope = _factory.Services.CreateScope();
+        ApplicationDbContext databaseContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        Guid classCourseId = await databaseContext.Assignments
+            .Where(assignment => assignment.Id == assignmentId)
+            .Select(assignment => assignment.ClassCourseId)
+            .SingleAsync();
+        await databaseContext.StudentEnrollments
+            .Where(enrollment => enrollment.ClassCourseId == classCourseId && enrollment.EndedAt == null)
+            .ExecuteUpdateAsync(setters => setters.SetProperty(
+                enrollment => enrollment.EndedAt,
+                DateTimeOffset.UtcNow));
+
+        HttpResponseMessage getResponse = await studentClient.GetAsync(
+            "/api/student/assignments/" + assignmentId + "/submission");
+        using MultipartFormDataContent updateContent = CreateSubmissionContent("Blocked update");
+        HttpResponseMessage updateResponse = await studentClient.PutAsync(
+            "/api/student/assignments/" + assignmentId + "/submission",
+            updateContent);
+
+        Assert.Equal(HttpStatusCode.OK, getResponse.StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, updateResponse.StatusCode);
     }
 
     [Fact]
@@ -238,6 +340,8 @@ public sealed class StudentSubmissionEndpointTests : IClassFixture<AuthWebApplic
 
     private sealed class SubmissionResponse
     {
+        public Guid Id { get; init; }
+
         public string? TextAnswer { get; init; }
 
         public string Status { get; init; } = string.Empty;

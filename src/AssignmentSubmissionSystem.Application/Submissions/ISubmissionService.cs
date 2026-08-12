@@ -16,7 +16,7 @@ public interface ISubmissionService
         CancellationToken cancellationToken);
 
     Task<SubmissionAttachmentDownload> OpenAttachmentAsync(
-        Guid assignmentId,
+        Guid submissionId,
         Guid studentUserId,
         CancellationToken cancellationToken);
 
