@@ -15,7 +15,19 @@ interface Particle {
   y: number;
 }
 
+interface DemoAccount {
+  institutionalId: string;
+  password: string;
+  role: string;
+}
+
 const roleRoutes = new Set(["/admin", "/change-password", "/teacher", "/student"]);
+
+const demoAccounts: DemoAccount[] = [
+  { institutionalId: "ADM-001", password: "Admin123!", role: "Administrator" },
+  { institutionalId: "TCH-001", password: "Teacher123!", role: "Teacher" },
+  { institutionalId: "STU-001", password: "Student123!", role: "Student" },
+];
 
 function isLoginResponse(value: unknown): value is LoginResponse {
   if (typeof value !== "object" || value === null) {
@@ -34,7 +46,9 @@ export function MercuryLoginForm() {
   const canvasReference = useRef<HTMLCanvasElement | null>(null);
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [institutionalId, setInstitutionalId] = useState("");
   const [message, setMessage] = useState<string | null>(null);
+  const [password, setPassword] = useState("");
 
   useEffect(() => {
     const canvas = canvasReference.current;
@@ -95,13 +109,13 @@ export function MercuryLoginForm() {
     setMessage(null);
 
     const formData = new FormData(event.currentTarget);
-    const institutionalId = String(formData.get("institutionalId") ?? "");
-    const password = String(formData.get("password") ?? "");
+    const submittedInstitutionalId = String(formData.get("institutionalId") ?? "");
+    const submittedPassword = String(formData.get("password") ?? "");
     const apiBaseUrl = (process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:5112").replace(/\/$/, "");
 
     try {
       const response = await fetch(apiBaseUrl + "/api/auth/login", {
-        body: JSON.stringify({ institutionalId, password }),
+        body: JSON.stringify({ institutionalId: submittedInstitutionalId, password: submittedPassword }),
         credentials: "include",
         headers: {
           "Content-Type": "application/json",
@@ -127,6 +141,12 @@ export function MercuryLoginForm() {
     } finally {
       setIsSubmitting(false);
     }
+  }
+
+  function selectDemoAccount(account: DemoAccount) {
+    setInstitutionalId(account.institutionalId);
+    setPassword(account.password);
+    setMessage(null);
   }
 
   return (
@@ -157,13 +177,13 @@ export function MercuryLoginForm() {
         <form onSubmit={handleSubmit}>
           <div className="login-field">
             <label htmlFor="institutionalId">Institutional ID</label>
-            <input autoComplete="username" id="institutionalId" name="institutionalId" placeholder="STU-2026-001" required type="text" />
+            <input autoComplete="username" id="institutionalId" name="institutionalId" onChange={(event) => setInstitutionalId(event.target.value)} placeholder="STU-2026-001" required type="text" value={institutionalId} />
           </div>
 
           <div className="login-field">
             <label htmlFor="password">Password</label>
             <div className="login-password-input">
-              <input autoComplete="current-password" id="password" name="password" placeholder="••••••••" required type={isPasswordVisible ? "text" : "password"} />
+              <input autoComplete="current-password" id="password" name="password" onChange={(event) => setPassword(event.target.value)} placeholder="••••••••" required type={isPasswordVisible ? "text" : "password"} value={password} />
               <button aria-label={isPasswordVisible ? "Hide password" : "Show password"} className="login-password-toggle" onClick={() => setIsPasswordVisible((isVisible) => !isVisible)} type="button">
                 {isPasswordVisible ? "Hide" : "Show"}
               </button>
@@ -176,6 +196,22 @@ export function MercuryLoginForm() {
         </form>
 
         <p aria-live="polite" className="login-message">{message}</p>
+        <section aria-labelledby="demo-accounts-heading" className="demo-accounts">
+          <div>
+            <p className="login-card__eyebrow">Local development</p>
+            <h2 id="demo-accounts-heading">Demo accounts</h2>
+          </div>
+          <p>Choose an account to fill the sign-in form.</p>
+          <div className="demo-accounts__list">
+            {demoAccounts.map((account) => (
+              <button key={account.institutionalId} onClick={() => selectDemoAccount(account)} type="button">
+                <span>{account.role}</span>
+                <strong>{account.institutionalId}</strong>
+                <code>{account.password}</code>
+              </button>
+            ))}
+          </div>
+        </section>
         <footer className="login-card__footer">Accounts are created and managed by an administrator.</footer>
       </section>
     </main>
