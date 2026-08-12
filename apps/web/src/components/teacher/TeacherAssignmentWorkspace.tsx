@@ -48,7 +48,7 @@ export function TeacherAssignmentWorkspace() {
     setShowForm(true);
   }
   async function create(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault(); const form = new FormData(event.currentTarget);
+    event.preventDefault(); const formElement = event.currentTarget; const form = new FormData(formElement);
     const scope = scopes.find((item) => item.classCourseId + ":" + item.subjectId === String(form.get("scope")));
     if (!scope) { setMessage("Choose one of your assigned Class/Course and Subject combinations."); return; }
     try {
@@ -58,7 +58,7 @@ export function TeacherAssignmentWorkspace() {
       } else {
         await request<Assignment>("/api/teacher/assignments", { method: "POST", body });
       }
-      event.currentTarget.reset(); setEditingAssignment(null); setShowForm(false); setView("Draft"); await load(); setMessage(editingAssignment ? "Draft updated." : "Draft saved. Publish it when every required detail is ready.");
+      formElement.reset(); setEditingAssignment(null); setShowForm(false); setView("Draft"); await load(); setMessage(editingAssignment ? "Draft updated." : "Draft saved. Publish it when every required detail is ready.");
     } catch (error) { setMessage(error instanceof Error ? error.message : "The draft could not be saved."); }
   }
   async function action(assignment: Assignment, operation: "publish" | "unpublish" | "delete") {
