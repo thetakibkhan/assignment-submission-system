@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { SignOutButton } from "@/components/auth/SignOutButton";
 
 type StudentAssignment = { allowSubmissionUpdates: boolean; classCourseName: string; deadline: string; deadlinePassed: boolean; description: string; id: string; maximumMarks: number; studentState: string; subjectName: string; teacherName: string; title: string };
 const apiBaseUrl = (process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:5112").replace(/\/$/, "");
@@ -19,7 +20,7 @@ export function StudentAssignmentWorkspace() {
   useEffect(() => { const timer = window.setTimeout(() => { void loadAssignments(); }, 0); return () => window.clearTimeout(timer); }, [loadAssignments]);
   function changeView(view: "open" | "past") { setActiveView(view); setSelectedAssignment(null); }
   return <main className="student-console">
-    <header className="student-console__header"><div><p className="login-card__eyebrow">Student workspace</p><h1>My assignments</h1><p>See what needs attention, understand each deadline, and review past work.</p></div><button onClick={() => void loadAssignments()} type="button">Refresh</button></header>
+    <header className="student-console__header"><div><p className="login-card__eyebrow">Student workspace</p><h1>My assignments</h1><p>See what needs attention, understand each deadline, and review past work.</p></div><div className="student-console__actions"><SignOutButton className="workspace-sign-out" /><button onClick={() => void loadAssignments()} type="button">Refresh</button></div></header>
     <p aria-live="polite" className="student-console__message">{message}</p>
     <div aria-label="Assignment timing" className="student-tabs"><button className={activeView === "open" ? "is-active" : ""} onClick={() => changeView("open")} type="button">Open</button><button className={activeView === "past" ? "is-active" : ""} onClick={() => changeView("past")} type="button">Past</button></div>
     <div className="student-workspace"><section aria-label={`${activeView} assignments`} className="student-assignment-list">{visibleAssignments.length === 0 ? <div className="student-empty"><h2>No {activeView} assignments</h2><p>{activeView === "open" ? "There is no current work for your active enrollments." : "Assignments appear here after their deadlines pass."}</p></div> : visibleAssignments.map((assignment) => <button aria-pressed={selectedAssignment?.id === assignment.id} className="student-assignment-row" key={assignment.id} onClick={() => setSelectedAssignment(assignment)} type="button"><span className="student-assignment-row__context">{assignment.classCourseName} · {assignment.subjectName}</span><strong>{assignment.title}</strong><span>{deadlineLabel(assignment)} · {assignment.studentState}</span></button>)}</section>
