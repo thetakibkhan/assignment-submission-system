@@ -18,6 +18,25 @@ public sealed class TeacherSubmissionsController : ControllerBase
         _submissionService = submissionService;
     }
 
+    [HttpGet("/api/teacher/assignments/{assignmentId:guid}/submissions")]
+    public async Task<ActionResult<IReadOnlyList<TeacherSubmissionResponse>>> GetQueueAsync(
+        Guid assignmentId,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            IReadOnlyList<TeacherSubmissionItem> items = await _submissionService.GetForTeacherAssignmentAsync(
+                assignmentId,
+                User.GetRequiredUserId(),
+                cancellationToken);
+            return Ok(items.Select(TeacherSubmissionResponse.From).ToList());
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound();
+        }
+    }
+
     [HttpPost("{submissionId:guid}/start-review")]
     public Task<IActionResult> StartReviewAsync(Guid submissionId, CancellationToken cancellationToken)
     {

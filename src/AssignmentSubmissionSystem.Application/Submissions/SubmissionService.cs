@@ -106,6 +106,24 @@ public sealed class SubmissionService : ISubmissionService
         };
     }
 
+    public async Task<IReadOnlyList<TeacherSubmissionItem>> GetForTeacherAssignmentAsync(
+        Guid assignmentId,
+        Guid teacherUserId,
+        CancellationToken cancellationToken)
+    {
+        Assignment assignment = await _assignmentRepository.GetByIdAsync(assignmentId, cancellationToken)
+            ?? throw new KeyNotFoundException("The requested assignment was not found.");
+        if (assignment.TeacherUserId != teacherUserId)
+        {
+            throw new KeyNotFoundException("The requested assignment was not found.");
+        }
+
+        return await _submissionRepository.GetForTeacherAssignmentAsync(
+            assignmentId,
+            teacherUserId,
+            cancellationToken);
+    }
+
     public async Task GradeAsync(Guid submissionId, Guid teacherUserId, CancellationToken cancellationToken)
     {
         Submission submission = await GetForTeacherAsync(submissionId, teacherUserId, cancellationToken);

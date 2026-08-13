@@ -20,6 +20,11 @@ public interface ISubmissionService
         Guid studentUserId,
         CancellationToken cancellationToken);
 
+    Task<IReadOnlyList<TeacherSubmissionItem>> GetForTeacherAssignmentAsync(
+        Guid assignmentId,
+        Guid teacherUserId,
+        CancellationToken cancellationToken);
+
     Task GradeAsync(Guid submissionId, Guid teacherUserId, CancellationToken cancellationToken);
 
     Task ReopenForCorrectionAsync(Guid submissionId, Guid teacherUserId, CancellationToken cancellationToken);

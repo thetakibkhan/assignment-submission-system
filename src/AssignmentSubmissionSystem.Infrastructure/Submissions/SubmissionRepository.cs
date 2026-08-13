@@ -27,6 +27,33 @@ public sealed class SubmissionRepository : ISubmissionRepository
         }
     }
 
+    public async Task<IReadOnlyList<TeacherSubmissionItem>> GetForTeacherAssignmentAsync(
+        Guid assignmentId,
+        Guid teacherUserId,
+        CancellationToken cancellationToken)
+    {
+        return await (from submission in _databaseContext.Submissions.AsNoTracking()
+                      join assignment in _databaseContext.Assignments.AsNoTracking()
+                          on submission.AssignmentId equals assignment.Id
+                      join student in _databaseContext.Users.AsNoTracking()
+                          on submission.StudentUserId equals student.Id
+                      where assignment.Id == assignmentId && assignment.TeacherUserId == teacherUserId
+                      orderby submission.Status, submission.SubmittedAt
+                      select new TeacherSubmissionItem
+                      {
+                          AttachmentFileName = submission.AttachmentFileName,
+                          Feedback = submission.Feedback,
+                          Id = submission.Id,
+                          Marks = submission.Marks,
+                          Status = submission.Status,
+                          StudentName = student.FullName,
+                          StudentUserId = submission.StudentUserId,
+                          SubmittedAt = submission.SubmittedAt,
+                          TextAnswer = submission.TextAnswer,
+                          UpdatedAt = submission.UpdatedAt
+                      }).ToListAsync(cancellationToken);
+    }
+
     public Task<Submission?> GetByIdForTeacherAsync(
         Guid submissionId,
         Guid teacherUserId,
