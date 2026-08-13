@@ -11,6 +11,10 @@ public interface ISubmissionRepository
         Guid teacherUserId,
         CancellationToken cancellationToken);
 
+    Task<Submission?> GetByIdAsync(Guid submissionId, CancellationToken cancellationToken);
+
+    Task<IReadOnlyList<TeacherSubmissionItem>> GetAllAsync(CancellationToken cancellationToken);
+
     Task<Submission?> GetByIdForTeacherAsync(
         Guid submissionId,
         Guid teacherUserId,

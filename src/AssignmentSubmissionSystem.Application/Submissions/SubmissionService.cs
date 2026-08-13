@@ -124,6 +124,20 @@ public sealed class SubmissionService : ISubmissionService
             cancellationToken);
     }
 
+    public Task<IReadOnlyList<TeacherSubmissionItem>> GetAllForAdminAsync(CancellationToken cancellationToken) => _submissionRepository.GetAllAsync(cancellationToken);
+
+    public async Task<SubmissionAttachmentDownload> OpenAttachmentForAdminAsync(Guid submissionId, CancellationToken cancellationToken)
+    {
+        Submission submission = await _submissionRepository.GetByIdAsync(submissionId, cancellationToken) ?? throw new KeyNotFoundException("The requested submission was not found.");
+        return await OpenAttachmentAsync(submission, cancellationToken);
+    }
+
+    public async Task<SubmissionAttachmentDownload> OpenAttachmentForTeacherAsync(Guid submissionId, Guid teacherUserId, CancellationToken cancellationToken)
+    {
+        Submission submission = await GetForTeacherAsync(submissionId, teacherUserId, cancellationToken);
+        return await OpenAttachmentAsync(submission, cancellationToken);
+    }
+
     public async Task GradeAsync(Guid submissionId, Guid teacherUserId, CancellationToken cancellationToken)
     {
         Submission submission = await GetForTeacherAsync(submissionId, teacherUserId, cancellationToken);
@@ -202,6 +216,13 @@ public sealed class SubmissionService : ISubmissionService
         await _submissionRepository.UpdateWithRevisionAsync(submission, revision, cancellationToken);
 
         return submission;
+    }
+
+    private async Task<SubmissionAttachmentDownload> OpenAttachmentAsync(Submission submission, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(submission.AttachmentStorageName) || string.IsNullOrWhiteSpace(submission.AttachmentContentType) || string.IsNullOrWhiteSpace(submission.AttachmentFileName)) throw new KeyNotFoundException("The requested attachment was not found.");
+        Stream? content = await _submissionFileStorage.OpenReadAsync(submission.AttachmentStorageName, cancellationToken);
+        return content is null ? throw new KeyNotFoundException("The requested attachment was not found.") : new SubmissionAttachmentDownload { Content = content, ContentType = submission.AttachmentContentType, FileName = submission.AttachmentFileName };
     }
 
     private async Task<Submission> GetForTeacherAsync(

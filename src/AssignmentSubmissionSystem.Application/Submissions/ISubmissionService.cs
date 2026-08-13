@@ -25,6 +25,12 @@ public interface ISubmissionService
         Guid teacherUserId,
         CancellationToken cancellationToken);
 
+    Task<IReadOnlyList<TeacherSubmissionItem>> GetAllForAdminAsync(CancellationToken cancellationToken);
+
+    Task<SubmissionAttachmentDownload> OpenAttachmentForAdminAsync(Guid submissionId, CancellationToken cancellationToken);
+
+    Task<SubmissionAttachmentDownload> OpenAttachmentForTeacherAsync(Guid submissionId, Guid teacherUserId, CancellationToken cancellationToken);
+
     Task GradeAsync(Guid submissionId, Guid teacherUserId, CancellationToken cancellationToken);
 
     Task ReopenForCorrectionAsync(Guid submissionId, Guid teacherUserId, CancellationToken cancellationToken);

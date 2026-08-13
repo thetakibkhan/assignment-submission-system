@@ -54,6 +54,16 @@ public sealed class SubmissionRepository : ISubmissionRepository
                       }).ToListAsync(cancellationToken);
     }
 
+    public Task<Submission?> GetByIdAsync(Guid submissionId, CancellationToken cancellationToken) => _databaseContext.Submissions.SingleOrDefaultAsync(submission => submission.Id == submissionId, cancellationToken);
+
+    public async Task<IReadOnlyList<TeacherSubmissionItem>> GetAllAsync(CancellationToken cancellationToken)
+    {
+        return await (from submission in _databaseContext.Submissions.AsNoTracking()
+                      join student in _databaseContext.Users.AsNoTracking() on submission.StudentUserId equals student.Id
+                      orderby submission.UpdatedAt descending
+                      select new TeacherSubmissionItem { AttachmentFileName = submission.AttachmentFileName, Feedback = submission.Feedback, Id = submission.Id, Marks = submission.Marks, Status = submission.Status, StudentName = student.FullName, StudentUserId = submission.StudentUserId, SubmittedAt = submission.SubmittedAt, TextAnswer = submission.TextAnswer, UpdatedAt = submission.UpdatedAt }).ToListAsync(cancellationToken);
+    }
+
     public Task<Submission?> GetByIdForTeacherAsync(
         Guid submissionId,
         Guid teacherUserId,
