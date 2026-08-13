@@ -43,6 +43,7 @@ coverage*.json
 
 # Runtime data and local file uploads
 /.local-data/
+**/.local-data/
 uploads/
 data/
 docker/postgres-data/
