@@ -28,6 +28,8 @@ public sealed class ApplicationDbContext : IdentityDbContext<ApplicationUser, Id
 
     public DbSet<SubmissionRevision> SubmissionRevisions => Set<SubmissionRevision>();
 
+    public DbSet<SubmissionReviewRevision> SubmissionReviewRevisions => Set<SubmissionReviewRevision>();
+
     public DbSet<Subject> Subjects => Set<Subject>();
 
     public DbSet<TeacherResponsibility> TeacherResponsibilities => Set<TeacherResponsibility>();
@@ -80,6 +82,8 @@ public sealed class ApplicationDbContext : IdentityDbContext<ApplicationUser, Id
             entity.Property(submission => submission.AttachmentContentType).HasMaxLength(100);
             entity.Property(submission => submission.AttachmentFileName).HasMaxLength(255);
             entity.Property(submission => submission.AttachmentStorageName).HasMaxLength(100);
+            entity.Property(submission => submission.Feedback).HasMaxLength(5000);
+            entity.Property(submission => submission.Marks).HasPrecision(10, 2);
             entity.Property(submission => submission.Status)
                 .HasConversion<string>()
                 .HasMaxLength(20)
@@ -108,6 +112,15 @@ public sealed class ApplicationDbContext : IdentityDbContext<ApplicationUser, Id
                 .WithMany()
                 .HasForeignKey(revision => revision.SubmissionId)
                 .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        builder.Entity<SubmissionReviewRevision>(entity =>
+        {
+            entity.Property(revision => revision.Feedback).HasMaxLength(5000);
+            entity.Property(revision => revision.Marks).HasPrecision(10, 2);
+            entity.Property(revision => revision.Status).HasConversion<string>().HasMaxLength(20).IsRequired();
+            entity.HasIndex(revision => new { revision.SubmissionId, revision.RecordedAt });
+            entity.HasOne<Submission>().WithMany().HasForeignKey(revision => revision.SubmissionId).OnDelete(DeleteBehavior.Restrict);
         });
 
         builder.Entity<ClassCourse>(entity =>

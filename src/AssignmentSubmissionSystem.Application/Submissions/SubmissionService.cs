@@ -106,6 +106,49 @@ public sealed class SubmissionService : ISubmissionService
         };
     }
 
+    public async Task GradeAsync(Guid submissionId, Guid teacherUserId, CancellationToken cancellationToken)
+    {
+        Submission submission = await GetForTeacherAsync(submissionId, teacherUserId, cancellationToken);
+        SubmissionReviewRevision revision = submission.CreateReviewRevision(Guid.CreateVersion7(), DateTimeOffset.UtcNow);
+        submission.Grade();
+        await _submissionRepository.UpdateWithReviewRevisionAsync(submission, revision, cancellationToken);
+    }
+
+    public async Task ReopenForCorrectionAsync(Guid submissionId, Guid teacherUserId, CancellationToken cancellationToken)
+    {
+        Submission submission = await GetForTeacherAsync(submissionId, teacherUserId, cancellationToken);
+        SubmissionReviewRevision revision = submission.CreateReviewRevision(Guid.CreateVersion7(), DateTimeOffset.UtcNow);
+        submission.ReopenForCorrection();
+        await _submissionRepository.UpdateWithReviewRevisionAsync(submission, revision, cancellationToken);
+    }
+
+    public async Task StartReviewAsync(Guid submissionId, Guid teacherUserId, CancellationToken cancellationToken)
+    {
+        Submission submission = await GetForTeacherAsync(submissionId, teacherUserId, cancellationToken);
+        SubmissionReviewRevision revision = submission.CreateReviewRevision(Guid.CreateVersion7(), DateTimeOffset.UtcNow);
+        submission.StartReview();
+        await _submissionRepository.UpdateWithReviewRevisionAsync(submission, revision, cancellationToken);
+    }
+
+    public async Task UpdateReviewAsync(
+        Guid submissionId,
+        ReviewSubmissionCommand command,
+        Guid teacherUserId,
+        CancellationToken cancellationToken)
+    {
+        Submission submission = await GetForTeacherAsync(submissionId, teacherUserId, cancellationToken);
+        Assignment assignment = await _assignmentRepository.GetByIdAsync(submission.AssignmentId, cancellationToken)
+            ?? throw new KeyNotFoundException("The requested submission was not found.");
+        if (command.Marks is < 0 || command.Marks > assignment.MaximumMarks)
+        {
+            throw new ArgumentOutOfRangeException(nameof(command.Marks), "Marks must be between zero and the assignment maximum.");
+        }
+
+        SubmissionReviewRevision revision = submission.CreateReviewRevision(Guid.CreateVersion7(), DateTimeOffset.UtcNow);
+        submission.UpdateReview(command.Marks, command.Feedback);
+        await _submissionRepository.UpdateWithReviewRevisionAsync(submission, revision, cancellationToken);
+    }
+
     public async Task<Submission> UpdateAsync(
         Guid assignmentId,
         CreateSubmissionCommand command,
@@ -141,6 +184,18 @@ public sealed class SubmissionService : ISubmissionService
         await _submissionRepository.UpdateWithRevisionAsync(submission, revision, cancellationToken);
 
         return submission;
+    }
+
+    private async Task<Submission> GetForTeacherAsync(
+        Guid submissionId,
+        Guid teacherUserId,
+        CancellationToken cancellationToken)
+    {
+        return await _submissionRepository.GetByIdForTeacherAsync(
+            submissionId,
+            teacherUserId,
+            cancellationToken)
+            ?? throw new KeyNotFoundException("The requested submission was not found.");
     }
 
     private async Task<Assignment> GetEligibleOpenAssignmentAsync(

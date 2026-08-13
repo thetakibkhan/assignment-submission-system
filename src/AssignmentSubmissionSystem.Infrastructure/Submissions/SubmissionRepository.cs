@@ -27,6 +27,17 @@ public sealed class SubmissionRepository : ISubmissionRepository
         }
     }
 
+    public Task<Submission?> GetByIdForTeacherAsync(
+        Guid submissionId,
+        Guid teacherUserId,
+        CancellationToken cancellationToken)
+    {
+        return (from submission in _databaseContext.Submissions
+                join assignment in _databaseContext.Assignments on submission.AssignmentId equals assignment.Id
+                where submission.Id == submissionId && assignment.TeacherUserId == teacherUserId
+                select submission).SingleOrDefaultAsync(cancellationToken);
+    }
+
     public Task<Submission?> GetByIdAndStudentAsync(
         Guid submissionId,
         Guid studentUserId,
@@ -42,6 +53,16 @@ public sealed class SubmissionRepository : ISubmissionRepository
         return _databaseContext.Submissions.SingleOrDefaultAsync(
             submission => submission.AssignmentId == assignmentId && submission.StudentUserId == studentUserId,
             cancellationToken);
+    }
+
+    public async Task UpdateWithReviewRevisionAsync(
+        Submission submission,
+        SubmissionReviewRevision revision,
+        CancellationToken cancellationToken)
+    {
+        _databaseContext.SubmissionReviewRevisions.Add(revision);
+        _databaseContext.Submissions.Update(submission);
+        await _databaseContext.SaveChangesAsync(cancellationToken);
     }
 
     public async Task UpdateWithRevisionAsync(

@@ -46,6 +46,10 @@ public sealed class Submission
 
     public SubmissionStatus Status { get; private set; }
 
+    public string? Feedback { get; private set; }
+
+    public decimal? Marks { get; private set; }
+
     public string? TextAnswer { get; private set; }
 
     public DateTimeOffset SubmittedAt { get; private set; }
@@ -62,6 +66,63 @@ public sealed class Submission
             AttachmentContentType,
             AttachmentStorageName,
             recordedAt);
+    }
+
+    public SubmissionReviewRevision CreateReviewRevision(Guid revisionId, DateTimeOffset recordedAt)
+    {
+        return new SubmissionReviewRevision(
+            revisionId,
+            Id,
+            Status,
+            Marks,
+            Feedback,
+            recordedAt);
+    }
+
+    public void StartReview()
+    {
+        if (Status != SubmissionStatus.Submitted)
+        {
+            throw new InvalidOperationException("Only submitted work can be started for review.");
+        }
+
+        Status = SubmissionStatus.UnderReview;
+    }
+
+    public void UpdateReview(decimal? marks, string? feedback)
+    {
+        if (Status != SubmissionStatus.UnderReview)
+        {
+            throw new InvalidOperationException("Only work under review can receive marks or feedback.");
+        }
+
+        Marks = marks;
+        Feedback = string.IsNullOrWhiteSpace(feedback) ? null : feedback.Trim();
+    }
+
+    public void Grade()
+    {
+        if (Status != SubmissionStatus.UnderReview)
+        {
+            throw new InvalidOperationException("Only work under review can be graded.");
+        }
+
+        if (Marks is null)
+        {
+            throw new InvalidOperationException("Marks are required before grading.");
+        }
+
+        Status = SubmissionStatus.Graded;
+    }
+
+    public void ReopenForCorrection()
+    {
+        if (Status != SubmissionStatus.Graded)
+        {
+            throw new InvalidOperationException("Only graded work can be reopened for correction.");
+        }
+
+        Status = SubmissionStatus.UnderReview;
     }
 
     public void UpdateContent(

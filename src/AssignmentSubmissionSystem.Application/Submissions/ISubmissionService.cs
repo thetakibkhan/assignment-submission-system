@@ -20,6 +20,18 @@ public interface ISubmissionService
         Guid studentUserId,
         CancellationToken cancellationToken);
 
+    Task GradeAsync(Guid submissionId, Guid teacherUserId, CancellationToken cancellationToken);
+
+    Task ReopenForCorrectionAsync(Guid submissionId, Guid teacherUserId, CancellationToken cancellationToken);
+
+    Task StartReviewAsync(Guid submissionId, Guid teacherUserId, CancellationToken cancellationToken);
+
+    Task UpdateReviewAsync(
+        Guid submissionId,
+        ReviewSubmissionCommand command,
+        Guid teacherUserId,
+        CancellationToken cancellationToken);
+
     Task<Submission> UpdateAsync(
         Guid assignmentId,
         CreateSubmissionCommand command,
