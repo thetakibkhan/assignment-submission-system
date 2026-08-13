@@ -11,3 +11,19 @@ export function getTeacherWorkspacePanelVisibility(
     submissionReview: isReviewingSubmission,
   };
 }
+
+interface SubmissionReviewSectionOptions {
+  hasAttachment: boolean;
+  isGraded: boolean;
+}
+
+export function getSubmissionReviewSectionVisibility({
+  hasAttachment,
+  isGraded,
+}: SubmissionReviewSectionOptions) {
+  return {
+    writtenResponse: true,
+    attachment: hasAttachment,
+    finalResult: isGraded,
+  };
+}
