@@ -19,6 +19,29 @@ public sealed class TeacherReviewEndpointTests : IClassFixture<AuthWebApplicatio
     }
 
     [Fact]
+    public async Task GetQueue_ShouldReturnSubmittedWork_ForTheOwningTeacher()
+    {
+        Guid assignmentId = await CreatePublishedAssignmentAsync(allowSubmissionUpdates: false);
+        using HttpClient studentClient = await CreateAuthenticatedClientAsync("STU-001", "Student123!");
+        using MultipartFormDataContent submissionContent = CreateSubmissionContent("Queue response");
+        HttpResponseMessage createResponse = await studentClient.PostAsync(
+            "/api/student/assignments/" + assignmentId + "/submission",
+            submissionContent);
+        createResponse.EnsureSuccessStatusCode();
+
+        using HttpClient teacherClient = await CreateAuthenticatedClientAsync("TCH-001", "Teacher123!");
+        HttpResponseMessage response = await teacherClient.GetAsync(
+            "/api/teacher/assignments/" + assignmentId + "/submissions");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        IReadOnlyList<TeacherSubmissionResponse>? submissions = await response.Content.ReadFromJsonAsync<IReadOnlyList<TeacherSubmissionResponse>>();
+        TeacherSubmissionResponse submission = Assert.Single(submissions ?? []);
+        Assert.Equal("Ayesha Rahman", submission.StudentName);
+        Assert.Equal("Queue response", submission.TextAnswer);
+        Assert.Equal("Submitted", submission.Status);
+    }
+
+    [Fact]
     public async Task ReviewLifecycle_ShouldRequireOwnerAndPublishResultsOnlyAfterGrading()
     {
         Guid assignmentId = await CreatePublishedAssignmentAsync(allowSubmissionUpdates: false);
@@ -148,6 +171,15 @@ public sealed class TeacherReviewEndpointTests : IClassFixture<AuthWebApplicatio
     private sealed class EntityResponse
     {
         public Guid Id { get; init; }
+    }
+
+    private sealed class TeacherSubmissionResponse
+    {
+        public string Status { get; init; } = string.Empty;
+
+        public string StudentName { get; init; } = string.Empty;
+
+        public string? TextAnswer { get; init; }
     }
 
     private sealed class SubmissionResponse
