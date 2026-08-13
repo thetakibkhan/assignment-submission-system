@@ -77,13 +77,23 @@ public sealed class TeacherReviewEndpointTests : IClassFixture<AuthWebApplicatio
             null);
         Assert.Equal(HttpStatusCode.NoContent, gradeResponse.StatusCode);
 
-        HttpResponseMessage gradedStudentResponse = await studentClient.GetAsync(
+        HttpResponseMessage earlyGradedStudentResponse = await studentClient.GetAsync(
             "/api/student/assignments/" + assignmentId + "/submission");
-        SubmissionResponse gradedSubmission = await gradedStudentResponse.Content.ReadFromJsonAsync<SubmissionResponse>()
+        SubmissionResponse earlyGradedSubmission = await earlyGradedStudentResponse.Content.ReadFromJsonAsync<SubmissionResponse>()
             ?? throw new InvalidOperationException("The graded submission response was empty.");
-        Assert.Equal("Graded", gradedSubmission.Status);
-        Assert.Equal(18m, gradedSubmission.Marks);
-        Assert.Equal("Strong analysis.", gradedSubmission.Feedback);
+        Assert.Equal("Graded", earlyGradedSubmission.Status);
+        Assert.Null(earlyGradedSubmission.Marks);
+        Assert.Null(earlyGradedSubmission.Feedback);
+
+        await MoveDeadlineToPastAsync(assignmentId);
+
+        HttpResponseMessage disclosedStudentResponse = await studentClient.GetAsync(
+            "/api/student/assignments/" + assignmentId + "/submission");
+        SubmissionResponse disclosedSubmission = await disclosedStudentResponse.Content.ReadFromJsonAsync<SubmissionResponse>()
+            ?? throw new InvalidOperationException("The disclosed submission response was empty.");
+        Assert.Equal("Graded", disclosedSubmission.Status);
+        Assert.Equal(18m, disclosedSubmission.Marks);
+        Assert.Equal("Strong analysis.", disclosedSubmission.Feedback);
     }
 
     private async Task<Guid> CreatePublishedAssignmentAsync(bool allowSubmissionUpdates)
