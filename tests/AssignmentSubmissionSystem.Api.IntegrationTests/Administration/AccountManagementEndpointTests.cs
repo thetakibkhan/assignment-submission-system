@@ -94,6 +94,32 @@ public sealed class AccountManagementEndpointTests : IClassFixture<AuthWebApplic
     }
 
     [Fact]
+    public async Task Create_ShouldAllowMissingOptionalContactEmail()
+    {
+        using HttpClient adminClient = await CreateAuthenticatedClientAsync("ADM-001", "Admin123!");
+        string institutionalId = "STU-" + Guid.NewGuid().ToString("N").ToUpperInvariant();
+
+        HttpResponseMessage response = await adminClient.PostAsJsonAsync(
+            "/api/admin/users",
+            new
+            {
+                fullName = "Student Without Contact Email",
+                institutionalId,
+                role = "Student"
+            });
+
+        Assert.True(
+            response.StatusCode == HttpStatusCode.Created,
+            await response.Content.ReadAsStringAsync());
+
+        CreatedAccountResponse? createdAccount = await response.Content
+            .ReadFromJsonAsync<CreatedAccountResponse>();
+
+        Assert.NotNull(createdAccount);
+        Assert.Equal(institutionalId, createdAccount.InstitutionalId);
+    }
+
+    [Fact]
     public async Task ManageUser_ShouldUpdateProfileActivationAndResetPassword_WhenRequestedByAdmin()
     {
         using HttpClient adminClient = await CreateAuthenticatedClientAsync("ADM-001", "Admin123!");
