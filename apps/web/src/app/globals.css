@@ -873,3 +873,18 @@ body {
   .teacher-review-file__info { align-self: center; flex: 1; }
   .teacher-review-detail__attachment { margin-left: 0; text-align: center; width: 100%; }
 }
+
+
+/* Student finalized result */
+.student-result-card { background: linear-gradient(145deg, rgba(39, 39, 42, .9), rgba(9, 9, 11, .86)); border: 1px solid #3f3f46; border-radius: .75rem; margin-top: 1rem; padding: 1.1rem; }
+.student-result-card__header { align-items: flex-start; display: flex; gap: 1rem; justify-content: space-between; }
+.student-result-card__header > div > span { color: #a1a1aa; font-size: .7rem; letter-spacing: .08em; text-transform: uppercase; }
+.student-result-card__header h3 { font-size: 1rem; margin: .2rem 0 0; }
+.student-result-card__status { background: rgba(134, 239, 172, .12); border: 1px solid rgba(134, 239, 172, .22); border-radius: 999px; color: #86efac; font-size: .68rem; padding: .35rem .55rem; }
+.student-result-card__score { margin: 1rem 0; }
+.student-result-card__score strong { color: #fafafa; font-size: 2.5rem; font-weight: 600; letter-spacing: -.05em; }
+.student-result-card__score span { color: #a1a1aa; font-size: 1rem; }
+.student-result-card__feedback { border-top: 1px solid #3f3f46; padding-top: .9rem; }
+.student-result-card__feedback h4 { color: #a1a1aa; font-size: .72rem; font-weight: 500; margin: 0 0 .4rem; }
+.student-result-card__feedback p { color: #e4e4e7; line-height: 1.6; margin: 0; white-space: pre-wrap; }
+.student-result-pending { background: rgba(39, 39, 42, .65); border: 1px solid #3f3f46; border-radius: .6rem; color: #a1a1aa; font-size: .82rem; line-height: 1.5; margin: 1rem 0 0; padding: .85rem; }

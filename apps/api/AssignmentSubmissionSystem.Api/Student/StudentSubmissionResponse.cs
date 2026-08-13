@@ -12,6 +12,8 @@ public sealed class StudentSubmissionResponse
 
     public decimal? Marks { get; init; }
 
+    public bool ResultsAvailable { get; init; }
+
     public string Status { get; init; } = string.Empty;
 
     public string? TextAnswer { get; init; }
@@ -20,14 +22,15 @@ public sealed class StudentSubmissionResponse
 
     public DateTimeOffset UpdatedAt { get; init; }
 
-    public static StudentSubmissionResponse From(Submission submission)
+    public static StudentSubmissionResponse From(Submission submission, bool resultsAvailable = false)
     {
         return new StudentSubmissionResponse
         {
             AttachmentFileName = submission.AttachmentFileName,
-            Feedback = submission.Status == SubmissionStatus.Graded ? submission.Feedback : null,
-            Marks = submission.Status == SubmissionStatus.Graded ? submission.Marks : null,
+            Feedback = resultsAvailable ? submission.Feedback : null,
+            Marks = resultsAvailable ? submission.Marks : null,
             Id = submission.Id,
+            ResultsAvailable = resultsAvailable,
             Status = submission.Status.ToString(),
             SubmittedAt = submission.SubmittedAt,
             TextAnswer = submission.TextAnswer,

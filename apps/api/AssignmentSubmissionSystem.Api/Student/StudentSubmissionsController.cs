@@ -38,11 +38,11 @@ public sealed class StudentSubmissionsController : ControllerBase
     {
         try
         {
-            Submission submission = await _submissionService.GetAsync(
+            StudentSubmissionDetails details = await _submissionService.GetAsync(
                 assignmentId,
                 User.GetRequiredUserId(),
                 cancellationToken);
-            return Ok(StudentSubmissionResponse.From(submission));
+            return Ok(StudentSubmissionResponse.From(details.Submission, details.ResultsAvailable));
         }
         catch (KeyNotFoundException)
         {
