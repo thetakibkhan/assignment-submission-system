@@ -76,7 +76,12 @@ public sealed class AccountManagementService : IAccountManagementService
 
             if (!createResult.Succeeded)
             {
-                throw new AccountManagementException("The account could not be created. Check that the institutional ID and email are unique and valid.");
+                if (createResult.Errors.Any(error => error.Code == "DuplicateUserName"))
+                {
+                    throw new AccountManagementException("The institutional ID is already in use.");
+                }
+
+                throw new AccountManagementException("The account could not be created. Check that the institutional ID is valid.");
             }
 
             IdentityResult roleResult = await _userManager.AddToRoleAsync(user, roleName);
@@ -244,11 +249,6 @@ public sealed class AccountManagementService : IAccountManagementService
             if (updateResult.Errors.Any(error => error.Code == "DuplicateUserName"))
             {
                 throw new AccountManagementException("The institutional ID is already in use.");
-            }
-
-            if (updateResult.Errors.Any(error => error.Code == "DuplicateEmail"))
-            {
-                throw new AccountManagementException("The email address is already in use.");
             }
 
             throw new AccountManagementException("The account profile could not be updated. Check that the account details are valid.");
