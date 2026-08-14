@@ -521,7 +521,7 @@ body {
 .admin-list p { margin: 0; padding: 0.55rem 0; }
 .admin-list p + p { border-top: 1px solid #27272a; }
 .admin-list b { color: #e4e4e7; font-family: "Courier New", monospace; font-size: 0.7rem; }
-.admin-submission-list { display: grid; gap: 0.5rem; padding: 0.5rem 0; }
+.admin-submission-list { display: grid; gap: 0.5rem; max-height: min(32rem, 58vh); overflow: auto; padding: 0.5rem 0; }
 .admin-submission-record { align-items: center; background: #09090b; border: 1px solid #27272a; border-radius: 0.6rem; display: grid; gap: 0.75rem; grid-template-columns: minmax(0, 1fr) auto; padding: 0.75rem 0.85rem; }
 .admin-submission-record__identity { display: grid; gap: 0.25rem; min-width: 0; }
 .admin-submission-record__identity strong { color: #f4f4f5; font-size: 0.85rem; }
