@@ -23,7 +23,7 @@ public sealed class ClassCourseEndpointTests : IClassFixture<AuthWebApplicationF
         string code = "CLS-" + Guid.NewGuid().ToString("N").ToUpperInvariant();
 
         HttpResponseMessage response = await client.PostAsJsonAsync(
-            "/api/admin/classes-courses",
+            "/api/admin/classes",
             new
             {
                 code,
