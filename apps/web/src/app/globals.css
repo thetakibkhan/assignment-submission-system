@@ -791,16 +791,27 @@ body {
 .notification-center { position: relative; }
 .notification-center__trigger, .notification-center__panel button { background: #18181b; border: 1px solid #3f3f46; border-radius: .5rem; color: #fafafa; cursor: pointer; font: inherit; min-height: 2.75rem; padding: .55rem .75rem; }
 .notification-center__trigger { align-items: center; display: inline-flex; gap: .4rem; }
+.notification-center__trigger:hover, .notification-center__trigger[aria-expanded="true"] { border-color: #a1a1aa; }
 .notification-center__trigger > span { align-items: center; background: #fafafa; border-radius: 999px; color: #18181b; display: inline-flex; font-size: .7rem; font-weight: 700; height: 1.1rem; justify-content: center; min-width: 1.1rem; padding: 0 .2rem; }
 .notification-center__panel { background: #18181b; border: 1px solid #3f3f46; border-radius: .75rem; box-shadow: 0 20px 55px rgba(0,0,0,.5); max-height: min(30rem, 70vh); overflow: auto; padding: .85rem; position: absolute; right: 0; top: calc(100% + .5rem); width: min(25rem, 85vw); z-index: 20; }
-.notification-center__panel header { align-items: center; border-bottom: 1px solid #27272a; display: flex; justify-content: space-between; padding: .15rem .15rem .75rem; }
+.notification-center__panel header { align-items: center; border-bottom: 1px solid #27272a; display: flex; gap: .75rem; justify-content: space-between; padding: .15rem .15rem .75rem; }
 .notification-center__panel header p, .notification-center__message, .notification-center__empty { color: #a1a1aa; font-size: .78rem; margin: .25rem 0 0; }
-.notification-center__panel header > div:last-child { display: flex; gap: .35rem; }
+.notification-center__panel header > div:last-child { align-items: center; display: flex; gap: .35rem; }
 .notification-center__panel button { min-height: 2.15rem; }
-.notification-center__list { display: grid; gap: .45rem; margin-top: .75rem; }
-.notification-center__list a { background: #09090b; border: 1px solid #27272a; border-radius: .5rem; color: #d4d4d8; display: grid; gap: .35rem; padding: .7rem; text-decoration: none; }
-.notification-center__list a.is-unread { border-color: #a1a1aa; color: #fafafa; }
-.notification-center__list small { color: #71717a; }
+.notification-center__icon-button { align-items: center; display: inline-flex; justify-content: center; min-width: 2.15rem; padding: .45rem !important; }
+.notification-center__icon-button:hover:not(:disabled) { background: #27272a; border-color: #71717a; }
+.notification-center__read-all { align-items: center; display: inline-flex; font-size: .72rem; gap: .35rem; }
+.notification-center__panel button:disabled { cursor: not-allowed; opacity: .45; }
+.notification-center__list { display: grid; gap: .45rem; list-style: none; margin: .75rem 0 0; padding: 0; }
+.notification-center__list li { align-items: center; background: #09090b; border: 1px solid #27272a; border-radius: .6rem; display: flex; gap: .35rem; min-width: 0; padding: .15rem; }
+.notification-center__list li.is-unread { border-color: #a1a1aa; }
+.notification-center__item { background: transparent !important; border: 0 !important; color: #d4d4d8; display: grid; flex: 1; gap: .35rem; min-width: 0; padding: .65rem !important; text-align: left; }
+.notification-center__list li.is-unread .notification-center__item { color: #fafafa; }
+.notification-center__item:hover { background: #18181b !important; }
+.notification-center__item > span { line-height: 1.4; overflow-wrap: anywhere; }
+.notification-center__item small { color: #71717a; font-size: .7rem; }
+.notification-center__item-actions { display: flex; flex: 0 0 auto; gap: .2rem; padding-right: .2rem; }
+@media (max-width:42rem) { .workspace-overview { grid-template-columns: 1fr; } .notification-center { flex: 1; } .notification-center__trigger { justify-content: center; width: 100%; } .notification-center__panel { left: 0; right: auto; width: 100%; } .notification-center__read-all { font-size: 0; min-width: 2.15rem; } }
 .workspace-sign-out { background: transparent; border: 1px solid #3f3f46; border-radius: .5rem; color: #d4d4d8; cursor: pointer; font: inherit; font-size: .82rem; min-height: 2.75rem; padding: .65rem 1rem; }
 .workspace-sign-out:hover { border-color: #a1a1aa; color: #fafafa; }
 .workspace-sign-out:disabled { cursor: wait; opacity: .6; }
