@@ -1,4 +1,6 @@
 using AssignmentSubmissionSystem.Infrastructure.Authentication;
+using AssignmentSubmissionSystem.Application.Dashboards;
+using AssignmentSubmissionSystem.Api.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -8,24 +10,30 @@ namespace AssignmentSubmissionSystem.Api.Dashboard;
 [Route("api/dashboard")]
 public sealed class DashboardController : ControllerBase
 {
-    [Authorize(Roles = RoleNames.Admin)]
+    private readonly IDashboardQuery _dashboardQuery;
+
+    public DashboardController(IDashboardQuery dashboardQuery)
+    {
+        _dashboardQuery = dashboardQuery;
+    }
+    [Authorize(Policy = AuthorizationPolicies.NormalAccess, Roles = RoleNames.Admin)]
     [HttpGet("admin")]
-    public ActionResult<object> GetAdminDashboard()
+    public async Task<ActionResult<AdminDashboardSummary>> GetAdminDashboard(CancellationToken cancellationToken)
     {
-        return Ok(new { message = "Admin dashboard access granted." });
+        return Ok(await _dashboardQuery.GetAdminAsync(cancellationToken));
     }
 
-    [Authorize(Roles = RoleNames.Teacher)]
+    [Authorize(Policy = AuthorizationPolicies.NormalAccess, Roles = RoleNames.Teacher)]
     [HttpGet("teacher")]
-    public ActionResult<object> GetTeacherDashboard()
+    public async Task<ActionResult<TeacherDashboardSummary>> GetTeacherDashboard(CancellationToken cancellationToken)
     {
-        return Ok(new { message = "Teacher dashboard access granted." });
+        return Ok(await _dashboardQuery.GetTeacherAsync(User.GetRequiredUserId(), cancellationToken));
     }
 
-    [Authorize(Roles = RoleNames.Student)]
+    [Authorize(Policy = AuthorizationPolicies.NormalAccess, Roles = RoleNames.Student)]
     [HttpGet("student")]
-    public ActionResult<object> GetStudentDashboard()
+    public async Task<ActionResult<StudentDashboardSummary>> GetStudentDashboard(CancellationToken cancellationToken)
     {
-        return Ok(new { message = "Student dashboard access granted." });
+        return Ok(await _dashboardQuery.GetStudentAsync(User.GetRequiredUserId(), DateTimeOffset.UtcNow, cancellationToken));
     }
 }

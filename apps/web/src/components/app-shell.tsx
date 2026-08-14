@@ -4,7 +4,7 @@ import { BookOpen, LayoutDashboard, LogOut, type LucideIcon, ShieldCheck, UserRo
 import { useRouter } from "next/navigation";
 import { createContext, type ReactNode, useContext, useState } from "react";
 
-export type DashboardSection = "overview" | "accounts" | "academic" | "enrollment" | "responsibilities";
+export type DashboardSection = "overview" | "accounts" | "academic" | "enrollment" | "responsibilities" | "submissions";
 
 type AppShellContextValue = {
   activeSection: DashboardSection;
@@ -18,6 +18,7 @@ const navigation: Array<{ icon: LucideIcon; label: string; section: DashboardSec
   { icon: BookOpen, label: "Academic structure", section: "academic" },
   { icon: UserRoundPlus, label: "Enrollments", section: "enrollment" },
   { icon: ShieldCheck, label: "Teacher scope", section: "responsibilities" },
+  { icon: BookOpen, label: "Submissions", section: "submissions" },
 ];
 
 export function AppShell({ children }: { children: ReactNode }) {

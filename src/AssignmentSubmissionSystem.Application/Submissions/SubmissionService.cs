@@ -2,6 +2,7 @@ using AssignmentSubmissionSystem.Application.AcademicSetup.Enrollments;
 using AssignmentSubmissionSystem.Application.Assignments;
 using AssignmentSubmissionSystem.Domain.Assignments;
 using AssignmentSubmissionSystem.Domain.Submissions;
+using AssignmentSubmissionSystem.Domain.Notifications;
 
 namespace AssignmentSubmissionSystem.Application.Submissions;
 
@@ -151,9 +152,11 @@ public sealed class SubmissionService : ISubmissionService
     public async Task GradeAsync(Guid submissionId, Guid teacherUserId, CancellationToken cancellationToken)
     {
         Submission submission = await GetForTeacherAsync(submissionId, teacherUserId, cancellationToken);
-        SubmissionReviewRevision revision = submission.CreateReviewRevision(Guid.CreateVersion7(), DateTimeOffset.UtcNow);
+        DateTimeOffset createdAt = DateTimeOffset.UtcNow;
+        SubmissionReviewRevision revision = submission.CreateReviewRevision(Guid.CreateVersion7(), createdAt);
         submission.Grade();
-        await _submissionRepository.UpdateWithReviewRevisionAsync(submission, revision, cancellationToken);
+        UserNotification notification = new(Guid.CreateVersion7(), submission.StudentUserId, NotificationType.SubmissionGraded, submission.AssignmentId, submission.Id, "Your submission has been graded. Results are visible after the deadline.", createdAt);
+        await _submissionRepository.UpdateWithReviewRevisionAndNotificationAsync(submission, revision, notification, cancellationToken);
     }
 
     public async Task ReopenForCorrectionAsync(Guid submissionId, Guid teacherUserId, CancellationToken cancellationToken)

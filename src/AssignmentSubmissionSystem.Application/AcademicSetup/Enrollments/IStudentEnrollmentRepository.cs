@@ -8,6 +8,8 @@ public interface IStudentEnrollmentRepository
 
     Task<bool> ExistsActiveAsync(Guid studentUserId, Guid classCourseId, CancellationToken cancellationToken);
 
+    Task<IReadOnlyList<Guid>> GetActiveStudentUserIdsAsync(Guid classCourseId, CancellationToken cancellationToken);
+
     Task<StudentEnrollment?> GetByIdAsync(Guid id, CancellationToken cancellationToken);
 
     Task UpdateAsync(StudentEnrollment enrollment, CancellationToken cancellationToken);

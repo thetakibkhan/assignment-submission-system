@@ -3,10 +3,13 @@
 import { useRouter } from "next/navigation";
 import { type FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { SignOutButton } from "@/components/auth/SignOutButton";
+import { NotificationCenter } from "@/components/notifications/NotificationCenter";
+import { filterDashboardItems } from "@/components/dashboard/dashboard-filtering";
 import { shouldShowStudentResult } from "@/components/student/student-result-visibility";
 
 type View = "open" | "past";
 type Submission = { attachmentFileName: string | null; feedback: string | null; id: string; marks: number | null; status: string; submittedAt: string; textAnswer: string | null; updatedAt: string };
+type StudentDashboard = { gradedSubmissions: number; nearestDeadline: string | null; openAssignments: number; submittedAssignments: number; };
 type Assignment = { allowSubmissionUpdates: boolean; classCourseName: string; deadline: string; deadlinePassed: boolean; description: string; id: string; maximumMarks: number; studentState: string; subjectName: string; teacherName: string; title: string };
 
 const apiBaseUrl = (process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:5112").replace(/\/$/, "");
@@ -34,14 +37,18 @@ function deadlineLabel(assignment: Assignment): string {
 export function StudentAssignmentWorkspace() {
   const router = useRouter();
   const [assignments, setAssignments] = useState<Assignment[]>([]);
+  const [dashboard, setDashboard] = useState<StudentDashboard | null>(null);
   const [activeView, setActiveView] = useState<View>("open");
+  const [assignmentSearch, setAssignmentSearch] = useState("");
   const [message, setMessage] = useState("Loading your assignments…");
   const [selectedAssignment, setSelectedAssignment] = useState<Assignment | null>(null);
   const [submission, setSubmission] = useState<Submission | null>(null);
   const [submissionText, setSubmissionText] = useState("");
   const [attachment, setAttachment] = useState<File | null>(null);
   const [isSavingSubmission, setIsSavingSubmission] = useState(false);
-  const visibleAssignments = useMemo(() => assignments.filter((assignment) => assignment.deadlinePassed === (activeView === "past")), [activeView, assignments]);
+  const visibleAssignments = useMemo(() => filterDashboardItems(assignments.filter((assignment) => assignment.deadlinePassed === (activeView === "past")), assignmentSearch, "All"), [activeView, assignmentSearch, assignments]);
+  const submittedCount = assignments.filter((assignment) => assignment.studentState !== "NotSubmitted").length;
+  const gradedCount = assignments.filter((assignment) => assignment.studentState === "Graded").length;
 
   const handleRequestError = useCallback((error: unknown): boolean => {
     if (error instanceof Error && error.message === "Unauthorized") {
@@ -53,8 +60,9 @@ export function StudentAssignmentWorkspace() {
 
   const loadAssignments = useCallback(async () => {
     try {
-      const loaded = await request<Assignment[]>("/api/student/assignments");
+      const [loaded, loadedDashboard] = await Promise.all([request<Assignment[]>("/api/student/assignments"), request<StudentDashboard>("/api/dashboard/student")]);
       setAssignments(loaded);
+      setDashboard(loadedDashboard);
       setMessage(loaded.length ? "Your assignment list is up to date." : "No assignments are available for your active enrollments.");
     } catch (error) {
       if (!handleRequestError(error)) setMessage("The assignment service is unavailable. Please try again.");
@@ -116,9 +124,11 @@ export function StudentAssignmentWorkspace() {
   const showResult = selectedAssignment !== null && submission !== null && shouldShowStudentResult({ deadlinePassed: selectedAssignment.deadlinePassed, marks: submission.marks, status: submission.status });
 
   return <main className="student-console">
-    <header className="student-console__header"><div><p className="login-card__eyebrow">Student workspace</p><h1>My assignments</h1><p>See what needs attention, understand each deadline, and review past work.</p></div><div className="student-console__actions"><SignOutButton className="workspace-sign-out" /><button onClick={() => void loadAssignments()} type="button">Refresh</button></div></header>
+    <header className="student-console__header"><div><p className="login-card__eyebrow">Student workspace</p><h1>My assignments</h1><p>See what needs attention, understand each deadline, and review past work.</p></div><div className="student-console__actions"><NotificationCenter destination="/student" /><SignOutButton className="workspace-sign-out" /><button onClick={() => void loadAssignments()} type="button">Refresh</button></div></header>
     <p aria-live="polite" className="student-console__message">{message}</p>
+    <section aria-label="Student overview" className="workspace-overview"><article><span>Open work</span><strong>{dashboard?.openAssignments ?? assignments.filter((assignment) => !assignment.deadlinePassed).length}</strong></article><article><span>Submitted</span><strong>{dashboard?.submittedAssignments ?? submittedCount}</strong></article><article><span>Graded</span><strong>{dashboard?.gradedSubmissions ?? gradedCount}</strong></article></section>
     <div aria-label="Assignment timing" className="student-tabs" role="tablist"><button aria-selected={activeView === "open"} className={activeView === "open" ? "is-active" : ""} onClick={() => changeView("open")} role="tab" type="button">Open</button><button aria-selected={activeView === "past"} className={activeView === "past" ? "is-active" : ""} onClick={() => changeView("past")} role="tab" type="button">Past</button></div>
+    <label className="workspace-filter">Search assignments<input aria-label="Search assignments" onChange={(event) => setAssignmentSearch(event.target.value)} placeholder="Search title" value={assignmentSearch} /></label>
     <div className="student-workspace"><section aria-label={activeView + " assignments"} className="student-assignment-list">{visibleAssignments.length === 0 ? <div className="student-empty"><h2>No {activeView} assignments</h2><p>{activeView === "open" ? "There is no current work for your active enrollments." : "Assignments appear here after their deadlines pass."}</p></div> : visibleAssignments.map((assignment) => <button aria-pressed={selectedAssignment?.id === assignment.id} className="student-assignment-row" key={assignment.id} onClick={() => void selectAssignment(assignment)} type="button"><span className="student-assignment-row__context">{assignment.classCourseName} · {assignment.subjectName}</span><strong>{assignment.title}</strong><span>{deadlineLabel(assignment)} · {assignment.studentState}</span></button>)}</section>
       <aside aria-live="polite" className="student-detail">{selectedAssignment ? <><div className="student-detail__heading"><span className={selectedAssignment.deadlinePassed ? "student-status student-status--past" : "student-status"}>{deadlineLabel(selectedAssignment)}</span><h2>{selectedAssignment.title}</h2><p>{selectedAssignment.classCourseName} · {selectedAssignment.subjectName}</p></div><dl className="student-detail__facts"><div><dt>Deadline</dt><dd>{new Date(selectedAssignment.deadline).toLocaleString()}</dd></div><div><dt>Maximum marks</dt><dd>{selectedAssignment.maximumMarks}</dd></div><div><dt>Teacher</dt><dd>{selectedAssignment.teacherName}</dd></div><div><dt>Status</dt><dd>{selectedAssignment.studentState}</dd></div></dl><section><h3>Instructions</h3><p>{selectedAssignment.description}</p></section><p className="student-detail__policy">{selectedAssignment.allowSubmissionUpdates ? "Updates are allowed until the deadline." : "Your submission cannot be changed after it is sent."}</p><section className="student-submission-panel"><h3>{submission === null ? "Submit your work" : "Your submission"}</h3>{canEdit ? <form onSubmit={saveSubmission}><label htmlFor="submission-text">Your answer</label><textarea id="submission-text" maxLength={10000} onChange={(event) => setSubmissionText(event.target.value)} placeholder="Write your answer here…" value={submissionText} /><label htmlFor="submission-attachment">One optional attachment</label><input accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg" id="submission-attachment" onChange={(event) => setAttachment(event.target.files?.[0] ?? null)} type="file" /><p className="student-submission-panel__hint">PDF, DOC, DOCX, TXT, PNG, JPG, or JPEG · up to 10 MB</p><button disabled={isSavingSubmission} type="submit">{isSavingSubmission ? "Saving…" : submission === null ? "Submit work" : "Update submission"}</button></form> : <p>{selectedAssignment.deadlinePassed ? "Submission is closed because the deadline has passed." : submission?.status !== "Submitted" ? "This submission is currently being reviewed." : "Your teacher has disabled submission updates for this assignment."}</p>}{submission && <div className="student-submission-panel__metadata"><p>Submitted {new Date(submission.submittedAt).toLocaleString()}{submission.updatedAt !== submission.submittedAt ? " · Updated " + new Date(submission.updatedAt).toLocaleString() : ""}</p>{submission.attachmentFileName && <a href={apiBaseUrl + "/api/student/submissions/" + submission.id + "/attachment"}>Download attachment: {submission.attachmentFileName}</a>}</div>}</section>{showResult && submission && selectedAssignment && <section aria-labelledby="student-result-heading" className="student-result-card"><div className="student-result-card__header"><div><span>Final result</span><h3 id="student-result-heading">Your marks</h3></div><span className="student-result-card__status">Graded</span></div><p className="student-result-card__score"><strong>{submission.marks}</strong><span> / {selectedAssignment.maximumMarks}</span></p><div className="student-result-card__feedback"><h4>Teacher feedback</h4><p>{submission.feedback || "No feedback provided."}</p></div></section>}{submission?.status === "Graded" && !selectedAssignment.deadlinePassed && <p className="student-result-pending">Your work has been graded. Marks and feedback will be available after the deadline.</p>}</> : <div className="student-detail__placeholder"><h2>Select an assignment</h2><p>Choose an item to see its instructions, deadline, marks, and submission policy.</p></div>}</aside>
     </div>

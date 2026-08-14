@@ -1,4 +1,5 @@
 using AssignmentSubmissionSystem.Domain.Assignments;
+using AssignmentSubmissionSystem.Domain.Notifications;
 
 namespace AssignmentSubmissionSystem.Application.Assignments;
 
@@ -10,4 +11,5 @@ public interface IAssignmentRepository
     Task<Assignment?> GetByIdAsync(Guid id, CancellationToken cancellationToken);
     Task<bool> HasSubmissionsAsync(Guid assignmentId, CancellationToken cancellationToken);
     Task UpdateAsync(Assignment assignment, CancellationToken cancellationToken);
+    Task UpdateWithNotificationsAsync(Assignment assignment, IReadOnlyList<UserNotification> notifications, CancellationToken cancellationToken);
 }

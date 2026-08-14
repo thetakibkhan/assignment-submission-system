@@ -27,6 +27,7 @@ type AcademicRecord = {
 };
 
 type AccountAction = "create" | "manage" | "update";
+type Submission = { id: string; status: string; studentName: string; submittedAt: string; };
 
 type CreatedAccount = {
   institutionalId: string;
@@ -64,6 +65,10 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
 export function AdminSetupConsole({ activeSection }: { activeSection: DashboardSection }) {
   const router = useRouter();
   const [accounts, setAccounts] = useState<Account[]>([]);
+  const [submissions, setSubmissions] = useState<Submission[]>([]);
+  const [accountSearch, setAccountSearch] = useState("");
+  const [academicSearch, setAcademicSearch] = useState("");
+  const [submissionSearch, setSubmissionSearch] = useState("");
   const [classCourses, setClassCourses] = useState<AcademicRecord[]>([]);
   const [subjects, setSubjects] = useState<AcademicRecord[]>([]);
   const [message, setMessage] = useState("Loading academic setup…");
@@ -87,6 +92,13 @@ export function AdminSetupConsole({ activeSection }: { activeSection: DashboardS
     [subjects, selectedSubjectId],
   );
 
+  const normalizedAccountSearch = accountSearch.trim().toLocaleLowerCase();
+  const normalizedAcademicSearch = academicSearch.trim().toLocaleLowerCase();
+  const normalizedSubmissionSearch = submissionSearch.trim().toLocaleLowerCase();
+  const filteredAccounts = accounts.filter((account) => (account.fullName + " " + account.institutionalId + " " + account.role).toLocaleLowerCase().includes(normalizedAccountSearch));
+  const filteredClassCourses = classCourses.filter((record) => (record.name + " " + record.code).toLocaleLowerCase().includes(normalizedAcademicSearch));
+  const filteredSubjects = subjects.filter((record) => (record.name + " " + record.code).toLocaleLowerCase().includes(normalizedAcademicSearch));
+  const filteredSubmissions = submissions.filter((submission) => (submission.studentName + " " + submission.status).toLocaleLowerCase().includes(normalizedSubmissionSearch));
   const activeStudents = accounts.filter((account) => account.isActive && account.role === "Student");
   const activeTeachers = accounts.filter((account) => account.isActive && account.role === "Teacher");
   const availableClassCourses = classCourses.filter((classCourse) => !classCourse.isArchived);
@@ -95,14 +107,16 @@ export function AdminSetupConsole({ activeSection }: { activeSection: DashboardS
 
   const loadSetup = useCallback(async () => {
     try {
-      const [loadedAccounts, loadedClassCourses, loadedSubjects] = await Promise.all([
+      const [loadedAccounts, loadedClassCourses, loadedSubjects, loadedSubmissions] = await Promise.all([
         request<Account[]>("/api/admin/users"),
         request<AcademicRecord[]>("/api/admin/classes-courses"),
         request<AcademicRecord[]>("/api/admin/subjects"),
+        request<Submission[]>("/api/admin/submissions"),
       ]);
       setAccounts(loadedAccounts);
       setClassCourses(loadedClassCourses);
       setSubjects(loadedSubjects);
+      setSubmissions(loadedSubmissions);
       setSelectedAccountId((currentId) => currentId || loadedAccounts[0]?.id || "");
       setSelectedClassCourseId((currentId) => currentId || loadedClassCourses[0]?.id || "");
       setSelectedSubjectId((currentId) => currentId || loadedSubjects[0]?.id || "");
@@ -279,7 +293,7 @@ export function AdminSetupConsole({ activeSection }: { activeSection: DashboardS
       <header className="admin-console__header">
         <div>
           <p className="login-card__eyebrow">Administration</p>
-          <h1>{activeSection === "overview" ? "Admin dashboard" : activeSection === "accounts" ? "Account management" : activeSection === "academic" ? "Academic structure" : activeSection === "enrollment" ? "Student enrollments" : "Teacher responsibilities"}</h1>
+          <h1>{activeSection === "overview" ? "Admin dashboard" : activeSection === "accounts" ? "Account management" : activeSection === "academic" ? "Academic structure" : activeSection === "enrollment" ? "Student enrollments" : activeSection === "responsibilities" ? "Teacher responsibilities" : "Submission records"}</h1>
           <p>Use the navigation to focus on one administration workflow at a time.</p>
         </div>
         <button className="admin-console__refresh" onClick={() => void loadSetup()} type="button">Refresh</button>
@@ -370,12 +384,12 @@ export function AdminSetupConsole({ activeSection }: { activeSection: DashboardS
 
         {academicPanelVisibility.manage && <article className="admin-panel admin-panel--academic">
           <h2>Manage classes/courses</h2>
-          <div className="admin-list">{classCourses.map((classCourse) => <p key={classCourse.id}><b>{classCourse.code}</b> {classCourse.name}{classCourse.isArchived ? " · archived" : ""}{!classCourse.isArchived && <button onClick={() => void archiveAcademicRecord("/api/admin/classes-courses", classCourse.id, "Class/Course")} type="button">Archive</button>}</p>)}</div>
+          <label className="workspace-filter">Search academic records<input aria-label="Search academic records" onChange={(event) => setAcademicSearch(event.target.value)} placeholder="Search name or code" value={academicSearch} /></label><div className="admin-list">{filteredClassCourses.map((classCourse) => <p key={classCourse.id}><b>{classCourse.code}</b> {classCourse.name}{classCourse.isArchived ? " · archived" : ""}{!classCourse.isArchived && <button onClick={() => void archiveAcademicRecord("/api/admin/classes-courses", classCourse.id, "Class/Course")} type="button">Archive</button>}</p>)}</div>
         </article>}
 
         {academicPanelVisibility.manage && <article className="admin-panel admin-panel--academic">
           <h2>Manage subjects</h2>
-          <div className="admin-list">{subjects.map((subject) => <p key={subject.id}><b>{subject.code}</b> {subject.name}{subject.isArchived ? " · archived" : ""}{!subject.isArchived && <button onClick={() => void archiveAcademicRecord("/api/admin/subjects", subject.id, "Subject")} type="button">Archive</button>}</p>)}</div>
+          <div className="admin-list">{filteredSubjects.map((subject) => <p key={subject.id}><b>{subject.code}</b> {subject.name}{subject.isArchived ? " · archived" : ""}{!subject.isArchived && <button onClick={() => void archiveAcademicRecord("/api/admin/subjects", subject.id, "Subject")} type="button">Archive</button>}</p>)}</div>
         </article>}
 
         {academicPanelVisibility.update && <article className="admin-panel admin-panel--academic">
@@ -421,8 +435,10 @@ export function AdminSetupConsole({ activeSection }: { activeSection: DashboardS
 
         {accountAction === "manage" && <article className="admin-panel admin-panel--accounts admin-panel--wide">
           <h2>Manage accounts</h2>
-          <div className="account-table">{accounts.map((account) => <div className="account-row" key={account.id}><div><strong>{account.fullName}</strong><span>{account.institutionalId} · {account.role}</span></div><div><span className={account.isActive ? "status status--active" : "status"}>{account.isActive ? "Active" : "Inactive"}</span><button onClick={() => void updateActivation(account)} type="button">{account.isActive ? "Deactivate" : "Reactivate"}</button></div></div>)}</div>
+          <label className="workspace-filter">Search accounts<input aria-label="Search accounts" onChange={(event) => setAccountSearch(event.target.value)} placeholder="Search name, ID, or role" value={accountSearch} /></label><div className="account-table">{filteredAccounts.map((account) => <div className="account-row" key={account.id}><div><strong>{account.fullName}</strong><span>{account.institutionalId} · {account.role}</span></div><div><span className={account.isActive ? "status status--active" : "status"}>{account.isActive ? "Active" : "Inactive"}</span><button onClick={() => void updateActivation(account)} type="button">{account.isActive ? "Deactivate" : "Reactivate"}</button></div></div>)}</div>
         </article>}
+
+        {activeSection === "submissions" && <article className="admin-panel admin-panel--submissions admin-panel--wide"><h2>Submission records</h2><p className="account-panel__hint">Search the records already available to administrators.</p><label className="workspace-filter">Search submissions<input aria-label="Search submissions" onChange={(event) => setSubmissionSearch(event.target.value)} placeholder="Search student or status" value={submissionSearch} /></label><div className="admin-list">{filteredSubmissions.length === 0 ? <p>No matching submissions.</p> : filteredSubmissions.map((submission) => <p key={submission.id}><b>{submission.studentName}</b><span>{submission.status} · submitted {new Date(submission.submittedAt).toLocaleString()}</span></p>)}</div></article>}
 
         {accountAction === "update" && <article className="admin-panel admin-panel--accounts admin-panel--wide">
           <h2>Update account</h2>

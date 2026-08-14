@@ -2,6 +2,7 @@ using AssignmentSubmissionSystem.Domain.Accounts;
 using AssignmentSubmissionSystem.Domain.Academics;
 using AssignmentSubmissionSystem.Domain.Assignments;
 using AssignmentSubmissionSystem.Domain.Submissions;
+using AssignmentSubmissionSystem.Domain.Notifications;
 using AssignmentSubmissionSystem.Infrastructure.Authentication;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
@@ -31,6 +32,8 @@ public sealed class ApplicationDbContext : IdentityDbContext<ApplicationUser, Id
     public DbSet<SubmissionReviewRevision> SubmissionReviewRevisions => Set<SubmissionReviewRevision>();
 
     public DbSet<Subject> Subjects => Set<Subject>();
+
+    public DbSet<UserNotification> UserNotifications => Set<UserNotification>();
 
     public DbSet<TeacherResponsibility> TeacherResponsibilities => Set<TeacherResponsibility>();
 
@@ -121,6 +124,16 @@ public sealed class ApplicationDbContext : IdentityDbContext<ApplicationUser, Id
             entity.Property(revision => revision.Status).HasConversion<string>().HasMaxLength(20).IsRequired();
             entity.HasIndex(revision => new { revision.SubmissionId, revision.RecordedAt });
             entity.HasOne<Submission>().WithMany().HasForeignKey(revision => revision.SubmissionId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        builder.Entity<UserNotification>(entity =>
+        {
+            entity.Property(notification => notification.Message).HasMaxLength(500).IsRequired();
+            entity.Property(notification => notification.Type).HasConversion<string>().HasMaxLength(50).IsRequired();
+            entity.HasIndex(notification => new { notification.RecipientUserId, notification.CreatedAt });
+            entity.HasOne<ApplicationUser>().WithMany().HasForeignKey(notification => notification.RecipientUserId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne<Assignment>().WithMany().HasForeignKey(notification => notification.AssignmentId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne<Submission>().WithMany().HasForeignKey(notification => notification.SubmissionId).OnDelete(DeleteBehavior.Restrict);
         });
 
         builder.Entity<ClassCourse>(entity =>

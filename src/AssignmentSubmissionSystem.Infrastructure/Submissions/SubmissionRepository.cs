@@ -1,5 +1,6 @@
 using AssignmentSubmissionSystem.Application.Submissions;
 using AssignmentSubmissionSystem.Domain.Submissions;
+using AssignmentSubmissionSystem.Domain.Notifications;
 using AssignmentSubmissionSystem.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -109,6 +110,18 @@ public sealed class SubmissionRepository : ISubmissionRepository
     {
         _databaseContext.SubmissionRevisions.Add(revision);
         _databaseContext.Submissions.Update(submission);
+        await _databaseContext.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task UpdateWithReviewRevisionAndNotificationAsync(
+        Submission submission,
+        SubmissionReviewRevision revision,
+        UserNotification notification,
+        CancellationToken cancellationToken)
+    {
+        _databaseContext.SubmissionReviewRevisions.Add(revision);
+        _databaseContext.Submissions.Update(submission);
+        await _databaseContext.UserNotifications.AddAsync(notification, cancellationToken);
         await _databaseContext.SaveChangesAsync(cancellationToken);
     }
 }

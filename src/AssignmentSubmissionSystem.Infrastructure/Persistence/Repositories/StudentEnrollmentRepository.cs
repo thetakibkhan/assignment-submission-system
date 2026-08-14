@@ -31,6 +31,15 @@ public sealed class StudentEnrollmentRepository : IStudentEnrollmentRepository
             cancellationToken);
     }
 
+    public async Task<IReadOnlyList<Guid>> GetActiveStudentUserIdsAsync(Guid classCourseId, CancellationToken cancellationToken)
+    {
+        return await (from enrollment in _databaseContext.StudentEnrollments.AsNoTracking()
+                      join user in _databaseContext.Users.AsNoTracking() on enrollment.StudentUserId equals user.Id
+                      where enrollment.ClassCourseId == classCourseId && enrollment.EndedAt == null && user.IsActive
+                      select enrollment.StudentUserId)
+            .ToListAsync(cancellationToken);
+    }
+
     public Task<StudentEnrollment?> GetByIdAsync(Guid id, CancellationToken cancellationToken)
     {
         return _databaseContext.StudentEnrollments.SingleOrDefaultAsync(

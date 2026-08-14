@@ -1,4 +1,6 @@
 using AssignmentSubmissionSystem.Application.AcademicSetup.TeacherResponsibilities;
+using AssignmentSubmissionSystem.Application.AcademicSetup.Enrollments;
+using AssignmentSubmissionSystem.Domain.Notifications;
 using AssignmentSubmissionSystem.Domain.Assignments;
 
 namespace AssignmentSubmissionSystem.Application.Assignments;
@@ -7,11 +9,13 @@ public sealed class AssignmentService : IAssignmentService
 {
     private readonly IAssignmentRepository _assignmentRepository;
     private readonly ITeacherResponsibilityRepository _teacherResponsibilityRepository;
+    private readonly IStudentEnrollmentRepository _studentEnrollmentRepository;
 
-    public AssignmentService(IAssignmentRepository assignmentRepository, ITeacherResponsibilityRepository teacherResponsibilityRepository)
+    public AssignmentService(IAssignmentRepository assignmentRepository, ITeacherResponsibilityRepository teacherResponsibilityRepository, IStudentEnrollmentRepository studentEnrollmentRepository)
     {
         _assignmentRepository = assignmentRepository;
         _teacherResponsibilityRepository = teacherResponsibilityRepository;
+        _studentEnrollmentRepository = studentEnrollmentRepository;
     }
 
     public async Task<Assignment> CreateAsync(CreateAssignmentCommand command, Guid teacherUserId, CancellationToken cancellationToken)
@@ -41,8 +45,13 @@ public sealed class AssignmentService : IAssignmentService
     {
         Assignment assignment = await GetOwnedAsync(id, teacherUserId, cancellationToken);
         await EnsureActiveScopeAsync(assignment.ClassCourseId, assignment.SubjectId, teacherUserId, cancellationToken);
-        assignment.Publish(DateTimeOffset.UtcNow);
-        await _assignmentRepository.UpdateAsync(assignment, cancellationToken);
+        DateTimeOffset createdAt = DateTimeOffset.UtcNow;
+        assignment.Publish(createdAt);
+        IReadOnlyList<Guid> studentUserIds = await _studentEnrollmentRepository.GetActiveStudentUserIdsAsync(assignment.ClassCourseId, cancellationToken);
+        IReadOnlyList<UserNotification> notifications = studentUserIds
+            .Select(studentUserId => new UserNotification(Guid.CreateVersion7(), studentUserId, NotificationType.AssignmentPublished, assignment.Id, null, "A new assignment is available: " + assignment.Title, createdAt))
+            .ToList();
+        await _assignmentRepository.UpdateWithNotificationsAsync(assignment, notifications, cancellationToken);
     }
 
     public async Task UnpublishAsync(Guid id, Guid teacherUserId, CancellationToken cancellationToken)

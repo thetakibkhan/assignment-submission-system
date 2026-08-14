@@ -1,5 +1,6 @@
 using AssignmentSubmissionSystem.Application.Assignments;
 using AssignmentSubmissionSystem.Domain.Assignments;
+using AssignmentSubmissionSystem.Domain.Notifications;
 using AssignmentSubmissionSystem.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -16,4 +17,5 @@ public sealed class AssignmentRepository : IAssignmentRepository
     public Task<Assignment?> GetByIdAsync(Guid id, CancellationToken cancellationToken) => _databaseContext.Assignments.SingleOrDefaultAsync(assignment => assignment.Id == id, cancellationToken);
     public Task<bool> HasSubmissionsAsync(Guid assignmentId, CancellationToken cancellationToken) => _databaseContext.Submissions.AnyAsync(submission => submission.AssignmentId == assignmentId, cancellationToken);
     public async Task UpdateAsync(Assignment assignment, CancellationToken cancellationToken) { _databaseContext.Assignments.Update(assignment); await _databaseContext.SaveChangesAsync(cancellationToken); }
+    public async Task UpdateWithNotificationsAsync(Assignment assignment, IReadOnlyList<UserNotification> notifications, CancellationToken cancellationToken) { _databaseContext.Assignments.Update(assignment); await _databaseContext.UserNotifications.AddRangeAsync(notifications, cancellationToken); await _databaseContext.SaveChangesAsync(cancellationToken); }
 }

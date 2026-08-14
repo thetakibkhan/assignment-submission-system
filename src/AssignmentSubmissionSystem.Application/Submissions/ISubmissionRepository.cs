@@ -1,4 +1,5 @@
 using AssignmentSubmissionSystem.Domain.Submissions;
+using AssignmentSubmissionSystem.Domain.Notifications;
 
 namespace AssignmentSubmissionSystem.Application.Submissions;
 
@@ -38,5 +39,11 @@ public interface ISubmissionRepository
     Task UpdateWithRevisionAsync(
         Submission submission,
         SubmissionRevision revision,
+        CancellationToken cancellationToken);
+
+    Task UpdateWithReviewRevisionAndNotificationAsync(
+        Submission submission,
+        SubmissionReviewRevision revision,
+        UserNotification notification,
         CancellationToken cancellationToken);
 }
