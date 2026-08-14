@@ -5,7 +5,10 @@ namespace AssignmentSubmissionSystem.Application.Submissions;
 
 public interface ISubmissionRepository
 {
-    Task AddAsync(Submission submission, CancellationToken cancellationToken);
+    Task AddWithNotificationAsync(
+        Submission submission,
+        UserNotification notification,
+        CancellationToken cancellationToken);
 
     Task<IReadOnlyList<TeacherSubmissionItem>> GetForTeacherAssignmentAsync(
         Guid assignmentId,

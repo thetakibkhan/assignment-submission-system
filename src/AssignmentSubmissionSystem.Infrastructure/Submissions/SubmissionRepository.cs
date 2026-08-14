@@ -15,9 +15,13 @@ public sealed class SubmissionRepository : ISubmissionRepository
         _databaseContext = databaseContext;
     }
 
-    public async Task AddAsync(Submission submission, CancellationToken cancellationToken)
+    public async Task AddWithNotificationAsync(
+        Submission submission,
+        UserNotification notification,
+        CancellationToken cancellationToken)
     {
         await _databaseContext.Submissions.AddAsync(submission, cancellationToken);
+        await _databaseContext.UserNotifications.AddAsync(notification, cancellationToken);
         try
         {
             await _databaseContext.SaveChangesAsync(cancellationToken);

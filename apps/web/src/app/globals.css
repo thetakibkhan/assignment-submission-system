@@ -858,6 +858,9 @@ body {
 
 .teacher-assignment__readiness { color: #fbbf24 !important; font-size: .75rem !important; margin-bottom: 0 !important; }
 .teacher-review-queue small { color: #86efac; font-size: .68rem; }
+.teacher-review-queue button[aria-pressed="true"] span { color: #52525b; }
+.teacher-review-queue button[aria-pressed="true"] small { color: #047857; }
+.teacher-review-queue button:focus-visible { outline: 2px solid #a1a1aa; outline-offset: -2px; }
 .teacher-review-detail__attachment { background: #fafafa; border-radius: .45rem; color: #18181b; display: inline-block; font-size: .8rem; font-weight: 700; margin-top: .5rem; padding: .65rem .8rem; text-decoration: none; } .teacher-review-detail__attachment:hover { background: #d4d4d8; color: #18181b; }
 
 

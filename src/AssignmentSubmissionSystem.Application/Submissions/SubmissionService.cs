@@ -57,7 +57,18 @@ public sealed class SubmissionService : ISubmissionService
             attachment?.OriginalFileName,
             attachment?.ContentType,
             attachment?.StorageName);
-        await _submissionRepository.AddAsync(submission, cancellationToken);
+        UserNotification notification = new(
+            Guid.CreateVersion7(),
+            assignment.TeacherUserId,
+            NotificationType.SubmissionReceived,
+            assignment.Id,
+            submission.Id,
+            "A student submitted work for: " + assignment.Title,
+            submission.SubmittedAt);
+        await _submissionRepository.AddWithNotificationAsync(
+            submission,
+            notification,
+            cancellationToken);
 
         return submission;
     }
