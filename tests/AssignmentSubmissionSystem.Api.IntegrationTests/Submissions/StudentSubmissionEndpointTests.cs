@@ -40,6 +40,28 @@ public sealed class StudentSubmissionEndpointTests : IClassFixture<AuthWebApplic
     }
 
     [Fact]
+    public async Task GetAssignments_ShouldPreventReturningToDraft_WhenStudentWorkExists()
+    {
+        Guid assignmentId = await CreatePublishedAssignmentAsync(allowSubmissionUpdates: true);
+        using HttpClient studentClient = await CreateAuthenticatedClientAsync("STU-001", "Student123!");
+        using MultipartFormDataContent content = CreateSubmissionContent("My final answer.");
+
+        HttpResponseMessage submissionResponse = await studentClient.PostAsync(
+            "/api/student/assignments/" + assignmentId + "/submission",
+            content);
+        submissionResponse.EnsureSuccessStatusCode();
+
+        using HttpClient teacherClient = await CreateAuthenticatedClientAsync("TCH-001", "Teacher123!");
+        IReadOnlyList<TeacherAssignmentResponse>? assignments = await teacherClient
+            .GetFromJsonAsync<IReadOnlyList<TeacherAssignmentResponse>>("/api/teacher/assignments");
+        TeacherAssignmentResponse assignment = Assert.Single(
+            assignments ?? [],
+            item => item.Id == assignmentId);
+
+        Assert.False(assignment.CanReturnToDraft ?? true);
+    }
+
+    [Fact]
     public async Task Create_ShouldNotifyTheOwningTeacher_WhenWorkIsSubmitted()
     {
         Guid assignmentId = await CreatePublishedAssignmentAsync(allowSubmissionUpdates: true);
@@ -373,6 +395,13 @@ public sealed class StudentSubmissionEndpointTests : IClassFixture<AuthWebApplic
         public string Status { get; init; } = string.Empty;
 
         public string? AttachmentFileName { get; init; }
+    }
+
+    private sealed class TeacherAssignmentResponse
+    {
+        public bool? CanReturnToDraft { get; init; }
+
+        public Guid Id { get; init; }
     }
 
     private sealed class NotificationResponse
