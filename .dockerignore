@@ -1,0 +1,15 @@
+.git
+.next
+node_modules
+**/node_modules
+**/.next
+.local-data
+docs
+.env
+.env.*
+!/.env.example
+appsettings.Development.json
+bin
+obj
+**/bin
+**/obj

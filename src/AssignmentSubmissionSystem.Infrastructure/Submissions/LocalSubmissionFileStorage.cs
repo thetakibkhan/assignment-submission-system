@@ -1,4 +1,5 @@
 using AssignmentSubmissionSystem.Application.Submissions;
+using Microsoft.Extensions.Options;
 
 namespace AssignmentSubmissionSystem.Infrastructure.Submissions;
 
@@ -6,9 +7,11 @@ public sealed class LocalSubmissionFileStorage : ISubmissionFileStorage
 {
     private readonly string _storageRoot;
 
-    public LocalSubmissionFileStorage()
+    public LocalSubmissionFileStorage(IOptions<SubmissionStorageOptions> options)
     {
-        _storageRoot = Path.Combine(Directory.GetCurrentDirectory(), ".local-data", "submissions");
+        _storageRoot = string.IsNullOrWhiteSpace(options.Value.RootPath)
+            ? Path.Combine(Directory.GetCurrentDirectory(), ".local-data", "submissions")
+            : options.Value.RootPath;
     }
 
     public Task DeleteAsync(string storageName, CancellationToken cancellationToken)

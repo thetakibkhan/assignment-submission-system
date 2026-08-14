@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using System.Threading.RateLimiting;
 using AssignmentSubmissionSystem.Api.Authentication;
 using System.Text;
 using AssignmentSubmissionSystem.Application.AccountManagement;
@@ -21,9 +22,12 @@ using AssignmentSubmissionSystem.Infrastructure.Submissions;
 using AssignmentSubmissionSystem.Infrastructure.Notifications;
 using AssignmentSubmissionSystem.Infrastructure.Dashboards;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.AspNetCore.RateLimiting;
+using Npgsql;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -39,8 +43,15 @@ if (string.IsNullOrWhiteSpace(jwtOptions.Issuer)
     throw new InvalidOperationException("JWT configuration must include issuer, audience, and a signing key of at least 32 characters.");
 }
 
-string connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
-    ?? throw new InvalidOperationException("The DefaultConnection connection string is required.");
+string connectionString = GetConnectionString(builder.Configuration);
+
+string? dataProtectionKeyRingPath = builder.Configuration["DataProtection:KeyRingPath"];
+
+if (!string.IsNullOrWhiteSpace(dataProtectionKeyRingPath))
+{
+    Directory.CreateDirectory(dataProtectionKeyRingPath);
+    builder.Services.AddDataProtection().PersistKeysToFileSystem(new DirectoryInfo(dataProtectionKeyRingPath));
+}
 
 builder.Services.AddControllers();
 builder.Services.AddProblemDetails();
@@ -55,6 +66,16 @@ builder.Services.AddSwaggerGen(options =>
     });
 });
 builder.Services.AddHealthChecks();
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.AddFixedWindowLimiter("Authentication", limiterOptions =>
+    {
+        limiterOptions.PermitLimit = 10;
+        limiterOptions.Window = TimeSpan.FromMinutes(1);
+        limiterOptions.QueueLimit = 0;
+    });
+});
 builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseNpgsql(connectionString));
 builder.Services.AddIdentity<ApplicationUser, IdentityRole<Guid>>(options =>
 {
@@ -70,7 +91,11 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole<Guid>>(options =>
     .AddDefaultTokenProviders();
 builder.Services.Configure<DemoAccountOptions>(builder.Configuration.GetSection(DemoAccountOptions.SectionName));
 builder.Services.Configure<DemoDataOptions>(builder.Configuration.GetSection(DemoDataOptions.SectionName));
+builder.Services.Configure<BootstrapAdminOptions>(
+    builder.Configuration.GetSection(BootstrapAdminOptions.SectionName));
 builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection(JwtOptions.SectionName));
+builder.Services.Configure<SubmissionStorageOptions>(
+    builder.Configuration.GetSection(SubmissionStorageOptions.SectionName));
 builder.Services.AddScoped<DatabaseInitializer>();
 builder.Services.AddScoped<DemoScenarioSeeder>();
 builder.Services.AddScoped<IAccountManagementService, AccountManagementService>();
@@ -185,6 +210,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 app.UseCors("WebApplication");
+app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
@@ -197,6 +223,49 @@ using (IServiceScope scope = app.Services.CreateScope())
 }
 
 app.Run();
+
+static string GetConnectionString(IConfiguration configuration)
+{
+    string? configuredConnectionString = configuration.GetConnectionString("DefaultConnection");
+
+    if (!string.IsNullOrWhiteSpace(configuredConnectionString))
+    {
+        return configuredConnectionString;
+    }
+
+    string? databaseUrl = configuration["DATABASE_URL"];
+
+    if (string.IsNullOrWhiteSpace(databaseUrl))
+    {
+        throw new InvalidOperationException("The DefaultConnection connection string or DATABASE_URL is required.");
+    }
+
+    Uri databaseUri = new(databaseUrl);
+
+    if (!string.Equals(databaseUri.Scheme, "postgres", StringComparison.OrdinalIgnoreCase)
+        && !string.Equals(databaseUri.Scheme, "postgresql", StringComparison.OrdinalIgnoreCase))
+    {
+        throw new InvalidOperationException("DATABASE_URL must use the postgres or postgresql scheme.");
+    }
+
+    string[] credentials = databaseUri.UserInfo.Split(':', 2);
+
+    if (credentials.Length != 2 || string.IsNullOrWhiteSpace(databaseUri.AbsolutePath.Trim('/')))
+    {
+        throw new InvalidOperationException("DATABASE_URL must include database credentials and a database name.");
+    }
+
+    var connectionStringBuilder = new NpgsqlConnectionStringBuilder
+    {
+        Host = databaseUri.Host,
+        Port = databaseUri.IsDefaultPort ? 5432 : databaseUri.Port,
+        Database = Uri.UnescapeDataString(databaseUri.AbsolutePath.Trim('/')),
+        Username = Uri.UnescapeDataString(credentials[0]),
+        Password = Uri.UnescapeDataString(credentials[1])
+    };
+
+    return connectionStringBuilder.ConnectionString;
+}
 
 public partial class Program
 {

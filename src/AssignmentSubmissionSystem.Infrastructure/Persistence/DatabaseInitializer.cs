@@ -9,6 +9,7 @@ namespace AssignmentSubmissionSystem.Infrastructure.Persistence;
 public sealed class DatabaseInitializer
 {
     private readonly ApplicationDbContext _databaseContext;
+    private readonly BootstrapAdminOptions _bootstrapAdmin;
     private readonly DemoAccountOptions _demoAccounts;
     private readonly DemoDataOptions _demoData;
     private readonly DemoScenarioSeeder _demoScenarioSeeder;
@@ -17,6 +18,7 @@ public sealed class DatabaseInitializer
 
     public DatabaseInitializer(
         ApplicationDbContext databaseContext,
+        IOptions<BootstrapAdminOptions> bootstrapAdmin,
         IOptions<DemoAccountOptions> demoAccounts,
         IOptions<DemoDataOptions> demoData,
         DemoScenarioSeeder demoScenarioSeeder,
@@ -24,6 +26,7 @@ public sealed class DatabaseInitializer
         UserManager<ApplicationUser> userManager)
     {
         _databaseContext = databaseContext;
+        _bootstrapAdmin = bootstrapAdmin.Value;
         _demoAccounts = demoAccounts.Value;
         _demoData = demoData.Value;
         _demoScenarioSeeder = demoScenarioSeeder;
@@ -41,6 +44,8 @@ public sealed class DatabaseInitializer
         {
             await _databaseContext.Database.EnsureCreatedAsync(cancellationToken);
         }
+
+        await EnsureBootstrapAdministratorAsync();
 
         if (!_demoData.Enabled)
         {
@@ -70,6 +75,37 @@ public sealed class DatabaseInitializer
         {
             throw new InvalidOperationException("The required application role could not be created.");
         }
+    }
+
+    private async Task EnsureBootstrapAdministratorAsync()
+    {
+        if (!_bootstrapAdmin.Enabled)
+        {
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(_bootstrapAdmin.FullName)
+            || string.IsNullOrWhiteSpace(_bootstrapAdmin.InstitutionalId)
+            || string.IsNullOrWhiteSpace(_bootstrapAdmin.Password))
+        {
+            throw new InvalidOperationException(
+                "Bootstrap administrator full name, institutional ID, and password must be configured.");
+        }
+
+        await EnsureRoleAsync(RoleNames.Admin);
+        IList<ApplicationUser> administrators = await _userManager.GetUsersInRoleAsync(RoleNames.Admin);
+
+        if (administrators.Count > 0)
+        {
+            return;
+        }
+
+        await EnsureUserAsync(
+            _bootstrapAdmin.FullName,
+            _bootstrapAdmin.InstitutionalId,
+            _bootstrapAdmin.Email,
+            _bootstrapAdmin.Password,
+            RoleNames.Admin);
     }
 
     private async Task EnsureMockAcademicDataAsync(CancellationToken cancellationToken)

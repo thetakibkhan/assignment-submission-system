@@ -104,6 +104,21 @@ cp .env.example .env
 
 `.env`, `appsettings.Development.json`, uploads, build output, and other local data are ignored by Git. Never use the demo values in a deployed environment. For a non-demo environment, set `DEMO_DATA_ENABLED=false` and provide deployment-specific database and JWT configuration outside source control.
 
+## Deploying to Render
+
+The repository includes a production [Render Blueprint](render.yaml). It creates a separate web service, API service, and managed PostgreSQL database. The API uses a persistent disk for submission attachments, so use a paid Render web-service plan for the API.
+
+1. Push the committed code to GitHub, then create a new Blueprint in Render from this repository.
+2. During Blueprint setup, provide these requested values:
+   - NEXT_PUBLIC_API_BASE_URL: the public HTTPS URL of the API service, for example https://assignment-submission-system-api.onrender.com
+   - Cors__AllowedOrigins__0: the public HTTPS URL of the web service, for example https://assignment-submission-system-web.onrender.com
+   - Jwt__Issuer: the API URL or another stable production issuer identifier
+   - Jwt__Audience: a stable identifier for the web client, such as assignment-submission-system-web
+3. Provide BootstrapAdmin__FullName, BootstrapAdmin__InstitutionalId, BootstrapAdmin__Email, and BootstrapAdmin__Password. The API creates this administrator only when no administrator exists. Keep DemoData__Enabled=false. After confirming the first administrator can sign in, set BootstrapAdmin__Enabled=false and remove BootstrapAdmin__Password from Render.
+4. After the API is healthy at /health, verify sign-in, upload/download, and role access through the deployed web URL.
+
+Keep the web and API services on their default onrender.com domains or on subdomains of the same custom domain so the Strict authentication cookie remains same-site. Render provides HTTPS for web services. Attachments and ASP.NET Data Protection keys are written to the API persistent disk under /var/data; database records are stored in Render Postgres. Do not change the API disk mount path after users begin uploading work.
+
 ## Manual development commands
 
 The Docker path is recommended. If the .NET SDK 10, Node.js, and PostgreSQL are already installed locally:

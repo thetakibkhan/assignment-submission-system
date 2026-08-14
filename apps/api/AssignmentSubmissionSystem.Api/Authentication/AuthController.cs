@@ -3,6 +3,7 @@ using AssignmentSubmissionSystem.Infrastructure.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace AssignmentSubmissionSystem.Api.Authentication;
 
@@ -88,6 +89,7 @@ public sealed class AuthController : ControllerBase
 
     [AllowAnonymous]
     [HttpPost("login")]
+    [EnableRateLimiting("Authentication")]
     public async Task<ActionResult<LoginResponse>> LoginAsync(LoginRequest request)
     {
         ApplicationUser? user = await _userManager.FindByNameAsync(request.InstitutionalId.Trim());

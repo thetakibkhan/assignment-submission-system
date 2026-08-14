@@ -1,0 +1,57 @@
+services:
+  - type: web
+    name: assignment-submission-system-api
+    runtime: docker
+    dockerfilePath: ./apps/api/Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+    plan: starter
+    disk:
+      name: submission-uploads
+      mountPath: /var/data
+      sizeGB: 1
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: assignment-submission-system-db
+          property: connectionString
+      - key: SubmissionStorage__RootPath
+        value: /var/data/submissions
+      - key: DataProtection__KeyRingPath
+        value: /var/data/data-protection-keys
+      - key: DemoData__Enabled
+        value: "false"
+      - key: BootstrapAdmin__Enabled
+        value: "true"
+      - key: BootstrapAdmin__FullName
+        sync: false
+      - key: BootstrapAdmin__InstitutionalId
+        sync: false
+      - key: BootstrapAdmin__Email
+        sync: false
+      - key: BootstrapAdmin__Password
+        sync: false
+      - key: Jwt__Issuer
+        sync: false
+      - key: Jwt__Audience
+        sync: false
+      - key: Jwt__SigningKey
+        generateValue: true
+      - key: Cors__AllowedOrigins__0
+        sync: false
+
+  - type: web
+    name: assignment-submission-system-web
+    runtime: docker
+    dockerfilePath: ./apps/web/Dockerfile
+    dockerContext: .
+    plan: starter
+    envVars:
+      - key: NEXT_PUBLIC_API_BASE_URL
+        sync: false
+
+databases:
+  - name: assignment-submission-system-db
+    plan: basic-256mb
