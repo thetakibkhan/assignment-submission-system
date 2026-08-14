@@ -1,9 +1,13 @@
 import path from "node:path";
 import type { NextConfig } from "next";
+import { getApiProxyDestination } from "./src/lib/api-routing";
 
 const nextConfig: NextConfig = {
   devIndicators: false,
   poweredByHeader: false,
+  async rewrites() {
+    return [{ destination: getApiProxyDestination(), source: "/api/:path*" }];
+  },
   async headers() {
     return [
       {

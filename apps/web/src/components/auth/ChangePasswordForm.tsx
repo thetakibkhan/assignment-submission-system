@@ -1,6 +1,7 @@
 "use client";
 
 import { type FormEvent, useState } from "react";
+import { browserApiBaseUrl } from "@/lib/api-routing";
 
 interface ChangePasswordResponse {
   redirectPath: string;
@@ -39,10 +40,8 @@ export function ChangePasswordForm() {
       return;
     }
 
-    const apiBaseUrl = (process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:5112").replace(/\/$/, "");
-
     try {
-      const response = await fetch(apiBaseUrl + "/api/auth/change-password", {
+      const response = await fetch(browserApiBaseUrl + "/api/auth/change-password", {
         body: JSON.stringify({ currentPassword, newPassword }),
         credentials: "include",
         headers: {

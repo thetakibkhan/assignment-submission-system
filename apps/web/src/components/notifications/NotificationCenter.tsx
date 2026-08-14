@@ -2,6 +2,7 @@
 
 import { Archive, Bell, ChevronRight, GripVertical, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { browserApiBaseUrl } from "@/lib/api-routing";
 
 type Notification = {
   assignmentId: string;
@@ -12,8 +13,6 @@ type Notification = {
   submissionId: string | null;
 };
 
-const apiBaseUrl = (process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:5112").replace(/\/$/, "");
-
 export function NotificationCenter({ destination }: { destination: "/student" | "/teacher" }) {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [isOpen, setIsOpen] = useState(false);
@@ -23,7 +22,7 @@ export function NotificationCenter({ destination }: { destination: "/student" | 
 
   const load = useCallback(async () => {
     try {
-      const response = await fetch(apiBaseUrl + "/api/notifications", { credentials: "include" });
+      const response = await fetch(browserApiBaseUrl + "/api/notifications", { credentials: "include" });
       if (!response.ok) {
         throw new Error("Notifications are unavailable.");
       }
@@ -60,7 +59,7 @@ export function NotificationCenter({ destination }: { destination: "/student" | 
 
   async function markAsRead(id: string) {
     const response = await fetch(
-      apiBaseUrl + "/api/notifications/" + encodeURIComponent(id) + "/read",
+      browserApiBaseUrl + "/api/notifications/" + encodeURIComponent(id) + "/read",
       { credentials: "include", method: "POST" });
 
     if (response.ok) {
@@ -74,7 +73,7 @@ export function NotificationCenter({ destination }: { destination: "/student" | 
     }
 
     const response = await fetch(
-      apiBaseUrl + "/api/notifications/" + encodeURIComponent(item.id),
+      browserApiBaseUrl + "/api/notifications/" + encodeURIComponent(item.id),
       { credentials: "include", method: "DELETE" });
 
     if (response.ok) {
@@ -88,7 +87,7 @@ export function NotificationCenter({ destination }: { destination: "/student" | 
   }
 
   async function markAllAsRead() {
-    const response = await fetch(apiBaseUrl + "/api/notifications/read-all", {
+    const response = await fetch(browserApiBaseUrl + "/api/notifications/read-all", {
       credentials: "include",
       method: "POST"
     });

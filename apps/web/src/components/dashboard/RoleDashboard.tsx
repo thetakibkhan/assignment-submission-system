@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { browserApiBaseUrl } from "@/lib/api-routing";
 
 interface RoleDashboardProps {
   endpoint: string;
@@ -14,12 +15,11 @@ export function RoleDashboard({ endpoint, role }: RoleDashboardProps) {
   const [isVerified, setIsVerified] = useState(false);
 
   useEffect(() => {
-    const apiBaseUrl = (process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:5112").replace(/\/$/, "");
     let isCurrent = true;
 
     async function verifyAccess() {
       try {
-        const response = await fetch(apiBaseUrl + endpoint, {
+        const response = await fetch(browserApiBaseUrl + endpoint, {
           credentials: "include",
         });
 

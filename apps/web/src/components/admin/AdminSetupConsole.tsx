@@ -8,6 +8,7 @@ import {
 } from "@/components/admin/academic-structure-actions";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useCallback, useEffect, useMemo, useState } from "react";
+import { browserApiBaseUrl } from "@/lib/api-routing";
 
 type Account = {
   email: string | null;
@@ -35,10 +36,8 @@ type CreatedAccount = {
   temporaryPassword: string;
 };
 
-const apiBaseUrl = (process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:5112").replace(/\/$/, "");
-
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
-  const response = await fetch(apiBaseUrl + path, {
+  const response = await fetch(browserApiBaseUrl + path, {
     ...options,
     credentials: "include",
     headers: {

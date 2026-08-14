@@ -2,9 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-
-const apiBaseUrl = (process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:5112")
-  .replace(/\/$/, "");
+import { browserApiBaseUrl } from "@/lib/api-routing";
 
 export function SignOutButton({ className }: { className?: string }) {
   const router = useRouter();
@@ -14,7 +12,7 @@ export function SignOutButton({ className }: { className?: string }) {
     setIsSigningOut(true);
 
     try {
-      const response = await fetch(apiBaseUrl + "/api/auth/logout", {
+      const response = await fetch(browserApiBaseUrl + "/api/auth/logout", {
         credentials: "include",
         method: "POST",
       });

@@ -3,6 +3,7 @@
 import { BookOpen, LayoutDashboard, LogOut, type LucideIcon, ShieldCheck, UserRoundPlus, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { createContext, type ReactNode, useContext, useState } from "react";
+import { browserApiBaseUrl } from "@/lib/api-routing";
 
 export type DashboardSection = "overview" | "accounts" | "academic" | "enrollment" | "responsibilities" | "submissions";
 
@@ -30,8 +31,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     setIsSigningOut(true);
 
     try {
-      const apiBaseUrl = (process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:5112").replace(/\/$/, "");
-      const response = await fetch(apiBaseUrl + "/api/auth/logout", {
+      const response = await fetch(browserApiBaseUrl + "/api/auth/logout", {
         credentials: "include",
         method: "POST",
       });

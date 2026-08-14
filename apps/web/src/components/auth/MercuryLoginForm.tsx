@@ -2,6 +2,7 @@
 
 import { type FormEvent, useEffect, useRef, useState } from "react";
 import { BouncyAccordion } from "@/components/ui/be-ui-bouncy-accordion";
+import { browserApiBaseUrl } from "@/lib/api-routing";
 
 interface LoginResponse {
   requiresPasswordChange: boolean;
@@ -113,10 +114,8 @@ export function MercuryLoginForm() {
     const formData = new FormData(event.currentTarget);
     const submittedInstitutionalId = String(formData.get("institutionalId") ?? "");
     const submittedPassword = String(formData.get("password") ?? "");
-    const apiBaseUrl = (process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:5112").replace(/\/$/, "");
-
     try {
-      const response = await fetch(apiBaseUrl + "/api/auth/login", {
+      const response = await fetch(browserApiBaseUrl + "/api/auth/login", {
         body: JSON.stringify({ institutionalId: submittedInstitutionalId, password: submittedPassword }),
         credentials: "include",
         headers: {
