@@ -27,3 +27,12 @@ export function getSubmissionReviewSectionVisibility({
     finalResult: isGraded,
   };
 }
+
+export function selectSubmissionAfterRefresh<T extends { id: string }>(
+  submissions: readonly T[],
+  selectedSubmissionId: string | null,
+): T | null {
+  return submissions.find((submission) => submission.id === selectedSubmissionId)
+    ?? submissions[0]
+    ?? null;
+}
