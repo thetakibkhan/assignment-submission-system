@@ -184,12 +184,10 @@ export function MercuryLoginForm() {
 
       <header className="login-header">
         <span>Assignment Submission System</span>
-        <span>Secure academic workspace</span>
       </header>
 
       <section aria-labelledby="login-heading" className="login-card">
         <header className="login-card__header">
-          <p className="login-card__eyebrow">Account access</p>
           <h1 id="login-heading">Welcome back</h1>
           <p>Sign in to manage assignments, submissions, and academic progress.</p>
         </header>

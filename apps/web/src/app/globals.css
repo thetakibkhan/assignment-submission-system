@@ -161,7 +161,6 @@ body {
   z-index: 1;
 }
 
-.login-header span:last-child { color: #71717a; }
 
 .login-card {
   animation: login-fade-up 800ms cubic-bezier(0.22, 0.61, 0.36, 1) 400ms both;
@@ -368,7 +367,6 @@ body {
 }
 
 @media (max-width: 38rem) {
-  .login-header span:last-child { display: none; }
   .login-card { padding: 1.5rem; }
 }
 
