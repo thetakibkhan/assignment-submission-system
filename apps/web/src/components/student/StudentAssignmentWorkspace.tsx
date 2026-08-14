@@ -63,7 +63,7 @@ export function StudentAssignmentWorkspace() {
       const [loaded, loadedDashboard] = await Promise.all([request<Assignment[]>("/api/student/assignments"), request<StudentDashboard>("/api/dashboard/student")]);
       setAssignments(loaded);
       setDashboard(loadedDashboard);
-      setMessage(loaded.length ? "Your assignment list is up to date." : "No assignments are available for your active enrollments.");
+      setMessage(loaded.length ? "" : "No assignments are available for your active enrollments.");
     } catch (error) {
       if (!handleRequestError(error)) setMessage("The assignment service is unavailable. Please try again.");
     }
@@ -124,7 +124,7 @@ export function StudentAssignmentWorkspace() {
   const showResult = selectedAssignment !== null && submission !== null && shouldShowStudentResult({ deadlinePassed: selectedAssignment.deadlinePassed, marks: submission.marks, status: submission.status });
 
   return <main className="student-console">
-    <header className="student-console__header"><div><p className="login-card__eyebrow">Student workspace</p><h1>My assignments</h1><p>See what needs attention, understand each deadline, and review past work.</p></div><div className="student-console__actions"><NotificationCenter destination="/student" /><SignOutButton className="workspace-sign-out" /><button onClick={() => void loadAssignments()} type="button">Refresh</button></div></header>
+    <header className="student-console__header"><div><p className="login-card__eyebrow">Student workspace</p><h1>My assignments</h1><p>See what needs attention, understand each deadline, and review past work.</p></div><div className="student-console__actions"><NotificationCenter destination="/student" /><SignOutButton className="workspace-sign-out" /></div></header>
     <p aria-live="polite" className="student-console__message">{message}</p>
     <section aria-label="Student overview" className="workspace-overview"><article><span>Open work</span><strong>{dashboard?.openAssignments ?? assignments.filter((assignment) => !assignment.deadlinePassed).length}</strong></article><article><span>Submitted</span><strong>{dashboard?.submittedAssignments ?? submittedCount}</strong></article><article><span>Graded</span><strong>{dashboard?.gradedSubmissions ?? gradedCount}</strong></article></section>
     <div aria-label="Assignment timing" className="student-tabs" role="tablist"><button aria-selected={activeView === "open"} className={activeView === "open" ? "is-active" : ""} onClick={() => changeView("open")} role="tab" type="button">Open</button><button aria-selected={activeView === "past"} className={activeView === "past" ? "is-active" : ""} onClick={() => changeView("past")} role="tab" type="button">Past</button></div>
