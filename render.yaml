@@ -5,11 +5,7 @@ services:
     dockerfilePath: ./apps/api/Dockerfile
     dockerContext: .
     healthCheckPath: /health
-    plan: starter
-    disk:
-      name: submission-uploads
-      mountPath: /var/data
-      sizeGB: 1
+    plan: free
     envVars:
       - key: ASPNETCORE_ENVIRONMENT
         value: Production
@@ -18,9 +14,9 @@ services:
           name: assignment-submission-system-db
           property: connectionString
       - key: SubmissionStorage__RootPath
-        value: /var/data/submissions
+        value: /tmp/submissions
       - key: DataProtection__KeyRingPath
-        value: /var/data/data-protection-keys
+        value: /tmp/data-protection-keys
       - key: DemoData__Enabled
         value: "false"
       - key: BootstrapAdmin__Enabled
@@ -47,11 +43,11 @@ services:
     runtime: docker
     dockerfilePath: ./apps/web/Dockerfile
     dockerContext: .
-    plan: starter
+    plan: free
     envVars:
       - key: NEXT_PUBLIC_API_BASE_URL
         sync: false
 
 databases:
   - name: assignment-submission-system-db
-    plan: basic-256mb
+    plan: free

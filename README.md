@@ -106,7 +106,7 @@ cp .env.example .env
 
 ## Deploying to Render
 
-The repository includes a production [Render Blueprint](render.yaml). It creates a separate web service, API service, and managed PostgreSQL database. The API uses a persistent disk for submission attachments, so use a paid Render web-service plan for the API.
+The repository includes a free demonstration [Render Blueprint](render.yaml). It creates separate web and API services plus a free managed PostgreSQL database without requiring a paid persistent disk.
 
 1. Push the committed code to GitHub, then create a new Blueprint in Render from this repository.
 2. During Blueprint setup, provide these requested values:
@@ -117,7 +117,7 @@ The repository includes a production [Render Blueprint](render.yaml). It creates
 3. Provide BootstrapAdmin__FullName, BootstrapAdmin__InstitutionalId, BootstrapAdmin__Email, and BootstrapAdmin__Password. The API creates this administrator only when no administrator exists. Keep DemoData__Enabled=false. After confirming the first administrator can sign in, set BootstrapAdmin__Enabled=false and remove BootstrapAdmin__Password from Render.
 4. After the API is healthy at /health, verify sign-in, upload/download, and role access through the deployed web URL.
 
-Keep the web and API services on their default onrender.com domains or on subdomains of the same custom domain so the Strict authentication cookie remains same-site. Render provides HTTPS for web services. Attachments and ASP.NET Data Protection keys are written to the API persistent disk under /var/data; database records are stored in Render Postgres. Do not change the API disk mount path after users begin uploading work.
+Keep the web and API services on their default onrender.com domains or on subdomains of the same custom domain so the Strict authentication cookie remains same-site. Render provides HTTPS for web services. On the free tier, attachments and ASP.NET Data Protection keys use the API service ephemeral filesystem and can disappear whenever Render restarts or redeploys that service. Free Render PostgreSQL databases also expire after 30 days. Use this configuration only for evaluation; switch the API to a paid persistent disk and use paid PostgreSQL before storing real institutional data.
 
 ## Manual development commands
 
