@@ -1,7 +1,7 @@
 "use client";
 
-import { Archive, Bell, CheckCheck, ChevronRight, GripVertical, Trash2 } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { Archive, Bell, ChevronRight, GripVertical, Trash2 } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 type Notification = {
   assignmentId: string;
@@ -19,6 +19,7 @@ export function NotificationCenter({ destination }: { destination: "/student" | 
   const [isOpen, setIsOpen] = useState(false);
   const [items, setItems] = useState<Notification[]>([]);
   const [message, setMessage] = useState("");
+  const notificationCenterRef = useRef<HTMLDivElement>(null);
 
   const load = useCallback(async () => {
     try {
@@ -38,6 +39,24 @@ export function NotificationCenter({ destination }: { destination: "/student" | 
     const timer = window.setTimeout(() => void load(), 0);
     return () => window.clearTimeout(timer);
   }, [load]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+    function closeWhenClickingOutside(event: PointerEvent) {
+      if (notificationCenterRef.current?.contains(event.target as Node)) {
+        return;
+      }
+
+      setIsOpen(false);
+      setActiveId(null);
+    }
+
+    document.addEventListener("pointerdown", closeWhenClickingOutside);
+    return () => document.removeEventListener("pointerdown", closeWhenClickingOutside);
+  }, [isOpen]);
 
   async function markAsRead(id: string) {
     const response = await fetch(
@@ -91,7 +110,7 @@ export function NotificationCenter({ destination }: { destination: "/student" | 
 
   const unreadCount = items.filter((item) => !item.isRead).length;
 
-  return <div className="notification-center">
+  return <div className="notification-center" ref={notificationCenterRef}>
     <button
       aria-expanded={isOpen}
       aria-haspopup="dialog"
@@ -101,7 +120,12 @@ export function NotificationCenter({ destination }: { destination: "/student" | 
         const nextOpenState = !isOpen;
         setIsOpen(nextOpenState);
         if (nextOpenState) {
-          void load();
+          void (async () => {
+            await load();
+            await markAllAsRead();
+          })();
+        } else {
+          setActiveId(null);
         }
       }}
       type="button">
@@ -111,9 +135,6 @@ export function NotificationCenter({ destination }: { destination: "/student" | 
     {isOpen && <section aria-label="Notifications" className="notification-center__panel" role="dialog">
       <header>
         <div><strong>Notifications</strong><p>{unreadCount ? unreadCount + " unread" : "You are up to date"}</p></div>
-        <div>
-          <button className="notification-center__read-all" disabled={!unreadCount} onClick={() => void markAllAsRead()} type="button"><CheckCheck size={15} /> Mark all read</button>
-        </div>
       </header>
       {message && <p className="notification-center__message">{message}</p>}
       {!message && items.length === 0 && <p className="notification-center__empty">No notifications yet.</p>}
