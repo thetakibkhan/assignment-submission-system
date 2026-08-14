@@ -134,7 +134,7 @@ export function NotificationCenter({ destination }: { destination: "/student" | 
     </button>
     {isOpen && <section aria-label="Notifications" className="notification-center__panel" role="dialog">
       <header>
-        <div><strong>Notifications</strong><p>{unreadCount ? unreadCount + " unread" : "You are up to date"}</p></div>
+        <div><strong>Notifications</strong>{unreadCount > 0 && <p>{unreadCount} unread</p>}</div>
       </header>
       {message && <p className="notification-center__message">{message}</p>}
       {!message && items.length === 0 && <p className="notification-center__empty">No notifications yet.</p>}
