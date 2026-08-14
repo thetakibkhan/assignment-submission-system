@@ -196,22 +196,27 @@ export function MercuryLoginForm() {
         </form>
 
         <p aria-live="polite" className="login-message">{message}</p>
-        <section aria-labelledby="demo-accounts-heading" className="demo-accounts">
-          <div>
-            <p className="login-card__eyebrow">Local development</p>
-            <h2 id="demo-accounts-heading">Demo accounts</h2>
+        <details className="demo-accounts">
+          <summary>
+            <span>
+              <small>Local development</small>
+              <strong>Demo accounts</strong>
+            </span>
+            <span aria-hidden="true" className="demo-accounts__indicator">+</span>
+          </summary>
+          <div className="demo-accounts__content">
+            <p>Choose an account to fill the sign-in form.</p>
+            <div className="demo-accounts__list">
+              {demoAccounts.map((account) => (
+                <button key={account.institutionalId} onClick={() => selectDemoAccount(account)} type="button">
+                  <span>{account.role}</span>
+                  <strong>{account.institutionalId}</strong>
+                  <code>{account.password}</code>
+                </button>
+              ))}
+            </div>
           </div>
-          <p>Choose an account to fill the sign-in form.</p>
-          <div className="demo-accounts__list">
-            {demoAccounts.map((account) => (
-              <button key={account.institutionalId} onClick={() => selectDemoAccount(account)} type="button">
-                <span>{account.role}</span>
-                <strong>{account.institutionalId}</strong>
-                <code>{account.password}</code>
-              </button>
-            ))}
-          </div>
-        </section>
+        </details>
         <footer className="login-card__footer">Accounts are created and managed by an administrator.</footer>
       </section>
     </main>
