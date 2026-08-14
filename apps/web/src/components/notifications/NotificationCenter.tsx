@@ -1,6 +1,6 @@
 "use client";
 
-import { Archive, Bell, CheckCheck, ChevronRight, GripVertical, RefreshCw, Trash2 } from "lucide-react";
+import { Archive, Bell, CheckCheck, ChevronRight, GripVertical, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
 type Notification = {
@@ -97,7 +97,13 @@ export function NotificationCenter({ destination }: { destination: "/student" | 
       aria-haspopup="dialog"
       aria-label="Open notifications"
       className="notification-center__trigger"
-      onClick={() => setIsOpen((current) => !current)}
+      onClick={() => {
+        const nextOpenState = !isOpen;
+        setIsOpen(nextOpenState);
+        if (nextOpenState) {
+          void load();
+        }
+      }}
       type="button">
       <Bell aria-hidden="true" size={17} />
       {unreadCount > 0 && <span>{unreadCount}</span>}
@@ -106,7 +112,6 @@ export function NotificationCenter({ destination }: { destination: "/student" | 
       <header>
         <div><strong>Notifications</strong><p>{unreadCount ? unreadCount + " unread" : "You are up to date"}</p></div>
         <div>
-          <button aria-label="Refresh notifications" className="notification-center__icon-button" onClick={() => void load()} type="button"><RefreshCw size={15} /></button>
           <button className="notification-center__read-all" disabled={!unreadCount} onClick={() => void markAllAsRead()} type="button"><CheckCheck size={15} /> Mark all read</button>
         </div>
       </header>
