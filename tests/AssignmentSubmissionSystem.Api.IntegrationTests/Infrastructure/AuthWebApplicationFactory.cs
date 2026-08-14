@@ -13,6 +13,7 @@ public sealed class AuthWebApplicationFactory : WebApplicationFactory<Program>
         Environment.SetEnvironmentVariable("DemoAccounts__AdminPassword", "Admin123!");
         Environment.SetEnvironmentVariable("DemoAccounts__TeacherPassword", "Teacher123!");
         Environment.SetEnvironmentVariable("DemoAccounts__StudentPassword", "Student123!");
+        Environment.SetEnvironmentVariable("DemoData__Enabled", "true");
         Environment.SetEnvironmentVariable("Jwt__AccessTokenLifetimeMinutes", "15");
         Environment.SetEnvironmentVariable("Jwt__Audience", "assignment-submission-system-tests");
         Environment.SetEnvironmentVariable("Jwt__Issuer", "assignment-submission-system-tests");

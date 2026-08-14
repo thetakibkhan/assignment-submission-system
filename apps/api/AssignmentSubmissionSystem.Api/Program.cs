@@ -45,7 +45,16 @@ string connectionString = builder.Configuration.GetConnectionString("DefaultConn
 builder.Services.AddControllers();
 builder.Services.AddProblemDetails();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(options =>
+{
+    options.SwaggerDoc("v1", new Microsoft.OpenApi.OpenApiInfo
+    {
+        Title = "Assignment Submission System API",
+        Version = "v1",
+        Description = "Local evaluator API. Sign in through POST /api/auth/login; the browser receives an HTTP-only cookie and each endpoint enforces its documented role."
+    });
+});
+builder.Services.AddHealthChecks();
 builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseNpgsql(connectionString));
 builder.Services.AddIdentity<ApplicationUser, IdentityRole<Guid>>(options =>
 {
@@ -60,8 +69,10 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole<Guid>>(options =>
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultTokenProviders();
 builder.Services.Configure<DemoAccountOptions>(builder.Configuration.GetSection(DemoAccountOptions.SectionName));
+builder.Services.Configure<DemoDataOptions>(builder.Configuration.GetSection(DemoDataOptions.SectionName));
 builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection(JwtOptions.SectionName));
 builder.Services.AddScoped<DatabaseInitializer>();
+builder.Services.AddScoped<DemoScenarioSeeder>();
 builder.Services.AddScoped<IAccountManagementService, AccountManagementService>();
 builder.Services.AddScoped<IAssignmentRepository, AssignmentRepository>();
 builder.Services.AddScoped<IAssignmentService, AssignmentService>();
@@ -151,11 +162,13 @@ builder.Services.AddAuthorization(options =>
         policy.RequireAssertion(context => !context.User.HasClaim(AuthorizationPolicies.PasswordChangeRequiredClaim, "true"));
     });
 });
+string[] allowedWebOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? ["http://localhost:3000"];
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("WebApplication", policy =>
     {
-        policy.WithOrigins("http://localhost:3000")
+        policy.WithOrigins(allowedWebOrigins)
             .AllowAnyHeader()
             .AllowAnyMethod()
             .AllowCredentials();
@@ -175,6 +188,7 @@ app.UseCors("WebApplication");
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+app.MapHealthChecks("/health").AllowAnonymous();
 
 using (IServiceScope scope = app.Services.CreateScope())
 {

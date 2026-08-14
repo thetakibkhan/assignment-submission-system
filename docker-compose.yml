@@ -4,7 +4,7 @@ services:
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-assignment_submission}
       POSTGRES_USER: ${POSTGRES_USER:-assignment_app}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env before starting the database.}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-assignment-demo-postgres-password}
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
       interval: 5s
@@ -20,17 +20,47 @@ services:
     working_dir: /workspace
     environment:
       ASPNETCORE_ENVIRONMENT: Development
-      ConnectionStrings__DefaultConnection: Host=database;Port=5432;Database=${POSTGRES_DB:-assignment_submission};Username=${POSTGRES_USER:-assignment_app};Password=${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env before starting the API.}
+      ConnectionStrings__DefaultConnection: Host=database;Port=5432;Database=${POSTGRES_DB:-assignment_submission};Username=${POSTGRES_USER:-assignment_app};Password=${POSTGRES_PASSWORD:-assignment-demo-postgres-password}
+      Cors__AllowedOrigins__0: http://localhost:3000
+      DemoAccounts__AdminPassword: ${DEMO_ADMIN_PASSWORD:-Admin!nVPT7mB4lxeZBUq2XwI}
+      DemoAccounts__TeacherPassword: ${DEMO_TEACHER_PASSWORD:-Teacher!XQt7fpdAg1jQJ7fGgSw}
+      DemoAccounts__StudentPassword: ${DEMO_STUDENT_PASSWORD:-Student!v5lVJbrqfRO0m93zrKQ}
+      DemoData__Enabled: ${DEMO_DATA_ENABLED:-true}
+      Jwt__AccessTokenLifetimeMinutes: ${JWT_ACCESS_TOKEN_LIFETIME_MINUTES:-15}
+      Jwt__Audience: ${JWT_AUDIENCE:-assignment-submission-system-web}
+      Jwt__Issuer: ${JWT_ISSUER:-assignment-submission-system}
+      Jwt__SigningKey: ${JWT_SIGNING_KEY:-LocalDemoSigningKeyOnlyNotForProduction12345}
     command: bash -lc "dotnet restore AssignmentSubmissionSystem.slnx && dotnet run --project apps/api/AssignmentSubmissionSystem.Api --urls http://0.0.0.0:8080"
     depends_on:
       database:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget --spider -q http://localhost:8080/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
     ports:
-      - "5112:8080"
+      - "${API_HOST_PORT:-5112}:8080"
     volumes:
       - .:/workspace
       - nuget-cache:/root/.nuget/packages
 
+  web:
+    image: node:22-alpine
+    working_dir: /workspace/apps/web
+    environment:
+      NEXT_PUBLIC_API_BASE_URL: http://localhost:5112
+    command: sh -c "npm install --no-audit --no-fund && npm run dev -- --hostname 0.0.0.0"
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      - "${WEB_HOST_PORT:-3000}:3000"
+    volumes:
+      - .:/workspace
+      - web-node-modules:/workspace/apps/web/node_modules
+
 volumes:
   nuget-cache:
   postgres-data:
+  web-node-modules:

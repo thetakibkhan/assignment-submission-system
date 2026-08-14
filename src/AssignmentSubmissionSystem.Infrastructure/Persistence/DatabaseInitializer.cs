@@ -10,17 +10,23 @@ public sealed class DatabaseInitializer
 {
     private readonly ApplicationDbContext _databaseContext;
     private readonly DemoAccountOptions _demoAccounts;
+    private readonly DemoDataOptions _demoData;
+    private readonly DemoScenarioSeeder _demoScenarioSeeder;
     private readonly RoleManager<IdentityRole<Guid>> _roleManager;
     private readonly UserManager<ApplicationUser> _userManager;
 
     public DatabaseInitializer(
         ApplicationDbContext databaseContext,
         IOptions<DemoAccountOptions> demoAccounts,
+        IOptions<DemoDataOptions> demoData,
+        DemoScenarioSeeder demoScenarioSeeder,
         RoleManager<IdentityRole<Guid>> roleManager,
         UserManager<ApplicationUser> userManager)
     {
         _databaseContext = databaseContext;
         _demoAccounts = demoAccounts.Value;
+        _demoData = demoData.Value;
+        _demoScenarioSeeder = demoScenarioSeeder;
         _roleManager = roleManager;
         _userManager = userManager;
     }
@@ -36,13 +42,19 @@ public sealed class DatabaseInitializer
             await _databaseContext.Database.EnsureCreatedAsync(cancellationToken);
         }
 
+        if (!_demoData.Enabled)
+        {
+            return;
+        }
+
         await EnsureRoleAsync(RoleNames.Admin);
         await EnsureRoleAsync(RoleNames.Teacher);
         await EnsureRoleAsync(RoleNames.Student);
-        await EnsureUserAsync("Nusrat Jahan", "ADM-001", "admin@assignment.local", _demoAccounts.AdminPassword, RoleNames.Admin);
-        await EnsureUserAsync("Rafiq Hasan", "TCH-001", "teacher@assignment.local", _demoAccounts.TeacherPassword, RoleNames.Teacher);
-        await EnsureUserAsync("Ayesha Rahman", "STU-001", "student@assignment.local", _demoAccounts.StudentPassword, RoleNames.Student);
+        ApplicationUser administrator = await EnsureUserAsync("Nusrat Jahan", "ADM-001", "admin@assignment.local", _demoAccounts.AdminPassword, RoleNames.Admin);
+        ApplicationUser teacher = await EnsureUserAsync("Rafiq Hasan", "TCH-001", "teacher@assignment.local", _demoAccounts.TeacherPassword, RoleNames.Teacher);
+        ApplicationUser student = await EnsureUserAsync("Ayesha Rahman", "STU-001", "student@assignment.local", _demoAccounts.StudentPassword, RoleNames.Student);
         await EnsureMockAcademicDataAsync(cancellationToken);
+        await _demoScenarioSeeder.EnsureAsync(administrator, teacher, student, cancellationToken);
     }
 
     private async Task EnsureRoleAsync(string roleName)
@@ -109,7 +121,7 @@ public sealed class DatabaseInitializer
         }
     }
 
-    private async Task EnsureUserAsync(
+    private async Task<ApplicationUser> EnsureUserAsync(
         string fullName,
         string institutionalId,
         string email,
@@ -121,7 +133,7 @@ public sealed class DatabaseInitializer
             throw new InvalidOperationException("Demo account passwords must be configured before the application starts.");
         }
 
-        ApplicationUser? user = await _userManager.FindByEmailAsync(email);
+        ApplicationUser? user = await _userManager.FindByNameAsync(institutionalId);
 
         if (user is null)
         {
@@ -163,5 +175,7 @@ public sealed class DatabaseInitializer
                 throw new InvalidOperationException("A required demo account role could not be assigned.");
             }
         }
+
+        return user;
     }
 }
