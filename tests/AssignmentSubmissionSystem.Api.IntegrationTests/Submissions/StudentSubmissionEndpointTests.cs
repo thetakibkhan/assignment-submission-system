@@ -3,6 +3,7 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using AssignmentSubmissionSystem.Api.IntegrationTests.Infrastructure;
 using AssignmentSubmissionSystem.Infrastructure.Persistence;
+using AssignmentSubmissionSystem.Domain.Notifications;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -36,6 +37,31 @@ public sealed class StudentSubmissionEndpointTests : IClassFixture<AuthWebApplic
         Assert.NotNull(submission);
         Assert.Equal("My completed response.", submission.TextAnswer);
         Assert.Equal("Submitted", submission.Status);
+    }
+
+    [Fact]
+    public async Task Create_ShouldNotifyTheOwningTeacher_WhenWorkIsSubmitted()
+    {
+        Guid assignmentId = await CreatePublishedAssignmentAsync(allowSubmissionUpdates: true);
+        using HttpClient studentClient = await CreateAuthenticatedClientAsync("STU-001", "Student123!");
+        using MultipartFormDataContent content = CreateSubmissionContent("Please review my work.");
+
+        HttpResponseMessage submissionResponse = await studentClient.PostAsync(
+            "/api/student/assignments/" + assignmentId + "/submission",
+            content);
+        submissionResponse.EnsureSuccessStatusCode();
+
+        using HttpClient teacherClient = await CreateAuthenticatedClientAsync("TCH-001", "Teacher123!");
+        IReadOnlyList<NotificationResponse>? notifications = await teacherClient
+            .GetFromJsonAsync<IReadOnlyList<NotificationResponse>>("/api/notifications");
+
+        NotificationType expectedType = NotificationType.SubmissionReceived;
+
+        Assert.Contains(
+            notifications ?? [],
+            notification => notification.AssignmentId == assignmentId
+                && notification.Type == expectedType
+                && notification.Message.Contains("submitted work", StringComparison.Ordinal));
     }
 
     [Fact]
@@ -347,5 +373,14 @@ public sealed class StudentSubmissionEndpointTests : IClassFixture<AuthWebApplic
         public string Status { get; init; } = string.Empty;
 
         public string? AttachmentFileName { get; init; }
+    }
+
+    private sealed class NotificationResponse
+    {
+        public Guid AssignmentId { get; init; }
+
+        public string Message { get; init; } = string.Empty;
+
+        public NotificationType Type { get; init; }
     }
 }
