@@ -18,6 +18,9 @@ function isChangePasswordResponse(value: unknown): value is ChangePasswordRespon
 
 export function ChangePasswordForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isCurrentPasswordVisible, setIsCurrentPasswordVisible] = useState(false);
+  const [isNewPasswordVisible, setIsNewPasswordVisible] = useState(false);
+  const [isConfirmPasswordVisible, setIsConfirmPasswordVisible] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -80,15 +83,30 @@ export function ChangePasswordForm() {
         <form onSubmit={handleSubmit}>
           <div className="login-field">
             <label htmlFor="currentPassword">Temporary password</label>
-            <input autoComplete="current-password" id="currentPassword" name="currentPassword" required type="password" />
+            <div className="login-password-input">
+              <input autoComplete="current-password" id="currentPassword" name="currentPassword" required type={isCurrentPasswordVisible ? "text" : "password"} />
+              <button aria-label={isCurrentPasswordVisible ? "Hide temporary password" : "Show temporary password"} className="login-password-toggle" onClick={() => setIsCurrentPasswordVisible((isVisible) => !isVisible)} type="button">
+                {isCurrentPasswordVisible ? "Hide" : "Show"}
+              </button>
+            </div>
           </div>
           <div className="login-field">
             <label htmlFor="newPassword">New password</label>
-            <input autoComplete="new-password" id="newPassword" minLength={8} name="newPassword" required type="password" />
+            <div className="login-password-input">
+              <input autoComplete="new-password" id="newPassword" minLength={8} name="newPassword" required type={isNewPasswordVisible ? "text" : "password"} />
+              <button aria-label={isNewPasswordVisible ? "Hide new password" : "Show new password"} className="login-password-toggle" onClick={() => setIsNewPasswordVisible((isVisible) => !isVisible)} type="button">
+                {isNewPasswordVisible ? "Hide" : "Show"}
+              </button>
+            </div>
           </div>
           <div className="login-field">
             <label htmlFor="confirmPassword">Confirm new password</label>
-            <input autoComplete="new-password" id="confirmPassword" minLength={8} name="confirmPassword" required type="password" />
+            <div className="login-password-input">
+              <input autoComplete="new-password" id="confirmPassword" minLength={8} name="confirmPassword" required type={isConfirmPasswordVisible ? "text" : "password"} />
+              <button aria-label={isConfirmPasswordVisible ? "Hide confirmed password" : "Show confirmed password"} className="login-password-toggle" onClick={() => setIsConfirmPasswordVisible((isVisible) => !isVisible)} type="button">
+                {isConfirmPasswordVisible ? "Hide" : "Show"}
+              </button>
+            </div>
           </div>
 
           <button className="login-submit-button" disabled={isSubmitting} type="submit">
