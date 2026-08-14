@@ -4,6 +4,7 @@ import test from "node:test";
 import {
   getSubmissionReviewSectionVisibility,
   getTeacherWorkspacePanelVisibility,
+  selectSubmissionAfterRefresh,
 } from "./teacher-workspace-view.ts";
 
 test("assignment management is the only visible workflow by default", () => {
@@ -48,5 +49,16 @@ test("optional review sections stay hidden when no file or result exists", () =>
     writtenResponse: true,
     attachment: false,
     finalResult: false,
+  });
+});
+
+test("saving a review keeps the same student selected after the queue refreshes", () => {
+  const submissions = [
+    { id: "first" },
+    { id: "saved" },
+  ];
+
+  assert.deepEqual(selectSubmissionAfterRefresh(submissions, "saved"), {
+    id: "saved",
   });
 });
