@@ -2,25 +2,42 @@
 
 A role-based academic workflow application for administrators, teachers, and students. It supports institutional-ID sign-in, academic setup, assignment publishing, student submission, teacher review, grading, and post-deadline result disclosure.
 
-## Evaluator quick start
+## Run locally
 
-Prerequisite: Docker Engine with Docker Compose.
+The Docker setup is the recommended and complete local setup. It starts the Next.js frontend, ASP.NET Core API, PostgreSQL database, migrations, and demo data together. No `.env` file is needed for the default demo.
+
+### Prerequisites
+
+- Git
+- Docker Engine with Docker Compose
+
+### Start the application
 
 ```bash
+git clone https://github.com/thetakibkhan/assignment-submission-system.git
+cd assignment-submission-system
 docker compose up
 ```
 
-Open [http://localhost:3000](http://localhost:3000). The frontend, API, PostgreSQL database, migrations, and staged demo data start automatically. First startup downloads container images and restores packages, so it can take a few minutes.
+The first start downloads container images and restores packages, so it can take a few minutes. Keep this terminal open while using the application.
 
-The API is available at `http://localhost:5112`; Swagger is at `http://localhost:5112/swagger` and readiness is at `http://localhost:5112/health`.
+When the services are ready, open:
 
-Stop the local application with:
+- Application: [http://localhost:3000](http://localhost:3000)
+- API health check: [http://localhost:5112/health](http://localhost:5112/health)
+- Swagger/OpenAPI: [http://localhost:5112/swagger](http://localhost:5112/swagger)
+
+Use one of the [demo accounts](#demo-accounts) to sign in.
+
+### Stop or reset
+
+Stop the local application:
 
 ```bash
 docker compose down
 ```
 
-Resetting deletes this project's local database volume and cannot be recovered:
+Resetting deletes this project’s local database volume and cannot be recovered:
 
 ```bash
 docker compose down -v && docker compose up
