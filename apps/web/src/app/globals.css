@@ -297,29 +297,7 @@ body {
   padding-top: 1.15rem;
 }
 
-.demo-accounts summary {
-  align-items: center;
-  cursor: pointer;
-  display: flex;
-  justify-content: space-between;
-  list-style: none;
-  padding: 0.2rem 0;
-}
-
-.demo-accounts summary::-webkit-details-marker { display: none; }
-
-.demo-accounts summary:focus-visible {
-  border-radius: 0.35rem;
-  outline: 2px solid #fafafa;
-  outline-offset: 4px;
-}
-
-.demo-accounts summary > span:first-child { display: grid; gap: 0.25rem; }
-.demo-accounts summary small { color: #71717a; font-family: "Courier New", monospace; font-size: 0.65rem; letter-spacing: 0.12em; text-transform: uppercase; }
-.demo-accounts summary strong { font-size: 0.9rem; }
-.demo-accounts__indicator { color: #a1a1aa; font-size: 1.2rem; transition: transform 180ms ease; }
-.demo-accounts[open] .demo-accounts__indicator { transform: rotate(45deg); }
-.demo-accounts__content { padding-top: 0.4rem; }
+.demo-accounts__content { padding-top: 0.1rem; }
 
 .demo-accounts__content > p {
   color: #a1a1aa;

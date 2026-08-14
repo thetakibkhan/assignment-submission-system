@@ -1,6 +1,7 @@
 "use client";
 
 import { type FormEvent, useEffect, useRef, useState } from "react";
+import { BouncyAccordion } from "@/components/ui/be-ui-bouncy-accordion";
 
 interface LoginResponse {
   requiresPasswordChange: boolean;
@@ -48,6 +49,7 @@ export function MercuryLoginForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [institutionalId, setInstitutionalId] = useState("");
   const [message, setMessage] = useState<string | null>(null);
+  const [openDemoAccountId, setOpenDemoAccountId] = useState<string | null>(null);
   const [password, setPassword] = useState("");
 
   useEffect(() => {
@@ -147,7 +149,25 @@ export function MercuryLoginForm() {
     setInstitutionalId(account.institutionalId);
     setPassword(account.password);
     setMessage(null);
+    setOpenDemoAccountId(null);
   }
+
+  const demoAccountAccordionItems = [{
+    id: "demo-accounts",
+    title: <span className="grid gap-1"><small className="font-mono text-[0.65rem] uppercase tracking-[0.12em] text-zinc-500">Local development</small><span>Demo accounts</span></span>,
+    description: <div className="demo-accounts__content">
+      <p>Choose an account to fill the sign-in form.</p>
+      <div className="demo-accounts__list">
+        {demoAccounts.map((account) => (
+          <button key={account.institutionalId} onClick={() => selectDemoAccount(account)} type="button">
+            <span>{account.role}</span>
+            <strong>{account.institutionalId}</strong>
+            <code>{account.password}</code>
+          </button>
+        ))}
+      </div>
+    </div>,
+  }];
 
   return (
     <main className="login-shell">
@@ -196,27 +216,19 @@ export function MercuryLoginForm() {
         </form>
 
         <p aria-live="polite" className="login-message">{message}</p>
-        <details className="demo-accounts">
-          <summary>
-            <span>
-              <small>Local development</small>
-              <strong>Demo accounts</strong>
-            </span>
-            <span aria-hidden="true" className="demo-accounts__indicator">+</span>
-          </summary>
-          <div className="demo-accounts__content">
-            <p>Choose an account to fill the sign-in form.</p>
-            <div className="demo-accounts__list">
-              {demoAccounts.map((account) => (
-                <button key={account.institutionalId} onClick={() => selectDemoAccount(account)} type="button">
-                  <span>{account.role}</span>
-                  <strong>{account.institutionalId}</strong>
-                  <code>{account.password}</code>
-                </button>
-              ))}
-            </div>
-          </div>
-        </details>
+        <BouncyAccordion
+          className="demo-accounts"
+          classNames={{
+            chevron: "text-zinc-400",
+            content: "border-t border-zinc-800",
+            item: "border border-zinc-800 bg-zinc-950/75",
+            title: "text-zinc-50",
+            trigger: "px-4 hover:bg-zinc-900/70",
+          }}
+          items={demoAccountAccordionItems}
+          onValueChange={setOpenDemoAccountId}
+          value={openDemoAccountId}
+        />
         <footer className="login-card__footer">Accounts are created and managed by an administrator.</footer>
       </section>
     </main>
