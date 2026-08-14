@@ -1,6 +1,6 @@
 "use client";
 
-import { Archive, Bell, CheckCheck, ChevronRight, GripVertical, RefreshCw } from "lucide-react";
+import { Archive, Bell, CheckCheck, ChevronRight, GripVertical, RefreshCw, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
 type Notification = {
@@ -47,6 +47,25 @@ export function NotificationCenter({ destination }: { destination: "/student" | 
     if (response.ok) {
       setItems((current) => current.map((item) => item.id === id ? { ...item, isRead: true } : item));
     }
+  }
+
+  async function deleteNotification(item: Notification) {
+    if (!window.confirm("Delete this notification? This cannot be undone.")) {
+      return;
+    }
+
+    const response = await fetch(
+      apiBaseUrl + "/api/notifications/" + encodeURIComponent(item.id),
+      { credentials: "include", method: "DELETE" });
+
+    if (response.ok) {
+      setItems((current) => current.filter((notification) => notification.id !== item.id));
+      setActiveId(null);
+      setMessage("");
+      return;
+    }
+
+    setMessage("The notification could not be deleted.");
   }
 
   async function markAllAsRead() {
@@ -104,6 +123,7 @@ export function NotificationCenter({ destination }: { destination: "/student" | 
             <div className="notification-center__item-actions">
               {isActive ? <>
                 <button aria-label="Mark notification as read" className="notification-center__icon-button" disabled={item.isRead} onClick={() => void markAsRead(item.id)} type="button"><Archive size={15} /></button>
+                <button aria-label="Delete notification" className="notification-center__icon-button notification-center__icon-button--delete" onClick={() => void deleteNotification(item)} type="button"><Trash2 size={15} /></button>
                 <button aria-label="Open related assignment" className="notification-center__icon-button" onClick={() => void openNotification(item)} type="button"><ChevronRight size={15} /></button>
               </> : <button aria-label="Show notification actions" className="notification-center__icon-button" onClick={() => setActiveId(item.id)} type="button"><GripVertical size={15} /></button>}
             </div>

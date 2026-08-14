@@ -1,3 +1,5 @@
+using AssignmentSubmissionSystem.Domain.Notifications;
+
 namespace AssignmentSubmissionSystem.Application.Notifications;
 
 public sealed class NotificationService : INotificationService
@@ -7,6 +9,24 @@ public sealed class NotificationService : INotificationService
     public NotificationService(INotificationRepository notificationRepository)
     {
         _notificationRepository = notificationRepository;
+    }
+
+    public async Task<bool> DeleteAsync(
+        Guid notificationId,
+        Guid recipientUserId,
+        CancellationToken cancellationToken)
+    {
+        UserNotification? notification = await _notificationRepository.GetForRecipientAsync(
+            notificationId,
+            recipientUserId,
+            cancellationToken);
+        if (notification is null)
+        {
+            return false;
+        }
+
+        await _notificationRepository.DeleteAsync(notification, cancellationToken);
+        return true;
     }
 
     public async Task<IReadOnlyList<NotificationItem>> GetForCurrentUserAsync(Guid recipientUserId, CancellationToken cancellationToken)

@@ -17,6 +17,17 @@ public sealed class NotificationsController : ControllerBase
         _notificationService = notificationService;
     }
 
+    [HttpDelete("{id:guid}")]
+    public async Task<IActionResult> DeleteAsync(Guid id, CancellationToken cancellationToken)
+    {
+        bool wasDeleted = await _notificationService.DeleteAsync(
+            id,
+            User.GetRequiredUserId(),
+            cancellationToken);
+
+        return wasDeleted ? NoContent() : NotFound();
+    }
+
     [HttpGet]
     public async Task<ActionResult<IReadOnlyList<NotificationItem>>> GetAsync(CancellationToken cancellationToken)
     {

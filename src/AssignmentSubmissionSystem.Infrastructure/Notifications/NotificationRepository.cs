@@ -14,6 +14,12 @@ public sealed class NotificationRepository : INotificationRepository
         _databaseContext = databaseContext;
     }
 
+    public async Task DeleteAsync(UserNotification notification, CancellationToken cancellationToken)
+    {
+        _databaseContext.UserNotifications.Remove(notification);
+        await _databaseContext.SaveChangesAsync(cancellationToken);
+    }
+
     public async Task<IReadOnlyList<UserNotification>> GetForRecipientAsync(Guid recipientUserId, CancellationToken cancellationToken)
     {
         return await _databaseContext.UserNotifications.AsNoTracking()
