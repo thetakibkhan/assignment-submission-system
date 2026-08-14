@@ -10,6 +10,10 @@ public interface IAssignmentRepository
     Task<IReadOnlyList<Assignment>> GetForTeacherAsync(Guid teacherUserId, CancellationToken cancellationToken);
     Task<Assignment?> GetByIdAsync(Guid id, CancellationToken cancellationToken);
     Task<bool> HasSubmissionsAsync(Guid assignmentId, CancellationToken cancellationToken);
+
+    Task<IReadOnlySet<Guid>> GetIdsWithSubmissionsAsync(
+        IReadOnlyCollection<Guid> assignmentIds,
+        CancellationToken cancellationToken);
     Task UpdateAsync(Assignment assignment, CancellationToken cancellationToken);
     Task UpdateWithNotificationsAsync(Assignment assignment, IReadOnlyList<UserNotification> notifications, CancellationToken cancellationToken);
 }

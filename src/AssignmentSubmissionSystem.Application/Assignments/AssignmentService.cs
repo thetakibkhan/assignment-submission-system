@@ -29,6 +29,11 @@ public sealed class AssignmentService : IAssignmentService
     public Task<IReadOnlyList<Assignment>> GetForTeacherAsync(Guid teacherUserId, CancellationToken cancellationToken)
         => _assignmentRepository.GetForTeacherAsync(teacherUserId, cancellationToken);
 
+    public Task<IReadOnlySet<Guid>> GetIdsWithSubmissionsAsync(
+        IReadOnlyCollection<Guid> assignmentIds,
+        CancellationToken cancellationToken)
+        => _assignmentRepository.GetIdsWithSubmissionsAsync(assignmentIds, cancellationToken);
+
     public Task<IReadOnlyList<TeacherAssignmentScope>> GetScopesForTeacherAsync(Guid teacherUserId, CancellationToken cancellationToken)
         => _teacherResponsibilityRepository.GetActiveScopesForTeacherAsync(teacherUserId, cancellationToken);
 

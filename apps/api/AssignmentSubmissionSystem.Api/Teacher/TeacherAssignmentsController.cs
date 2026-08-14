@@ -16,7 +16,20 @@ public sealed class TeacherAssignmentsController : ControllerBase
     public TeacherAssignmentsController(IAssignmentService assignmentService) => _assignmentService = assignmentService;
 
     [HttpGet]
-    public async Task<ActionResult<IReadOnlyList<AssignmentResponse>>> GetAllAsync(CancellationToken cancellationToken) => Ok((await _assignmentService.GetForTeacherAsync(User.GetRequiredUserId(), cancellationToken)).Select(AssignmentResponse.From).ToList());
+    public async Task<ActionResult<IReadOnlyList<AssignmentResponse>>> GetAllAsync(CancellationToken cancellationToken)
+    {
+        IReadOnlyList<Assignment> assignments = await _assignmentService.GetForTeacherAsync(
+            User.GetRequiredUserId(),
+            cancellationToken);
+        IReadOnlySet<Guid> assignmentIdsWithSubmissions = await _assignmentService
+            .GetIdsWithSubmissionsAsync(assignments.Select(assignment => assignment.Id).ToArray(), cancellationToken);
+
+        return Ok(assignments
+            .Select(assignment => AssignmentResponse.From(
+                assignment,
+                !assignmentIdsWithSubmissions.Contains(assignment.Id)))
+            .ToList());
+    }
     [HttpGet("scopes")]
     public async Task<ActionResult<IReadOnlyList<TeacherAssignmentScope>>> GetScopesAsync(CancellationToken cancellationToken) => Ok(await _assignmentService.GetScopesForTeacherAsync(User.GetRequiredUserId(), cancellationToken));
 

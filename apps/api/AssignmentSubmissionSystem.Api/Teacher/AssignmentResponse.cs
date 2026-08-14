@@ -13,6 +13,21 @@ public sealed class AssignmentResponse
     public decimal? MaximumMarks { get; init; }
     public bool? AllowSubmissionUpdates { get; init; }
     public string Status { get; init; } = string.Empty;
+    public bool CanReturnToDraft { get; init; }
     public DateTimeOffset UpdatedAt { get; init; }
-    public static AssignmentResponse From(Assignment assignment) => new() { Id = assignment.Id, ClassCourseId = assignment.ClassCourseId, SubjectId = assignment.SubjectId, Title = assignment.Title, Description = assignment.Description, Deadline = assignment.Deadline, MaximumMarks = assignment.MaximumMarks, AllowSubmissionUpdates = assignment.AllowSubmissionUpdates, Status = assignment.Status.ToString(), UpdatedAt = assignment.UpdatedAt };
+
+    public static AssignmentResponse From(Assignment assignment, bool canReturnToDraft = false) => new()
+    {
+        Id = assignment.Id,
+        ClassCourseId = assignment.ClassCourseId,
+        SubjectId = assignment.SubjectId,
+        Title = assignment.Title,
+        Description = assignment.Description,
+        Deadline = assignment.Deadline,
+        MaximumMarks = assignment.MaximumMarks,
+        AllowSubmissionUpdates = assignment.AllowSubmissionUpdates,
+        Status = assignment.Status.ToString(),
+        CanReturnToDraft = assignment.Status == AssignmentStatus.Published && canReturnToDraft,
+        UpdatedAt = assignment.UpdatedAt
+    };
 }
