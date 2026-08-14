@@ -56,6 +56,9 @@ logs/
 tmp/
 temp/
 
+# Local planning and decision notes (the root README remains tracked)
+docs/
+
 # Editors and operating systems
 .idea/
 .vscode/*
