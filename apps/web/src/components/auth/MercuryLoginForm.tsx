@@ -154,7 +154,7 @@ export function MercuryLoginForm() {
 
   const demoAccountAccordionItems = [{
     id: "demo-accounts",
-    title: <span className="grid gap-1"><small className="font-mono text-[0.65rem] uppercase tracking-[0.12em] text-zinc-500">Local development</small><span>Demo accounts</span></span>,
+    title: "Demo accounts",
     description: <div className="demo-accounts__content">
       <p>Choose an account to fill the sign-in form.</p>
       <div className="demo-accounts__list">
