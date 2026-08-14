@@ -60,6 +60,46 @@ services:
       - .:/workspace
       - web-node-modules:/workspace/apps/web/node_modules
 
+  test-database:
+    image: postgres:17-alpine
+    profiles: ["test"]
+    environment:
+      POSTGRES_DB: assignment_submission_tests
+      POSTGRES_PASSWORD: TestOnlyPostgresPassword123!
+      POSTGRES_USER: postgres
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $POSTGRES_USER -d $POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    networks:
+      default:
+        aliases:
+          - auth-test-db
+
+  test:
+    image: mcr.microsoft.com/dotnet/sdk:10.0
+    profiles: ["test"]
+    working_dir: /workspace
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__DefaultConnection: Host=auth-test-db;Port=5432;Database=assignment_submission_tests;Username=postgres;Password=TestOnlyPostgresPassword123!
+      DemoAccounts__AdminPassword: Admin123!
+      DemoAccounts__TeacherPassword: Teacher123!
+      DemoAccounts__StudentPassword: Student123!
+      DemoData__Enabled: true
+      Jwt__AccessTokenLifetimeMinutes: 15
+      Jwt__Audience: assignment-submission-system-tests
+      Jwt__Issuer: assignment-submission-system-tests
+      Jwt__SigningKey: ThisIsOnlyAnIntegrationTestSigningKey123!
+    command: dotnet test AssignmentSubmissionSystem.slnx
+    depends_on:
+      test-database:
+        condition: service_healthy
+    volumes:
+      - .:/workspace
+      - nuget-cache:/root/.nuget/packages
+
 volumes:
   nuget-cache:
   postgres-data:

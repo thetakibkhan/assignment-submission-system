@@ -103,10 +103,16 @@ dotnet run --project apps/api/AssignmentSubmissionSystem.Api
 
 ## Verification
 
-The complete backend test suite needs the test PostgreSQL service named `auth-test-db`, as used by the existing integration-test configuration. From the supplied evaluation environment, run:
+Run the complete backend unit and integration suite with its isolated PostgreSQL database:
 
 ```bash
-dotnet test AssignmentSubmissionSystem.slnx
+docker compose --profile test run --rm test
+```
+
+The test database is not exposed to the host. Remove only that temporary database after testing if you do not need it again:
+
+```bash
+docker compose --profile test rm -sf test-database
 ```
 
 Frontend checks:
@@ -121,5 +127,5 @@ cd apps/web && npm run lint && npm run build
 - The backend is the authorization boundary. UI visibility does not grant access.
 - Deadlines are evaluated on the server in UTC. Late submission and updates are blocked.
 - Marks and feedback are disclosed only when the submission is **Graded** and the assignment deadline has passed.
-- A submission accepts one optional local attachment up to 10 MB: PDF, DOC, DOCX, TXT, PNG, JPG, or JPEG.
+- A submission accepts up to five local attachments: 10 MB per file and 25 MB combined. Accepted types are PDF, DOC, DOCX, TXT, PNG, JPG, and JPEG.
 - Historical records are retained. This project intentionally does not include email/SMS, real-time delivery, reporting, exports, or deployment infrastructure.
