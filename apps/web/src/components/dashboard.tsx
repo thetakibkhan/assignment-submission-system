@@ -6,5 +6,5 @@ import { useAppShell } from "@/components/app-shell";
 export function Dashboard() {
   const { activeSection } = useAppShell();
 
-  return <AdminSetupConsole activeSection={activeSection} />;
+  return <AdminSetupConsole activeSection={activeSection} key={activeSection} />;
 }

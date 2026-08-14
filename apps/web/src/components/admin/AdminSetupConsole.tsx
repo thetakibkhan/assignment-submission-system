@@ -73,7 +73,7 @@ export function AdminSetupConsole({ activeSection }: { activeSection: DashboardS
   const [subjects, setSubjects] = useState<AcademicRecord[]>([]);
   const [message, setMessage] = useState("Loading academic setup…");
   const [temporaryCredential, setTemporaryCredential] = useState<CreatedAccount | null>(null);
-  const [accountAction, setAccountAction] = useState<AccountAction | null>(null);
+  const [accountAction, setAccountAction] = useState<AccountAction>("manage");
   const [academicAction, setAcademicAction] = useState<AcademicStructureAction | null>(null);
   const [selectedAccountId, setSelectedAccountId] = useState("");
   const [selectedClassCourseId, setSelectedClassCourseId] = useState("");
@@ -438,7 +438,7 @@ export function AdminSetupConsole({ activeSection }: { activeSection: DashboardS
           <label className="workspace-filter">Search accounts<input aria-label="Search accounts" onChange={(event) => setAccountSearch(event.target.value)} placeholder="Search name, ID, or role" value={accountSearch} /></label><div className="account-table">{filteredAccounts.map((account) => <div className="account-row" key={account.id}><div><strong>{account.fullName}</strong><span>{account.institutionalId} · {account.role}</span></div><div><span className={account.isActive ? "status status--active" : "status"}>{account.isActive ? "Active" : "Inactive"}</span><button onClick={() => void updateActivation(account)} type="button">{account.isActive ? "Deactivate" : "Reactivate"}</button></div></div>)}</div>
         </article>}
 
-        {activeSection === "submissions" && <article className="admin-panel admin-panel--submissions admin-panel--wide"><h2>Submission records</h2><p className="account-panel__hint">Search the records already available to administrators.</p><label className="workspace-filter">Search submissions<input aria-label="Search submissions" onChange={(event) => setSubmissionSearch(event.target.value)} placeholder="Search student or status" value={submissionSearch} /></label><div className="admin-list">{filteredSubmissions.length === 0 ? <p>No matching submissions.</p> : filteredSubmissions.map((submission) => <p key={submission.id}><b>{submission.studentName}</b><span>{submission.status} · submitted {new Date(submission.submittedAt).toLocaleString()}</span></p>)}</div></article>}
+        {activeSection === "submissions" && <article className="admin-panel admin-panel--submissions admin-panel--wide"><h2>Submission records</h2><p className="account-panel__hint">Search the records already available to administrators.</p><label className="workspace-filter">Search submissions<input aria-label="Search submissions" onChange={(event) => setSubmissionSearch(event.target.value)} placeholder="Search student or status" value={submissionSearch} /></label><div className="admin-list admin-submission-list">{filteredSubmissions.length === 0 ? <p>No matching submissions.</p> : filteredSubmissions.map((submission) => <article className="admin-submission-record" key={submission.id}><div className="admin-submission-record__identity"><strong>{submission.studentName}</strong><span>{submission.status}</span></div><time dateTime={submission.submittedAt}>Submitted {new Date(submission.submittedAt).toLocaleString()}</time></article>)}</div></article>}
 
         {accountAction === "update" && <article className="admin-panel admin-panel--accounts admin-panel--wide">
           <h2>Update account</h2>
