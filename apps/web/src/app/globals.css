@@ -873,6 +873,11 @@ body {
 .student-attachment-control__button:hover, .student-submission-panel__download:hover { background: #3f3f46; border-color: #71717a; }
 .student-attachment-control__button:focus-visible, .student-submission-panel__download:focus-visible { outline: 2px solid #d4d4d8; outline-offset: 2px; }
 .student-attachment-control > span { color: #a1a1aa; font-size: .75rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.student-attachment-list, .teacher-review-files { display: grid; gap: .5rem; }
+.student-attachment-item { align-items: center; background: #09090b; border: 1px solid #3f3f46; border-radius: .5rem; display: flex; gap: .75rem; justify-content: space-between; min-width: 0; padding: .6rem .7rem; }
+.student-attachment-item a, .student-attachment-item span { color: #d4d4d8; font-size: .78rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.student-attachment-item button { align-items: center; background: transparent !important; border: 1px solid #52525b !important; border-radius: 50%; color: #d4d4d8 !important; display: inline-flex; flex: 0 0 1.75rem; font-size: 1.1rem !important; height: 1.75rem; justify-content: center; min-height: 0 !important; padding: 0 !important; width: 1.75rem; }
+.student-attachment-item button:hover { border-color: #ef4444 !important; color: #fca5a5 !important; }
 .student-submission-panel__download { align-items: flex-start; display: grid; gap: .2rem; margin-top: .75rem; text-align: left; }
 .student-submission-panel__download span { color: #a1a1aa; font-size: .68rem; font-weight: 400; max-width: 18rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .student-submission-panel__hint { color: #71717a !important; font-size: .72rem !important; margin: 0; }

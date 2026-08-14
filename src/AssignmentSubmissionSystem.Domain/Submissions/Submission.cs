@@ -2,6 +2,11 @@ namespace AssignmentSubmissionSystem.Domain.Submissions;
 
 public sealed class Submission
 {
+    private readonly List<SubmissionAttachment> _attachments = [];
+
+    private Submission()
+    {
+    }
     public Submission(
         Guid id,
         Guid assignmentId,
@@ -10,14 +15,20 @@ public sealed class Submission
         DateTimeOffset submittedAt,
         string? attachmentFileName = null,
         string? attachmentContentType = null,
-        string? attachmentStorageName = null)
+        string? attachmentStorageName = null,
+        IEnumerable<SubmissionAttachment>? attachments = null)
     {
         ArgumentOutOfRangeException.ThrowIfEqual(id, Guid.Empty);
         ArgumentOutOfRangeException.ThrowIfEqual(assignmentId, Guid.Empty);
         ArgumentOutOfRangeException.ThrowIfEqual(studentUserId, Guid.Empty);
 
         TextAnswer = NormalizeTextAnswer(textAnswer);
-        if (TextAnswer is null && string.IsNullOrWhiteSpace(attachmentStorageName))
+        if (attachments is not null)
+        {
+            _attachments.AddRange(attachments);
+        }
+
+        if (TextAnswer is null && string.IsNullOrWhiteSpace(attachmentStorageName) && _attachments.Count == 0)
         {
             throw new ArgumentException("A text answer or attachment is required.", nameof(textAnswer));
         }
@@ -37,6 +48,8 @@ public sealed class Submission
     public Guid AssignmentId { get; private set; }
 
     public Guid StudentUserId { get; private set; }
+
+    public IReadOnlyCollection<SubmissionAttachment> Attachments => _attachments;
 
     public string? AttachmentContentType { get; private set; }
 
@@ -151,6 +164,34 @@ public sealed class Submission
             AttachmentFileName = attachmentFileName;
             AttachmentStorageName = attachmentStorageName;
         }
+        UpdatedAt = updatedAt;
+    }
+
+    public void UpdateContent(
+        string? textAnswer,
+        IReadOnlySet<Guid> removedAttachmentIds,
+        IEnumerable<SubmissionAttachment> newAttachments,
+        DateTimeOffset updatedAt)
+    {
+        if (Status != SubmissionStatus.Submitted)
+        {
+            throw new InvalidOperationException("Only a submitted submission can be updated.");
+        }
+
+        string? normalizedTextAnswer = NormalizeTextAnswer(textAnswer);
+        List<SubmissionAttachment> additions = newAttachments.ToList();
+        int remainingAttachmentCount = _attachments.Count(attachment => !removedAttachmentIds.Contains(attachment.Id));
+        if (normalizedTextAnswer is null && remainingAttachmentCount + additions.Count == 0)
+        {
+            throw new ArgumentException("A text answer or attachment is required.", nameof(textAnswer));
+        }
+
+        TextAnswer = normalizedTextAnswer;
+        _attachments.RemoveAll(attachment => removedAttachmentIds.Contains(attachment.Id));
+        _attachments.AddRange(additions);
+        AttachmentContentType = null;
+        AttachmentFileName = null;
+        AttachmentStorageName = null;
         UpdatedAt = updatedAt;
     }
 

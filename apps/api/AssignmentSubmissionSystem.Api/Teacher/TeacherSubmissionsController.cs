@@ -43,6 +43,20 @@ public sealed class TeacherSubmissionsController : ControllerBase
         try { SubmissionAttachmentDownload file = await _submissionService.OpenAttachmentForTeacherAsync(submissionId, User.GetRequiredUserId(), cancellationToken); return File(file.Content, file.ContentType, file.FileName); } catch (KeyNotFoundException) { return NotFound(); }
     }
 
+    [HttpGet("{submissionId:guid}/attachments/{attachmentId:guid}")]
+    public async Task<IActionResult> DownloadAttachmentAsync(Guid submissionId, Guid attachmentId, CancellationToken cancellationToken)
+    {
+        try
+        {
+            SubmissionAttachmentDownload file = await _submissionService.OpenAttachmentForTeacherAsync(submissionId, attachmentId, User.GetRequiredUserId(), cancellationToken);
+            return File(file.Content, file.ContentType, file.FileName);
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound();
+        }
+    }
+
     [HttpPost("{submissionId:guid}/start-review")]
     public Task<IActionResult> StartReviewAsync(Guid submissionId, CancellationToken cancellationToken)
     {

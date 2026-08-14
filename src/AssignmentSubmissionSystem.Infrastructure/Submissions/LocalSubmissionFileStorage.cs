@@ -11,6 +11,17 @@ public sealed class LocalSubmissionFileStorage : ISubmissionFileStorage
         _storageRoot = Path.Combine(Directory.GetCurrentDirectory(), ".local-data", "submissions");
     }
 
+    public Task DeleteAsync(string storageName, CancellationToken cancellationToken)
+    {
+        string safeStorageName = Path.GetFileName(storageName);
+        if (string.Equals(storageName, safeStorageName, StringComparison.Ordinal))
+        {
+            File.Delete(Path.Combine(_storageRoot, safeStorageName));
+        }
+
+        return Task.CompletedTask;
+    }
+
     public Task<Stream?> OpenReadAsync(string storageName, CancellationToken cancellationToken)
     {
         string safeStorageName = Path.GetFileName(storageName);

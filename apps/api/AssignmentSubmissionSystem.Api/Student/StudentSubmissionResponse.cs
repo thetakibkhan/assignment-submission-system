@@ -6,6 +6,8 @@ public sealed class StudentSubmissionResponse
 {
     public string? AttachmentFileName { get; init; }
 
+    public IReadOnlyList<SubmissionAttachmentResponse> Attachments { get; init; } = [];
+
     public string? Feedback { get; init; }
 
     public Guid Id { get; init; }
@@ -26,7 +28,8 @@ public sealed class StudentSubmissionResponse
     {
         return new StudentSubmissionResponse
         {
-            AttachmentFileName = submission.AttachmentFileName,
+            AttachmentFileName = submission.Attachments.FirstOrDefault()?.FileName ?? submission.AttachmentFileName,
+            Attachments = submission.Attachments.Select(attachment => new SubmissionAttachmentResponse { Id = attachment.Id, FileName = attachment.FileName }).ToList(),
             Feedback = resultsAvailable ? submission.Feedback : null,
             Marks = resultsAvailable ? submission.Marks : null,
             Id = submission.Id,

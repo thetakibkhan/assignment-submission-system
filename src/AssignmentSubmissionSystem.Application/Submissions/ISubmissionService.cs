@@ -17,6 +17,12 @@ public interface ISubmissionService
 
     Task<SubmissionAttachmentDownload> OpenAttachmentAsync(
         Guid submissionId,
+        Guid attachmentId,
+        Guid studentUserId,
+        CancellationToken cancellationToken);
+
+    Task<SubmissionAttachmentDownload> OpenAttachmentAsync(
+        Guid submissionId,
         Guid studentUserId,
         CancellationToken cancellationToken);
 
@@ -29,7 +35,11 @@ public interface ISubmissionService
 
     Task<SubmissionAttachmentDownload> OpenAttachmentForAdminAsync(Guid submissionId, CancellationToken cancellationToken);
 
+    Task<SubmissionAttachmentDownload> OpenAttachmentForAdminAsync(Guid submissionId, Guid attachmentId, CancellationToken cancellationToken);
+
     Task<SubmissionAttachmentDownload> OpenAttachmentForTeacherAsync(Guid submissionId, Guid teacherUserId, CancellationToken cancellationToken);
+
+    Task<SubmissionAttachmentDownload> OpenAttachmentForTeacherAsync(Guid submissionId, Guid attachmentId, Guid teacherUserId, CancellationToken cancellationToken);
 
     Task GradeAsync(Guid submissionId, Guid teacherUserId, CancellationToken cancellationToken);
 

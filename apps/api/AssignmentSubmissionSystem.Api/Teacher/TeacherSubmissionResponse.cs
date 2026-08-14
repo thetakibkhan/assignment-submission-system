@@ -6,6 +6,8 @@ public sealed class TeacherSubmissionResponse
 {
     public string? AttachmentFileName { get; init; }
 
+    public IReadOnlyList<SubmissionAttachmentItem> Attachments { get; init; } = [];
+
     public string? Feedback { get; init; }
 
     public Guid Id { get; init; }
@@ -27,6 +29,7 @@ public sealed class TeacherSubmissionResponse
         return new TeacherSubmissionResponse
         {
             AttachmentFileName = item.AttachmentFileName,
+            Attachments = item.Attachments,
             Feedback = item.Feedback,
             Id = item.Id,
             Marks = item.Marks,

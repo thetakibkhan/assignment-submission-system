@@ -45,18 +45,18 @@ public sealed class SubmissionService : ISubmissionService
             throw new InvalidOperationException("You have already submitted work for this assignment.");
         }
 
-        StoredSubmissionAttachment? attachment = command.Attachment is null
-            ? null
-            : await _submissionFileStorage.SaveAsync(command.Attachment, cancellationToken);
+        Guid submissionId = Guid.CreateVersion7();
+        IReadOnlyList<SubmissionAttachment> attachments = await SaveAttachmentsAsync(
+            submissionId,
+            command.Attachments,
+            cancellationToken);
         Submission submission = new(
-            Guid.CreateVersion7(),
+            submissionId,
             assignment.Id,
             studentUserId,
             command.TextAnswer,
             DateTimeOffset.UtcNow,
-            attachment?.OriginalFileName,
-            attachment?.ContentType,
-            attachment?.StorageName);
+            attachments: attachments);
         UserNotification notification = new(
             Guid.CreateVersion7(),
             assignment.TeacherUserId,
@@ -97,6 +97,17 @@ public sealed class SubmissionService : ISubmissionService
 
     public async Task<SubmissionAttachmentDownload> OpenAttachmentAsync(
         Guid submissionId,
+        Guid attachmentId,
+        Guid studentUserId,
+        CancellationToken cancellationToken)
+    {
+        Submission submission = await _submissionRepository.GetByIdAndStudentAsync(submissionId, studentUserId, cancellationToken)
+            ?? throw new KeyNotFoundException("The requested submission was not found.");
+        return await OpenAttachmentAsync(submission, attachmentId, cancellationToken);
+    }
+
+    public async Task<SubmissionAttachmentDownload> OpenAttachmentAsync(
+        Guid submissionId,
         Guid studentUserId,
         CancellationToken cancellationToken)
     {
@@ -105,27 +116,7 @@ public sealed class SubmissionService : ISubmissionService
             studentUserId,
             cancellationToken)
             ?? throw new KeyNotFoundException("The requested submission was not found.");
-        if (string.IsNullOrWhiteSpace(submission.AttachmentStorageName) ||
-            string.IsNullOrWhiteSpace(submission.AttachmentContentType) ||
-            string.IsNullOrWhiteSpace(submission.AttachmentFileName))
-        {
-            throw new KeyNotFoundException("The requested attachment was not found.");
-        }
-
-        Stream? content = await _submissionFileStorage.OpenReadAsync(
-            submission.AttachmentStorageName,
-            cancellationToken);
-        if (content is null)
-        {
-            throw new KeyNotFoundException("The requested attachment was not found.");
-        }
-
-        return new SubmissionAttachmentDownload
-        {
-            Content = content,
-            ContentType = submission.AttachmentContentType,
-            FileName = submission.AttachmentFileName
-        };
+        return await OpenAttachmentAsync(submission, null, cancellationToken);
     }
 
     public async Task<IReadOnlyList<TeacherSubmissionItem>> GetForTeacherAssignmentAsync(
@@ -148,16 +139,28 @@ public sealed class SubmissionService : ISubmissionService
 
     public Task<IReadOnlyList<TeacherSubmissionItem>> GetAllForAdminAsync(CancellationToken cancellationToken) => _submissionRepository.GetAllAsync(cancellationToken);
 
+    public async Task<SubmissionAttachmentDownload> OpenAttachmentForAdminAsync(Guid submissionId, Guid attachmentId, CancellationToken cancellationToken)
+    {
+        Submission submission = await _submissionRepository.GetByIdAsync(submissionId, cancellationToken) ?? throw new KeyNotFoundException("The requested submission was not found.");
+        return await OpenAttachmentAsync(submission, attachmentId, cancellationToken);
+    }
+
     public async Task<SubmissionAttachmentDownload> OpenAttachmentForAdminAsync(Guid submissionId, CancellationToken cancellationToken)
     {
         Submission submission = await _submissionRepository.GetByIdAsync(submissionId, cancellationToken) ?? throw new KeyNotFoundException("The requested submission was not found.");
-        return await OpenAttachmentAsync(submission, cancellationToken);
+        return await OpenAttachmentAsync(submission, null, cancellationToken);
+    }
+
+    public async Task<SubmissionAttachmentDownload> OpenAttachmentForTeacherAsync(Guid submissionId, Guid attachmentId, Guid teacherUserId, CancellationToken cancellationToken)
+    {
+        Submission submission = await GetForTeacherAsync(submissionId, teacherUserId, cancellationToken);
+        return await OpenAttachmentAsync(submission, attachmentId, cancellationToken);
     }
 
     public async Task<SubmissionAttachmentDownload> OpenAttachmentForTeacherAsync(Guid submissionId, Guid teacherUserId, CancellationToken cancellationToken)
     {
         Submission submission = await GetForTeacherAsync(submissionId, teacherUserId, cancellationToken);
-        return await OpenAttachmentAsync(submission, cancellationToken);
+        return await OpenAttachmentAsync(submission, null, cancellationToken);
     }
 
     public async Task GradeAsync(Guid submissionId, Guid teacherUserId, CancellationToken cancellationToken)
@@ -226,27 +229,73 @@ public sealed class SubmissionService : ISubmissionService
             studentUserId,
             cancellationToken)
             ?? throw new KeyNotFoundException("The requested submission was not found.");
-        StoredSubmissionAttachment? attachment = command.Attachment is null
-            ? null
-            : await _submissionFileStorage.SaveAsync(command.Attachment, cancellationToken);
+        List<SubmissionAttachment> removedAttachments = submission.Attachments
+            .Where(attachment => command.RemovedAttachmentIds.Contains(attachment.Id))
+            .ToList();
+        int retainedAttachmentCount = submission.Attachments.Count - removedAttachments.Count;
+        if (retainedAttachmentCount + command.Attachments.Count > 5)
+        {
+            throw new ArgumentException("A submission can contain at most 5 attachments.");
+        }
+
+        IReadOnlyList<SubmissionAttachment> newAttachments = await SaveAttachmentsAsync(submission.Id, command.Attachments, cancellationToken);
         DateTimeOffset updatedAt = DateTimeOffset.UtcNow;
         SubmissionRevision revision = submission.CreateRevision(Guid.CreateVersion7(), updatedAt);
-        submission.UpdateContent(
-            command.TextAnswer,
-            attachment?.OriginalFileName,
-            attachment?.ContentType,
-            attachment?.StorageName,
-            updatedAt);
-        await _submissionRepository.UpdateWithRevisionAsync(submission, revision, cancellationToken);
+        submission.UpdateContent(command.TextAnswer, command.RemovedAttachmentIds, newAttachments, updatedAt);
+        await _submissionRepository.UpdateWithRevisionAsync(submission, revision, newAttachments, removedAttachments, cancellationToken);
+        foreach (SubmissionAttachment removedAttachment in removedAttachments)
+        {
+            await _submissionFileStorage.DeleteAsync(removedAttachment.StorageName, cancellationToken);
+        }
 
         return submission;
     }
 
-    private async Task<SubmissionAttachmentDownload> OpenAttachmentAsync(Submission submission, CancellationToken cancellationToken)
+    private async Task<IReadOnlyList<SubmissionAttachment>> SaveAttachmentsAsync(
+        Guid submissionId,
+        IReadOnlyList<SubmissionAttachmentUpload> uploads,
+        CancellationToken cancellationToken)
     {
-        if (string.IsNullOrWhiteSpace(submission.AttachmentStorageName) || string.IsNullOrWhiteSpace(submission.AttachmentContentType) || string.IsNullOrWhiteSpace(submission.AttachmentFileName)) throw new KeyNotFoundException("The requested attachment was not found.");
-        Stream? content = await _submissionFileStorage.OpenReadAsync(submission.AttachmentStorageName, cancellationToken);
-        return content is null ? throw new KeyNotFoundException("The requested attachment was not found.") : new SubmissionAttachmentDownload { Content = content, ContentType = submission.AttachmentContentType, FileName = submission.AttachmentFileName };
+        List<SubmissionAttachment> attachments = [];
+        foreach (SubmissionAttachmentUpload upload in uploads)
+        {
+            StoredSubmissionAttachment stored = await _submissionFileStorage.SaveAsync(upload, cancellationToken);
+            attachments.Add(new SubmissionAttachment(
+                Guid.CreateVersion7(),
+                submissionId,
+                stored.OriginalFileName,
+                stored.ContentType,
+                stored.StorageName));
+        }
+
+        return attachments;
+    }
+
+    private async Task<SubmissionAttachmentDownload> OpenAttachmentAsync(
+        Submission submission,
+        Guid? attachmentId,
+        CancellationToken cancellationToken)
+    {
+        SubmissionAttachment? attachment = attachmentId.HasValue
+            ? submission.Attachments.SingleOrDefault(item => item.Id == attachmentId.Value)
+            : submission.Attachments.FirstOrDefault();
+        if (attachment is not null)
+        {
+            Stream? content = await _submissionFileStorage.OpenReadAsync(attachment.StorageName, cancellationToken);
+            return content is null
+                ? throw new KeyNotFoundException("The requested attachment was not found.")
+                : new SubmissionAttachmentDownload { Content = content, ContentType = attachment.ContentType, FileName = attachment.FileName };
+        }
+
+        if (string.IsNullOrWhiteSpace(submission.AttachmentStorageName) || string.IsNullOrWhiteSpace(submission.AttachmentContentType) || string.IsNullOrWhiteSpace(submission.AttachmentFileName))
+        {
+            throw new KeyNotFoundException("The requested attachment was not found.");
+        }
+
+        Stream? legacyContent = await _submissionFileStorage.OpenReadAsync(submission.AttachmentStorageName, cancellationToken);
+        return legacyContent is null
+            ? throw new KeyNotFoundException("The requested attachment was not found.")
+            : new SubmissionAttachmentDownload { Content = legacyContent, ContentType = submission.AttachmentContentType, FileName = submission.AttachmentFileName };
     }
 
     private async Task<Submission> GetForTeacherAsync(

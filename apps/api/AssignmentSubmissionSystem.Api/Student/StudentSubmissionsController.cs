@@ -12,7 +12,9 @@ namespace AssignmentSubmissionSystem.Api.Student;
 [Route("api/student/assignments/{assignmentId:guid}/submission")]
 public sealed class StudentSubmissionsController : ControllerBase
 {
+    private const int MaximumAttachmentCount = 5;
     private const long MaximumAttachmentBytes = 10 * 1024 * 1024;
+    private const long MaximumCombinedAttachmentBytes = 25 * 1024 * 1024;
 
     private static readonly IReadOnlyDictionary<string, string> AllowedAttachmentContentTypes = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
     {
@@ -75,6 +77,27 @@ public sealed class StudentSubmissionsController : ControllerBase
         }
     }
 
+    [HttpGet("/api/student/submissions/{submissionId:guid}/attachments/{attachmentId:guid}")]
+    public async Task<IActionResult> DownloadAttachmentAsync(
+        Guid submissionId,
+        Guid attachmentId,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            SubmissionAttachmentDownload attachment = await _submissionService.OpenAttachmentAsync(
+                submissionId,
+                attachmentId,
+                User.GetRequiredUserId(),
+                cancellationToken);
+            return File(attachment.Content, attachment.ContentType, attachment.FileName);
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound();
+        }
+    }
+
     [HttpPut]
     public Task<ActionResult<StudentSubmissionResponse>> UpdateAsync(Guid assignmentId, [FromForm] StudentSubmissionRequest request, CancellationToken cancellationToken)
     {
@@ -83,25 +106,38 @@ public sealed class StudentSubmissionsController : ControllerBase
 
     private static CreateSubmissionCommand CreateCommand(StudentSubmissionRequest request)
     {
-        if (request.Attachment is null)
+        List<IFormFile> files = [.. request.Attachments];
+        if (request.Attachment is not null)
         {
-            return new CreateSubmissionCommand { TextAnswer = request.TextAnswer };
+            files.Add(request.Attachment);
         }
 
-        string extension = Path.GetExtension(request.Attachment.FileName);
-        if (request.Attachment.Length == 0 || request.Attachment.Length > MaximumAttachmentBytes || !AllowedAttachmentContentTypes.TryGetValue(extension, out string? contentType))
+        if (files.Count > MaximumAttachmentCount || files.Sum(file => file.Length) > MaximumCombinedAttachmentBytes)
         {
-            throw new ArgumentException("Attach one PDF, DOC, DOCX, TXT, PNG, JPG, or JPEG file no larger than 10 MB.");
+            throw new ArgumentException("Attach up to 5 files with a combined size no larger than 25 MB.");
+        }
+
+        List<SubmissionAttachmentUpload> uploads = [];
+        foreach (IFormFile file in files)
+        {
+            string extension = Path.GetExtension(file.FileName);
+            if (file.Length == 0 || file.Length > MaximumAttachmentBytes || !AllowedAttachmentContentTypes.TryGetValue(extension, out string? contentType))
+            {
+                throw new ArgumentException("Each attachment must be a PDF, DOC, DOCX, TXT, PNG, JPG, or JPEG file no larger than 10 MB.");
+            }
+
+            uploads.Add(new SubmissionAttachmentUpload
+            {
+                Content = file.OpenReadStream(),
+                ContentType = contentType,
+                OriginalFileName = file.FileName
+            });
         }
 
         return new CreateSubmissionCommand
         {
-            Attachment = new SubmissionAttachmentUpload
-            {
-                Content = request.Attachment.OpenReadStream(),
-                ContentType = contentType,
-                OriginalFileName = request.Attachment.FileName
-            },
+            Attachments = uploads,
+            RemovedAttachmentIds = request.RemovedAttachmentIds.ToHashSet(),
             TextAnswer = request.TextAnswer
         };
     }

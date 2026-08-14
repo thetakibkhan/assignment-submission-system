@@ -42,6 +42,8 @@ public interface ISubmissionRepository
     Task UpdateWithRevisionAsync(
         Submission submission,
         SubmissionRevision revision,
+        IReadOnlyCollection<SubmissionAttachment> addedAttachments,
+        IReadOnlyCollection<SubmissionAttachment> removedAttachments,
         CancellationToken cancellationToken);
 
     Task UpdateWithReviewRevisionAndNotificationAsync(

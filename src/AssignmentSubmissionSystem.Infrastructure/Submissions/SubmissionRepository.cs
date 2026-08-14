@@ -46,7 +46,7 @@ public sealed class SubmissionRepository : ISubmissionRepository
                       orderby submission.Status, submission.SubmittedAt
                       select new TeacherSubmissionItem
                       {
-                          AttachmentFileName = submission.AttachmentFileName,
+                          Attachments = submission.Attachments.Select(attachment => new SubmissionAttachmentItem { Id = attachment.Id, FileName = attachment.FileName }).ToList(),
                           Feedback = submission.Feedback,
                           Id = submission.Id,
                           Marks = submission.Marks,
@@ -59,14 +59,14 @@ public sealed class SubmissionRepository : ISubmissionRepository
                       }).ToListAsync(cancellationToken);
     }
 
-    public Task<Submission?> GetByIdAsync(Guid submissionId, CancellationToken cancellationToken) => _databaseContext.Submissions.SingleOrDefaultAsync(submission => submission.Id == submissionId, cancellationToken);
+    public Task<Submission?> GetByIdAsync(Guid submissionId, CancellationToken cancellationToken) => _databaseContext.Submissions.Include(submission => submission.Attachments).SingleOrDefaultAsync(submission => submission.Id == submissionId, cancellationToken);
 
     public async Task<IReadOnlyList<TeacherSubmissionItem>> GetAllAsync(CancellationToken cancellationToken)
     {
         return await (from submission in _databaseContext.Submissions.AsNoTracking()
                       join student in _databaseContext.Users.AsNoTracking() on submission.StudentUserId equals student.Id
                       orderby submission.UpdatedAt descending
-                      select new TeacherSubmissionItem { AttachmentFileName = submission.AttachmentFileName, Feedback = submission.Feedback, Id = submission.Id, Marks = submission.Marks, Status = submission.Status, StudentName = student.FullName, StudentUserId = submission.StudentUserId, SubmittedAt = submission.SubmittedAt, TextAnswer = submission.TextAnswer, UpdatedAt = submission.UpdatedAt }).ToListAsync(cancellationToken);
+                      select new TeacherSubmissionItem { Attachments = submission.Attachments.Select(attachment => new SubmissionAttachmentItem { Id = attachment.Id, FileName = attachment.FileName }).ToList(), Feedback = submission.Feedback, Id = submission.Id, Marks = submission.Marks, Status = submission.Status, StudentName = student.FullName, StudentUserId = submission.StudentUserId, SubmittedAt = submission.SubmittedAt, TextAnswer = submission.TextAnswer, UpdatedAt = submission.UpdatedAt }).ToListAsync(cancellationToken);
     }
 
     public Task<Submission?> GetByIdForTeacherAsync(
@@ -74,7 +74,7 @@ public sealed class SubmissionRepository : ISubmissionRepository
         Guid teacherUserId,
         CancellationToken cancellationToken)
     {
-        return (from submission in _databaseContext.Submissions
+        return (from submission in _databaseContext.Submissions.Include(submission => submission.Attachments)
                 join assignment in _databaseContext.Assignments on submission.AssignmentId equals assignment.Id
                 where submission.Id == submissionId && assignment.TeacherUserId == teacherUserId
                 select submission).SingleOrDefaultAsync(cancellationToken);
@@ -85,14 +85,14 @@ public sealed class SubmissionRepository : ISubmissionRepository
         Guid studentUserId,
         CancellationToken cancellationToken)
     {
-        return _databaseContext.Submissions.SingleOrDefaultAsync(
+        return _databaseContext.Submissions.Include(submission => submission.Attachments).SingleOrDefaultAsync(
             submission => submission.Id == submissionId && submission.StudentUserId == studentUserId,
             cancellationToken);
     }
 
     public Task<Submission?> GetByAssignmentAndStudentAsync(Guid assignmentId, Guid studentUserId, CancellationToken cancellationToken)
     {
-        return _databaseContext.Submissions.SingleOrDefaultAsync(
+        return _databaseContext.Submissions.Include(submission => submission.Attachments).SingleOrDefaultAsync(
             submission => submission.AssignmentId == assignmentId && submission.StudentUserId == studentUserId,
             cancellationToken);
     }
@@ -103,17 +103,21 @@ public sealed class SubmissionRepository : ISubmissionRepository
         CancellationToken cancellationToken)
     {
         _databaseContext.SubmissionReviewRevisions.Add(revision);
-        _databaseContext.Submissions.Update(submission);
+        _databaseContext.Entry(submission).State = EntityState.Modified;
         await _databaseContext.SaveChangesAsync(cancellationToken);
     }
 
     public async Task UpdateWithRevisionAsync(
         Submission submission,
         SubmissionRevision revision,
+        IReadOnlyCollection<SubmissionAttachment> addedAttachments,
+        IReadOnlyCollection<SubmissionAttachment> removedAttachments,
         CancellationToken cancellationToken)
     {
         _databaseContext.SubmissionRevisions.Add(revision);
-        _databaseContext.Submissions.Update(submission);
+        _databaseContext.SubmissionAttachments.AddRange(addedAttachments);
+        _databaseContext.SubmissionAttachments.RemoveRange(removedAttachments);
+        _databaseContext.Entry(submission).State = EntityState.Modified;
         await _databaseContext.SaveChangesAsync(cancellationToken);
     }
 
@@ -124,7 +128,7 @@ public sealed class SubmissionRepository : ISubmissionRepository
         CancellationToken cancellationToken)
     {
         _databaseContext.SubmissionReviewRevisions.Add(revision);
-        _databaseContext.Submissions.Update(submission);
+        _databaseContext.Entry(submission).State = EntityState.Modified;
         await _databaseContext.UserNotifications.AddAsync(notification, cancellationToken);
         await _databaseContext.SaveChangesAsync(cancellationToken);
     }

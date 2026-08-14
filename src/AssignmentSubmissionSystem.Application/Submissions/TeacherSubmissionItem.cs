@@ -4,7 +4,9 @@ namespace AssignmentSubmissionSystem.Application.Submissions;
 
 public sealed class TeacherSubmissionItem
 {
-    public string? AttachmentFileName { get; init; }
+    public string? AttachmentFileName => Attachments.FirstOrDefault()?.FileName;
+
+    public IReadOnlyList<SubmissionAttachmentItem> Attachments { get; init; } = [];
 
     public string? Feedback { get; init; }
 
