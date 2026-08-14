@@ -100,15 +100,15 @@ public sealed class TeacherReviewEndpointTests : IClassFixture<AuthWebApplicatio
     {
         using HttpClient adminClient = await CreateAuthenticatedClientAsync("ADM-001", "Admin123!");
         string suffix = Guid.NewGuid().ToString("N").ToUpperInvariant();
-        EntityResponse classCourse = await CreateEntityAsync(adminClient, "/api/admin/classes-courses", "CLS-" + suffix, "Class " + suffix[..6]);
+        EntityResponse academicClass = await CreateEntityAsync(adminClient, "/api/admin/classes", "CLS-" + suffix, "Class " + suffix[..6]);
         EntityResponse subject = await CreateEntityAsync(adminClient, "/api/admin/subjects", "SUB-" + suffix, "Subject " + suffix[..6]);
         HttpResponseMessage responsibilityResponse = await adminClient.PostAsJsonAsync(
             "/api/admin/teacher-responsibilities",
-            new { classCourseId = classCourse.Id, subjectId = subject.Id, teacherInstitutionalId = "TCH-001" });
+            new { academicClassId = academicClass.Id, subjectId = subject.Id, teacherInstitutionalId = "TCH-001" });
         responsibilityResponse.EnsureSuccessStatusCode();
         HttpResponseMessage enrollmentResponse = await adminClient.PostAsJsonAsync(
             "/api/admin/enrollments",
-            new { classCourseId = classCourse.Id, studentInstitutionalId = "STU-001" });
+            new { academicClassId = academicClass.Id, studentInstitutionalId = "STU-001" });
         enrollmentResponse.EnsureSuccessStatusCode();
 
         using HttpClient teacherClient = await CreateAuthenticatedClientAsync("TCH-001", "Teacher123!");
@@ -116,7 +116,7 @@ public sealed class TeacherReviewEndpointTests : IClassFixture<AuthWebApplicatio
             "/api/teacher/assignments",
             new
             {
-                classCourseId = classCourse.Id,
+                academicClassId = academicClass.Id,
                 subjectId = subject.Id,
                 title = "Submission work " + suffix,
                 description = "Provide a response before the deadline.",

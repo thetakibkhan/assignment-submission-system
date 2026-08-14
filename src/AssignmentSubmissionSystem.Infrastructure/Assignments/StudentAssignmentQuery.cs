@@ -33,9 +33,9 @@ public sealed class StudentAssignmentQuery : IStudentAssignmentQuery
     {
         return from assignment in _databaseContext.Assignments.AsNoTracking()
                join enrollment in _databaseContext.StudentEnrollments.AsNoTracking()
-                   on assignment.ClassCourseId equals enrollment.ClassCourseId
-               join classCourse in _databaseContext.ClassCourses.AsNoTracking()
-                   on assignment.ClassCourseId equals classCourse.Id
+                   on assignment.AcademicClassId equals enrollment.AcademicClassId
+               join academicClass in _databaseContext.AcademicClasses.AsNoTracking()
+                   on assignment.AcademicClassId equals academicClass.Id
                join subject in _databaseContext.Subjects.AsNoTracking()
                    on assignment.SubjectId equals subject.Id
                join teacher in _databaseContext.Users.AsNoTracking()
@@ -50,7 +50,7 @@ public sealed class StudentAssignmentQuery : IStudentAssignmentQuery
                select new StudentAssignmentItem
                {
                    AllowSubmissionUpdates = assignment.AllowSubmissionUpdates ?? false,
-                   ClassCourseName = classCourse.Name,
+                   AcademicClassName = academicClass.Name,
                    Deadline = assignment.Deadline ?? DateTimeOffset.MaxValue,
                    DeadlinePassed = assignment.Deadline <= currentTime,
                    Description = assignment.Description ?? string.Empty,

@@ -19,13 +19,13 @@ public sealed class AcademicRelationshipEndpointTests : IClassFixture<AuthWebApp
     public async Task EnrollAndEnd_ShouldPreserveEnrollment_WhenRequestedByAdmin()
     {
         using HttpClient client = await CreateAuthenticatedClientAsync("ADM-001", "Admin123!");
-        Guid classCourseId = await CreateClassCourseAsync(client);
+        Guid academicClassId = await CreateAcademicClassAsync(client);
 
         HttpResponseMessage enrollmentResponse = await client.PostAsJsonAsync(
             "/api/admin/enrollments",
             new
             {
-                classCourseId,
+                academicClassId,
                 studentInstitutionalId = "STU-001"
             });
 
@@ -47,14 +47,14 @@ public sealed class AcademicRelationshipEndpointTests : IClassFixture<AuthWebApp
     public async Task AssignAndRevoke_ShouldPreserveTeacherResponsibility_WhenRequestedByAdmin()
     {
         using HttpClient client = await CreateAuthenticatedClientAsync("ADM-001", "Admin123!");
-        Guid classCourseId = await CreateClassCourseAsync(client);
+        Guid academicClassId = await CreateAcademicClassAsync(client);
         Guid subjectId = await CreateSubjectAsync(client);
 
         HttpResponseMessage assignmentResponse = await client.PostAsJsonAsync(
             "/api/admin/teacher-responsibilities",
             new
             {
-                classCourseId,
+                academicClassId,
                 subjectId,
                 teacherInstitutionalId = "TCH-001"
             });
@@ -74,14 +74,14 @@ public sealed class AcademicRelationshipEndpointTests : IClassFixture<AuthWebApp
     }
 
     [Fact]
-    public async Task Assign_ShouldRejectASecondActiveTeacherForTheSameClassCourseAndSubject()
+    public async Task Assign_ShouldRejectASecondActiveTeacherForTheSameAcademicClassAndSubject()
     {
         using HttpClient client = await CreateAuthenticatedClientAsync("ADM-001", "Admin123!");
-        Guid classCourseId = await CreateClassCourseAsync(client);
+        Guid academicClassId = await CreateAcademicClassAsync(client);
         Guid subjectId = await CreateSubjectAsync(client);
         object request = new
         {
-            classCourseId,
+            academicClassId,
             subjectId,
             teacherInstitutionalId = "TCH-001"
         };
@@ -120,10 +120,10 @@ public sealed class AcademicRelationshipEndpointTests : IClassFixture<AuthWebApp
         return client;
     }
 
-    private static async Task<Guid> CreateClassCourseAsync(HttpClient client)
+    private static async Task<Guid> CreateAcademicClassAsync(HttpClient client)
     {
         HttpResponseMessage response = await client.PostAsJsonAsync(
-            "/api/admin/classes-courses",
+            "/api/admin/classes",
             new
             {
                 code = "CLS-" + Guid.NewGuid().ToString("N").ToUpperInvariant(),
@@ -132,9 +132,9 @@ public sealed class AcademicRelationshipEndpointTests : IClassFixture<AuthWebApp
 
         response.EnsureSuccessStatusCode();
 
-        RelationshipResponse? classCourse = await response.Content.ReadFromJsonAsync<RelationshipResponse>();
+        RelationshipResponse? academicClass = await response.Content.ReadFromJsonAsync<RelationshipResponse>();
 
-        return classCourse?.Id ?? throw new InvalidOperationException("The Class/Course response was empty.");
+        return academicClass?.Id ?? throw new InvalidOperationException("The Class response was empty.");
     }
 
     private static async Task<Guid> CreateSubjectAsync(HttpClient client)

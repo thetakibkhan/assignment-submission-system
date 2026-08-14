@@ -1,4 +1,4 @@
-using AssignmentSubmissionSystem.Application.AcademicSetup.ClassCourses;
+using AssignmentSubmissionSystem.Application.AcademicSetup.AcademicClasses;
 using AssignmentSubmissionSystem.Domain.Academics;
 
 namespace AssignmentSubmissionSystem.Application.AcademicSetup.Enrollments;
@@ -6,16 +6,16 @@ namespace AssignmentSubmissionSystem.Application.AcademicSetup.Enrollments;
 public sealed class StudentEnrollmentService : IStudentEnrollmentService
 {
     private readonly IAcademicUserDirectory _academicUserDirectory;
-    private readonly IClassCourseRepository _classCourseRepository;
+    private readonly IAcademicClassRepository _academicClassRepository;
     private readonly IStudentEnrollmentRepository _studentEnrollmentRepository;
 
     public StudentEnrollmentService(
         IAcademicUserDirectory academicUserDirectory,
-        IClassCourseRepository classCourseRepository,
+        IAcademicClassRepository academicClassRepository,
         IStudentEnrollmentRepository studentEnrollmentRepository)
     {
         _academicUserDirectory = academicUserDirectory;
-        _classCourseRepository = classCourseRepository;
+        _academicClassRepository = academicClassRepository;
         _studentEnrollmentRepository = studentEnrollmentRepository;
     }
 
@@ -24,12 +24,12 @@ public sealed class StudentEnrollmentService : IStudentEnrollmentService
         Guid enrolledByUserId,
         CancellationToken cancellationToken)
     {
-        ClassCourse classCourse = await _classCourseRepository.GetByIdAsync(command.ClassCourseId, cancellationToken)
-            ?? throw new KeyNotFoundException("The requested Class/Course was not found.");
+        AcademicClass academicClass = await _academicClassRepository.GetByIdAsync(command.AcademicClassId, cancellationToken)
+            ?? throw new KeyNotFoundException("The requested Class was not found.");
 
-        if (classCourse.IsArchived)
+        if (academicClass.IsArchived)
         {
-            throw new InvalidOperationException("An archived Class/Course cannot accept new enrollments.");
+            throw new InvalidOperationException("An archived Class cannot accept new enrollments.");
         }
 
         Guid studentUserId = await _academicUserDirectory.GetActiveStudentIdAsync(
@@ -39,7 +39,7 @@ public sealed class StudentEnrollmentService : IStudentEnrollmentService
 
         if (await _studentEnrollmentRepository.ExistsActiveAsync(
             studentUserId,
-            command.ClassCourseId,
+            command.AcademicClassId,
             cancellationToken))
         {
             throw new DuplicateActiveEnrollmentException();
@@ -48,7 +48,7 @@ public sealed class StudentEnrollmentService : IStudentEnrollmentService
         StudentEnrollment enrollment = new(
             Guid.CreateVersion7(),
             studentUserId,
-            command.ClassCourseId,
+            command.AcademicClassId,
             enrolledByUserId,
             DateTimeOffset.UtcNow);
         await _studentEnrollmentRepository.AddAsync(enrollment, cancellationToken);

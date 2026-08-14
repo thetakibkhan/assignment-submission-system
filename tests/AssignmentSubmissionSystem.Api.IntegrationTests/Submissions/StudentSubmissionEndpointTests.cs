@@ -307,12 +307,12 @@ public sealed class StudentSubmissionEndpointTests : IClassFixture<AuthWebApplic
 
         using IServiceScope scope = _factory.Services.CreateScope();
         ApplicationDbContext databaseContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        Guid classCourseId = await databaseContext.Assignments
+        Guid academicClassId = await databaseContext.Assignments
             .Where(assignment => assignment.Id == assignmentId)
-            .Select(assignment => assignment.ClassCourseId)
+            .Select(assignment => assignment.AcademicClassId)
             .SingleAsync();
         await databaseContext.StudentEnrollments
-            .Where(enrollment => enrollment.ClassCourseId == classCourseId && enrollment.EndedAt == null)
+            .Where(enrollment => enrollment.AcademicClassId == academicClassId && enrollment.EndedAt == null)
             .ExecuteUpdateAsync(setters => setters.SetProperty(
                 enrollment => enrollment.EndedAt,
                 DateTimeOffset.UtcNow));
@@ -353,15 +353,15 @@ public sealed class StudentSubmissionEndpointTests : IClassFixture<AuthWebApplic
     {
         using HttpClient adminClient = await CreateAuthenticatedClientAsync("ADM-001", "Admin123!");
         string suffix = Guid.NewGuid().ToString("N").ToUpperInvariant();
-        EntityResponse classCourse = await CreateEntityAsync(adminClient, "/api/admin/classes-courses", "CLS-" + suffix, "Class " + suffix[..6]);
+        EntityResponse academicClass = await CreateEntityAsync(adminClient, "/api/admin/classes", "CLS-" + suffix, "Class " + suffix[..6]);
         EntityResponse subject = await CreateEntityAsync(adminClient, "/api/admin/subjects", "SUB-" + suffix, "Subject " + suffix[..6]);
         HttpResponseMessage responsibilityResponse = await adminClient.PostAsJsonAsync(
             "/api/admin/teacher-responsibilities",
-            new { classCourseId = classCourse.Id, subjectId = subject.Id, teacherInstitutionalId = "TCH-001" });
+            new { academicClassId = academicClass.Id, subjectId = subject.Id, teacherInstitutionalId = "TCH-001" });
         responsibilityResponse.EnsureSuccessStatusCode();
         HttpResponseMessage enrollmentResponse = await adminClient.PostAsJsonAsync(
             "/api/admin/enrollments",
-            new { classCourseId = classCourse.Id, studentInstitutionalId = "STU-001" });
+            new { academicClassId = academicClass.Id, studentInstitutionalId = "STU-001" });
         enrollmentResponse.EnsureSuccessStatusCode();
 
         using HttpClient teacherClient = await CreateAuthenticatedClientAsync("TCH-001", "Teacher123!");
@@ -369,7 +369,7 @@ public sealed class StudentSubmissionEndpointTests : IClassFixture<AuthWebApplic
             "/api/teacher/assignments",
             new
             {
-                classCourseId = classCourse.Id,
+                academicClassId = academicClass.Id,
                 subjectId = subject.Id,
                 title = "Submission work " + suffix,
                 description = "Provide a response before the deadline.",

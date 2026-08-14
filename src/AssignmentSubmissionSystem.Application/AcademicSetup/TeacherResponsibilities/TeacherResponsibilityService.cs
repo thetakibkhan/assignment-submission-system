@@ -1,4 +1,4 @@
-using AssignmentSubmissionSystem.Application.AcademicSetup.ClassCourses;
+using AssignmentSubmissionSystem.Application.AcademicSetup.AcademicClasses;
 using AssignmentSubmissionSystem.Application.AcademicSetup.Subjects;
 using AssignmentSubmissionSystem.Domain.Academics;
 
@@ -7,18 +7,18 @@ namespace AssignmentSubmissionSystem.Application.AcademicSetup.TeacherResponsibi
 public sealed class TeacherResponsibilityService : ITeacherResponsibilityService
 {
     private readonly IAcademicUserDirectory _academicUserDirectory;
-    private readonly IClassCourseRepository _classCourseRepository;
+    private readonly IAcademicClassRepository _academicClassRepository;
     private readonly ISubjectRepository _subjectRepository;
     private readonly ITeacherResponsibilityRepository _teacherResponsibilityRepository;
 
     public TeacherResponsibilityService(
         IAcademicUserDirectory academicUserDirectory,
-        IClassCourseRepository classCourseRepository,
+        IAcademicClassRepository academicClassRepository,
         ISubjectRepository subjectRepository,
         ITeacherResponsibilityRepository teacherResponsibilityRepository)
     {
         _academicUserDirectory = academicUserDirectory;
-        _classCourseRepository = classCourseRepository;
+        _academicClassRepository = academicClassRepository;
         _subjectRepository = subjectRepository;
         _teacherResponsibilityRepository = teacherResponsibilityRepository;
     }
@@ -28,14 +28,14 @@ public sealed class TeacherResponsibilityService : ITeacherResponsibilityService
         Guid assignedByUserId,
         CancellationToken cancellationToken)
     {
-        ClassCourse classCourse = await _classCourseRepository.GetByIdAsync(command.ClassCourseId, cancellationToken)
-            ?? throw new KeyNotFoundException("The requested Class/Course was not found.");
+        AcademicClass academicClass = await _academicClassRepository.GetByIdAsync(command.AcademicClassId, cancellationToken)
+            ?? throw new KeyNotFoundException("The requested Class was not found.");
         Subject subject = await _subjectRepository.GetByIdAsync(command.SubjectId, cancellationToken)
             ?? throw new KeyNotFoundException("The requested Subject was not found.");
 
-        if (classCourse.IsArchived || subject.IsArchived)
+        if (academicClass.IsArchived || subject.IsArchived)
         {
-            throw new InvalidOperationException("Archived Class/Courses and Subjects cannot receive Teacher responsibilities.");
+            throw new InvalidOperationException("Archived Classes and Subjects cannot receive Teacher responsibilities.");
         }
 
         Guid teacherUserId = await _academicUserDirectory.GetActiveTeacherIdAsync(
@@ -44,7 +44,7 @@ public sealed class TeacherResponsibilityService : ITeacherResponsibilityService
             ?? throw new ArgumentException("The requested active Teacher account was not found.", nameof(command));
 
         if (await _teacherResponsibilityRepository.ExistsActiveAsync(
-            command.ClassCourseId,
+            command.AcademicClassId,
             command.SubjectId,
             cancellationToken))
         {
@@ -54,7 +54,7 @@ public sealed class TeacherResponsibilityService : ITeacherResponsibilityService
         TeacherResponsibility responsibility = new(
             Guid.CreateVersion7(),
             teacherUserId,
-            command.ClassCourseId,
+            command.AcademicClassId,
             command.SubjectId,
             assignedByUserId,
             DateTimeOffset.UtcNow);

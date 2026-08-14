@@ -320,7 +320,7 @@ public sealed class SubmissionService : ISubmissionService
 
         bool hasActiveEnrollment = await _studentEnrollmentRepository.ExistsActiveAsync(
             studentUserId,
-            assignment.ClassCourseId,
+            assignment.AcademicClassId,
             cancellationToken);
 
         if (assignment.Status != AssignmentStatus.Published || !hasActiveEnrollment)

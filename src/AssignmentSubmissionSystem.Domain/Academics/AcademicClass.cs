@@ -1,8 +1,8 @@
 namespace AssignmentSubmissionSystem.Domain.Academics;
 
-public sealed class ClassCourse
+public sealed class AcademicClass
 {
-    public ClassCourse(Guid id, string name, string code)
+    public AcademicClass(Guid id, string name, string code)
     {
         ArgumentOutOfRangeException.ThrowIfEqual(id, Guid.Empty);
 

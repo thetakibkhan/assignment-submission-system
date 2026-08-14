@@ -6,7 +6,7 @@ public sealed class TeacherResponsibilityResponse
 {
     public DateTimeOffset AssignedAt { get; init; }
 
-    public Guid ClassCourseId { get; init; }
+    public Guid AcademicClassId { get; init; }
 
     public Guid Id { get; init; }
 
@@ -21,7 +21,7 @@ public sealed class TeacherResponsibilityResponse
         return new TeacherResponsibilityResponse
         {
             AssignedAt = responsibility.AssignedAt,
-            ClassCourseId = responsibility.ClassCourseId,
+            AcademicClassId = responsibility.AcademicClassId,
             Id = responsibility.Id,
             IsActive = responsibility.IsActive,
             SubjectId = responsibility.SubjectId,

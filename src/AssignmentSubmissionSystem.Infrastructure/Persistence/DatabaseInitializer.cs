@@ -74,10 +74,10 @@ public sealed class DatabaseInitializer
 
     private async Task EnsureMockAcademicDataAsync(CancellationToken cancellationToken)
     {
-        ClassCourse[] mockClassCourses =
+        AcademicClass[] mockAcademicClasses =
         [
-            new ClassCourse(Guid.CreateVersion7(), "Class Nine", "CLS-09"),
-            new ClassCourse(Guid.CreateVersion7(), "Class Ten", "CLS-10")
+            new AcademicClass(Guid.CreateVersion7(), "Class Nine", "CLS-09"),
+            new AcademicClass(Guid.CreateVersion7(), "Class Ten", "CLS-10")
         ];
         Subject[] mockSubjects =
         [
@@ -86,8 +86,8 @@ public sealed class DatabaseInitializer
             new Subject(Guid.CreateVersion7(), "Science", "SUB-SCI")
         ];
 
-        HashSet<string> existingClassCourseCodes = (await _databaseContext.ClassCourses
-            .Select(classCourse => classCourse.Code)
+        HashSet<string> existingAcademicClassCodes = (await _databaseContext.AcademicClasses
+            .Select(academicClass => academicClass.Code)
             .ToListAsync(cancellationToken))
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
         HashSet<string> existingSubjectCodes = (await _databaseContext.Subjects
@@ -95,14 +95,14 @@ public sealed class DatabaseInitializer
             .ToListAsync(cancellationToken))
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
-        foreach (ClassCourse classCourse in mockClassCourses)
+        foreach (AcademicClass academicClass in mockAcademicClasses)
         {
-            if (existingClassCourseCodes.Contains(classCourse.Code))
+            if (existingAcademicClassCodes.Contains(academicClass.Code))
             {
                 continue;
             }
 
-            _databaseContext.ClassCourses.Add(classCourse);
+            _databaseContext.AcademicClasses.Add(academicClass);
         }
 
         foreach (Subject subject in mockSubjects)

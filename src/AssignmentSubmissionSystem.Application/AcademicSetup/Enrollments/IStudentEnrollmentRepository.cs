@@ -6,9 +6,9 @@ public interface IStudentEnrollmentRepository
 {
     Task AddAsync(StudentEnrollment enrollment, CancellationToken cancellationToken);
 
-    Task<bool> ExistsActiveAsync(Guid studentUserId, Guid classCourseId, CancellationToken cancellationToken);
+    Task<bool> ExistsActiveAsync(Guid studentUserId, Guid academicClassId, CancellationToken cancellationToken);
 
-    Task<IReadOnlyList<Guid>> GetActiveStudentUserIdsAsync(Guid classCourseId, CancellationToken cancellationToken);
+    Task<IReadOnlyList<Guid>> GetActiveStudentUserIdsAsync(Guid academicClassId, CancellationToken cancellationToken);
 
     Task<StudentEnrollment?> GetByIdAsync(Guid id, CancellationToken cancellationToken);
 

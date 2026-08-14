@@ -27,7 +27,7 @@ public sealed class DemoScenarioSeeder
         ApplicationUser student,
         CancellationToken cancellationToken)
     {
-        ClassCourse classCourse = await _databaseContext.ClassCourses.SingleAsync(
+        AcademicClass academicClass = await _databaseContext.AcademicClasses.SingleAsync(
             item => item.Code == "CLS-10",
             cancellationToken);
         Subject subject = await _databaseContext.Subjects.SingleAsync(
@@ -37,7 +37,7 @@ public sealed class DemoScenarioSeeder
 
         if (!await _databaseContext.TeacherResponsibilities.AnyAsync(
             item => item.TeacherUserId == teacher.Id
-                && item.ClassCourseId == classCourse.Id
+                && item.AcademicClassId == academicClass.Id
                 && item.SubjectId == subject.Id
                 && item.RevokedAt == null,
             cancellationToken))
@@ -45,7 +45,7 @@ public sealed class DemoScenarioSeeder
             _databaseContext.TeacherResponsibilities.Add(new TeacherResponsibility(
                 Guid.CreateVersion7(),
                 teacher.Id,
-                classCourse.Id,
+                academicClass.Id,
                 subject.Id,
                 administrator.Id,
                 now));
@@ -53,32 +53,32 @@ public sealed class DemoScenarioSeeder
 
         if (!await _databaseContext.StudentEnrollments.AnyAsync(
             item => item.StudentUserId == student.Id
-                && item.ClassCourseId == classCourse.Id
+                && item.AcademicClassId == academicClass.Id
                 && item.EndedAt == null,
             cancellationToken))
         {
             _databaseContext.StudentEnrollments.Add(new StudentEnrollment(
                 Guid.CreateVersion7(),
                 student.Id,
-                classCourse.Id,
+                academicClass.Id,
                 administrator.Id,
                 now));
         }
 
         Assignment draft = await EnsureAssignmentAsync(
-            teacher, classCourse, subject, DraftAssignmentTitle,
+            teacher, academicClass, subject, DraftAssignmentTitle,
             "Write a short reflection on the assigned literature extract.",
             now.AddDays(7), now, false, cancellationToken);
         Assignment open = await EnsureAssignmentAsync(
-            teacher, classCourse, subject, OpenAssignmentTitle,
+            teacher, academicClass, subject, OpenAssignmentTitle,
             "Write a concise argument with a clear claim and supporting evidence.",
             now.AddDays(7), now, true, cancellationToken);
         Assignment review = await EnsureAssignmentAsync(
-            teacher, classCourse, subject, ReviewAssignmentTitle,
+            teacher, academicClass, subject, ReviewAssignmentTitle,
             "Record observations and explain the scientific pattern you found.",
             now.AddDays(5), now, false, cancellationToken);
         Assignment historical = await EnsureAssignmentAsync(
-            teacher, classCourse, subject, HistoricalResultTitle,
+            teacher, academicClass, subject, HistoricalResultTitle,
             "Summarize the reading and explain its central idea.",
             now.AddDays(-7), now.AddDays(-30), false, cancellationToken);
 
@@ -117,7 +117,7 @@ public sealed class DemoScenarioSeeder
 
     private async Task<Assignment> EnsureAssignmentAsync(
         ApplicationUser teacher,
-        ClassCourse classCourse,
+        AcademicClass academicClass,
         Subject subject,
         string title,
         string description,
@@ -137,7 +137,7 @@ public sealed class DemoScenarioSeeder
         assignment = new Assignment(
             Guid.CreateVersion7(),
             teacher.Id,
-            classCourse.Id,
+            academicClass.Id,
             subject.Id,
             title,
             description,

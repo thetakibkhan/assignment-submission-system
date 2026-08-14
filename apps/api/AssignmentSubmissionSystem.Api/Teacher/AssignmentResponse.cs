@@ -5,7 +5,7 @@ namespace AssignmentSubmissionSystem.Api.Teacher;
 public sealed class AssignmentResponse
 {
     public Guid Id { get; init; }
-    public Guid ClassCourseId { get; init; }
+    public Guid AcademicClassId { get; init; }
     public Guid SubjectId { get; init; }
     public string Title { get; init; } = string.Empty;
     public string? Description { get; init; }
@@ -19,7 +19,7 @@ public sealed class AssignmentResponse
     public static AssignmentResponse From(Assignment assignment, bool canReturnToDraft = false) => new()
     {
         Id = assignment.Id,
-        ClassCourseId = assignment.ClassCourseId,
+        AcademicClassId = assignment.AcademicClassId,
         SubjectId = assignment.SubjectId,
         Title = assignment.Title,
         Description = assignment.Description,

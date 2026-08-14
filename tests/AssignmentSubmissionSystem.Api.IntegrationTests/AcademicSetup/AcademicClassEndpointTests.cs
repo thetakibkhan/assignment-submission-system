@@ -6,17 +6,17 @@ using Microsoft.AspNetCore.Mvc.Testing;
 
 namespace AssignmentSubmissionSystem.Api.IntegrationTests.AcademicSetup;
 
-public sealed class ClassCourseEndpointTests : IClassFixture<AuthWebApplicationFactory>
+public sealed class AcademicClassEndpointTests : IClassFixture<AuthWebApplicationFactory>
 {
     private readonly AuthWebApplicationFactory _factory;
 
-    public ClassCourseEndpointTests(AuthWebApplicationFactory factory)
+    public AcademicClassEndpointTests(AuthWebApplicationFactory factory)
     {
         _factory = factory;
     }
 
     [Fact]
-    public async Task Create_ShouldCreateClassCourse_WhenRequestedByAdmin()
+    public async Task Create_ShouldCreateAcademicClass_WhenRequestedByAdmin()
     {
         using HttpClient client = await CreateAuthenticatedClientAsync("ADM-001", "Admin123!");
 
@@ -32,12 +32,12 @@ public sealed class ClassCourseEndpointTests : IClassFixture<AuthWebApplicationF
 
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
 
-        ClassCourseResponse? classCourse = await response.Content.ReadFromJsonAsync<ClassCourseResponse>();
+        AcademicClassResponse? academicClass = await response.Content.ReadFromJsonAsync<AcademicClassResponse>();
 
-        Assert.NotNull(classCourse);
-        Assert.Equal(code, classCourse.Code);
-        Assert.Equal("Class Nine", classCourse.Name);
-        Assert.False(classCourse.IsArchived);
+        Assert.NotNull(academicClass);
+        Assert.Equal(code, academicClass.Code);
+        Assert.Equal("Class Nine", academicClass.Name);
+        Assert.False(academicClass.IsArchived);
     }
 
     [Fact]
@@ -46,7 +46,7 @@ public sealed class ClassCourseEndpointTests : IClassFixture<AuthWebApplicationF
         using HttpClient client = await CreateAuthenticatedClientAsync("TCH-001", "Teacher123!");
 
         HttpResponseMessage response = await client.PostAsJsonAsync(
-            "/api/admin/classes-courses",
+            "/api/admin/classes",
             new
             {
                 code = "CLS-10",
@@ -58,19 +58,19 @@ public sealed class ClassCourseEndpointTests : IClassFixture<AuthWebApplicationF
 
 
     [Fact]
-    public async Task GetAll_ShouldIncludeCreatedClassCourse_WhenRequestedByAdmin()
+    public async Task GetAll_ShouldIncludeCreatedAcademicClass_WhenRequestedByAdmin()
     {
         using HttpClient client = await CreateAuthenticatedClientAsync("ADM-001", "Admin123!");
-        ClassCourseResponse createdClassCourse = await CreateClassCourseAsync(client);
+        AcademicClassResponse createdAcademicClass = await CreateAcademicClassAsync(client);
 
-        HttpResponseMessage response = await client.GetAsync("/api/admin/classes-courses");
+        HttpResponseMessage response = await client.GetAsync("/api/admin/classes");
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
-        List<ClassCourseResponse>? classCourses = await response.Content.ReadFromJsonAsync<List<ClassCourseResponse>>();
+        List<AcademicClassResponse>? academicClasses = await response.Content.ReadFromJsonAsync<List<AcademicClassResponse>>();
 
-        Assert.NotNull(classCourses);
-        Assert.Contains(classCourses, classCourse => classCourse.Id == createdClassCourse.Id);
+        Assert.NotNull(academicClasses);
+        Assert.Contains(academicClasses, academicClass => academicClass.Id == createdAcademicClass.Id);
     }
 
 
@@ -79,44 +79,44 @@ public sealed class ClassCourseEndpointTests : IClassFixture<AuthWebApplicationF
     {
         using HttpClient client = await CreateAuthenticatedClientAsync("ADM-001", "Admin123!");
 
-        List<ClassCourseResponse>? classCourses = await client.GetFromJsonAsync<List<ClassCourseResponse>>(
-            "/api/admin/classes-courses");
-        List<ClassCourseResponse>? subjects = await client.GetFromJsonAsync<List<ClassCourseResponse>>(
+        List<AcademicClassResponse>? academicClasses = await client.GetFromJsonAsync<List<AcademicClassResponse>>(
+            "/api/admin/classes");
+        List<AcademicClassResponse>? subjects = await client.GetFromJsonAsync<List<AcademicClassResponse>>(
             "/api/admin/subjects");
 
-        Assert.NotNull(classCourses);
+        Assert.NotNull(academicClasses);
         Assert.NotNull(subjects);
-        Assert.Contains(classCourses, classCourse => classCourse.Code == "CLS-09" && classCourse.Name == "Class Nine");
-        Assert.Contains(classCourses, classCourse => classCourse.Code == "CLS-10" && classCourse.Name == "Class Ten");
+        Assert.Contains(academicClasses, academicClass => academicClass.Code == "CLS-09" && academicClass.Name == "Class Nine");
+        Assert.Contains(academicClasses, academicClass => academicClass.Code == "CLS-10" && academicClass.Name == "Class Ten");
         Assert.Contains(subjects, subject => subject.Code == "SUB-MAT" && subject.Name == "Mathematics");
         Assert.Contains(subjects, subject => subject.Code == "SUB-ENG" && subject.Name == "English");
         Assert.Contains(subjects, subject => subject.Code == "SUB-SCI" && subject.Name == "Science");
     }
 
     [Fact]
-    public async Task UpdateAndArchive_ShouldPreserveClassCourseIdentity_WhenRequestedByAdmin()
+    public async Task UpdateAndArchive_ShouldPreserveAcademicClassIdentity_WhenRequestedByAdmin()
     {
         using HttpClient client = await CreateAuthenticatedClientAsync("ADM-001", "Admin123!");
-        ClassCourseResponse classCourse = await CreateClassCourseAsync(client);
+        AcademicClassResponse academicClass = await CreateAcademicClassAsync(client);
 
         HttpResponseMessage updateResponse = await client.PutAsJsonAsync(
-            "/api/admin/classes-courses/" + classCourse.Id,
+            "/api/admin/classes/" + academicClass.Id,
             new
             {
-                code = classCourse.Code,
+                code = academicClass.Code,
                 name = "Updated Class Name"
             });
 
         Assert.Equal(HttpStatusCode.OK, updateResponse.StatusCode);
 
-        ClassCourseResponse? updatedClassCourse = await updateResponse.Content.ReadFromJsonAsync<ClassCourseResponse>();
+        AcademicClassResponse? updatedAcademicClass = await updateResponse.Content.ReadFromJsonAsync<AcademicClassResponse>();
 
-        Assert.NotNull(updatedClassCourse);
-        Assert.Equal(classCourse.Id, updatedClassCourse.Id);
-        Assert.Equal("Updated Class Name", updatedClassCourse.Name);
+        Assert.NotNull(updatedAcademicClass);
+        Assert.Equal(academicClass.Id, updatedAcademicClass.Id);
+        Assert.Equal("Updated Class Name", updatedAcademicClass.Name);
 
         HttpResponseMessage archiveResponse = await client.PostAsync(
-            "/api/admin/classes-courses/" + classCourse.Id + "/archive",
+            "/api/admin/classes/" + academicClass.Id + "/archive",
             null);
 
         Assert.Equal(HttpStatusCode.NoContent, archiveResponse.StatusCode);
@@ -144,11 +144,11 @@ public sealed class ClassCourseEndpointTests : IClassFixture<AuthWebApplicationF
     }
 
 
-    private static async Task<ClassCourseResponse> CreateClassCourseAsync(HttpClient client)
+    private static async Task<AcademicClassResponse> CreateAcademicClassAsync(HttpClient client)
     {
         string code = "CLS-" + Guid.NewGuid().ToString("N").ToUpperInvariant();
         HttpResponseMessage response = await client.PostAsJsonAsync(
-            "/api/admin/classes-courses",
+            "/api/admin/classes",
             new
             {
                 code,
@@ -157,10 +157,10 @@ public sealed class ClassCourseEndpointTests : IClassFixture<AuthWebApplicationF
 
         response.EnsureSuccessStatusCode();
 
-        return await response.Content.ReadFromJsonAsync<ClassCourseResponse>()
-            ?? throw new InvalidOperationException("The Class/Course response was empty.");
+        return await response.Content.ReadFromJsonAsync<AcademicClassResponse>()
+            ?? throw new InvalidOperationException("The Class response was empty.");
     }
-    private sealed class ClassCourseResponse
+    private sealed class AcademicClassResponse
     {
         public string Code { get; init; } = string.Empty;
 

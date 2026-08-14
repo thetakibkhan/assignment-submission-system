@@ -68,6 +68,6 @@ public sealed class TeacherAssignmentsController : ControllerBase
         catch (UnauthorizedAccessException) { return Forbid(); }
         catch (InvalidOperationException exception) { return Conflict(Problem(exception.Message)); }
     }
-    private static CreateAssignmentCommand ToCommand(CreateAssignmentRequest request) => new() { ClassCourseId = request.ClassCourseId, SubjectId = request.SubjectId, Title = request.Title, Description = request.Description, Deadline = request.Deadline, MaximumMarks = request.MaximumMarks, AllowSubmissionUpdates = request.AllowSubmissionUpdates };
+    private static CreateAssignmentCommand ToCommand(CreateAssignmentRequest request) => new() { AcademicClassId = request.AcademicClassId, SubjectId = request.SubjectId, Title = request.Title, Description = request.Description, Deadline = request.Deadline, MaximumMarks = request.MaximumMarks, AllowSubmissionUpdates = request.AllowSubmissionUpdates };
     private static ProblemDetails Problem(string detail) => new() { Title = "Assignment action is not allowed", Detail = detail, Status = StatusCodes.Status400BadRequest };
 }

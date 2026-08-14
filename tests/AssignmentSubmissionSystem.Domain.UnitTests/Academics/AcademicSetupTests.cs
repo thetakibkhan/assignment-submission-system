@@ -5,15 +5,15 @@ namespace AssignmentSubmissionSystem.Domain.UnitTests.Academics;
 public sealed class AcademicSetupTests
 {
     [Fact]
-    public void Archive_ShouldPreserveClassCourseIdentity()
+    public void Archive_ShouldPreserveAcademicClassIdentity()
     {
-        Guid classCourseId = Guid.CreateVersion7();
-        ClassCourse classCourse = new(classCourseId, "Class Nine", "CLS-9");
+        Guid academicClassId = Guid.CreateVersion7();
+        AcademicClass academicClass = new(academicClassId, "Class Nine", "CLS-9");
 
-        classCourse.Archive();
+        academicClass.Archive();
 
-        Assert.True(classCourse.IsArchived);
-        Assert.Equal(classCourseId, classCourse.Id);
+        Assert.True(academicClass.IsArchived);
+        Assert.Equal(academicClassId, academicClass.Id);
     }
 
     [Fact]
@@ -22,13 +22,13 @@ public sealed class AcademicSetupTests
         DateTimeOffset enrolledAt = new(2026, 8, 10, 0, 0, 0, TimeSpan.Zero);
         DateTimeOffset endedAt = enrolledAt.AddDays(1);
         Guid studentUserId = Guid.CreateVersion7();
-        Guid classCourseId = Guid.CreateVersion7();
+        Guid academicClassId = Guid.CreateVersion7();
         Guid enrolledByUserId = Guid.CreateVersion7();
         Guid endedByUserId = Guid.CreateVersion7();
         StudentEnrollment enrollment = new(
             Guid.CreateVersion7(),
             studentUserId,
-            classCourseId,
+            academicClassId,
             enrolledByUserId,
             enrolledAt);
 
@@ -36,7 +36,7 @@ public sealed class AcademicSetupTests
 
         Assert.False(enrollment.IsActive);
         Assert.Equal(studentUserId, enrollment.StudentUserId);
-        Assert.Equal(classCourseId, enrollment.ClassCourseId);
+        Assert.Equal(academicClassId, enrollment.AcademicClassId);
         Assert.Equal(endedByUserId, enrollment.EndedByUserId);
         Assert.Equal(endedAt, enrollment.EndedAt);
     }
@@ -47,14 +47,14 @@ public sealed class AcademicSetupTests
         DateTimeOffset assignedAt = new(2026, 8, 10, 0, 0, 0, TimeSpan.Zero);
         DateTimeOffset revokedAt = assignedAt.AddDays(1);
         Guid teacherUserId = Guid.CreateVersion7();
-        Guid classCourseId = Guid.CreateVersion7();
+        Guid academicClassId = Guid.CreateVersion7();
         Guid subjectId = Guid.CreateVersion7();
         Guid assignedByUserId = Guid.CreateVersion7();
         Guid revokedByUserId = Guid.CreateVersion7();
         TeacherResponsibility responsibility = new(
             Guid.CreateVersion7(),
             teacherUserId,
-            classCourseId,
+            academicClassId,
             subjectId,
             assignedByUserId,
             assignedAt);
@@ -63,7 +63,7 @@ public sealed class AcademicSetupTests
 
         Assert.False(responsibility.IsActive);
         Assert.Equal(teacherUserId, responsibility.TeacherUserId);
-        Assert.Equal(classCourseId, responsibility.ClassCourseId);
+        Assert.Equal(academicClassId, responsibility.AcademicClassId);
         Assert.Equal(subjectId, responsibility.SubjectId);
         Assert.Equal(revokedByUserId, responsibility.RevokedByUserId);
         Assert.Equal(revokedAt, responsibility.RevokedAt);

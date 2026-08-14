@@ -21,21 +21,21 @@ public sealed class StudentEnrollmentRepository : IStudentEnrollmentRepository
 
     public Task<bool> ExistsActiveAsync(
         Guid studentUserId,
-        Guid classCourseId,
+        Guid academicClassId,
         CancellationToken cancellationToken)
     {
         return _databaseContext.StudentEnrollments.AnyAsync(
             enrollment => enrollment.StudentUserId == studentUserId
-                && enrollment.ClassCourseId == classCourseId
+                && enrollment.AcademicClassId == academicClassId
                 && enrollment.EndedAt == null,
             cancellationToken);
     }
 
-    public async Task<IReadOnlyList<Guid>> GetActiveStudentUserIdsAsync(Guid classCourseId, CancellationToken cancellationToken)
+    public async Task<IReadOnlyList<Guid>> GetActiveStudentUserIdsAsync(Guid academicClassId, CancellationToken cancellationToken)
     {
         return await (from enrollment in _databaseContext.StudentEnrollments.AsNoTracking()
                       join user in _databaseContext.Users.AsNoTracking() on enrollment.StudentUserId equals user.Id
-                      where enrollment.ClassCourseId == classCourseId && enrollment.EndedAt == null && user.IsActive
+                      where enrollment.AcademicClassId == academicClassId && enrollment.EndedAt == null && user.IsActive
                       select enrollment.StudentUserId)
             .ToListAsync(cancellationToken);
     }

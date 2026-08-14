@@ -4,7 +4,7 @@ namespace AssignmentSubmissionSystem.Api.Administration;
 
 public sealed class EnrollmentResponse
 {
-    public Guid ClassCourseId { get; init; }
+    public Guid AcademicClassId { get; init; }
 
     public DateTimeOffset EnrolledAt { get; init; }
 
@@ -18,7 +18,7 @@ public sealed class EnrollmentResponse
     {
         return new EnrollmentResponse
         {
-            ClassCourseId = enrollment.ClassCourseId,
+            AcademicClassId = enrollment.AcademicClassId,
             EnrolledAt = enrollment.EnrolledAt,
             Id = enrollment.Id,
             IsActive = enrollment.IsActive,

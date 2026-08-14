@@ -3,7 +3,7 @@ namespace AssignmentSubmissionSystem.Application.Dashboards;
 public sealed class AdminDashboardSummary
 {
     public int ActiveAccounts { get; init; }
-    public int ActiveClassCourses { get; init; }
+    public int ActiveAcademicClasses { get; init; }
     public int ActiveSubjects { get; init; }
     public int AssignmentCount { get; init; }
     public int SubmissionCount { get; init; }

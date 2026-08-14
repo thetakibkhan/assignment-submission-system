@@ -1,12 +1,14 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace AssignmentSubmissionSystem.Api.Administration;
 
-public sealed class ClassCourseResponse
+public sealed class CreateAcademicClassRequest
 {
+    [Required]
+    [StringLength(50)]
     public string Code { get; init; } = string.Empty;
 
-    public Guid Id { get; init; }
-
-    public bool IsArchived { get; init; }
-
+    [Required]
+    [StringLength(200)]
     public string Name { get; init; } = string.Empty;
 }

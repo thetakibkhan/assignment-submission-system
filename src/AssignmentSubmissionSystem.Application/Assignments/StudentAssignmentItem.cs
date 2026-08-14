@@ -3,7 +3,7 @@ namespace AssignmentSubmissionSystem.Application.Assignments;
 public sealed class StudentAssignmentItem
 {
     public bool AllowSubmissionUpdates { get; init; }
-    public string ClassCourseName { get; init; } = string.Empty;
+    public string AcademicClassName { get; init; } = string.Empty;
     public DateTimeOffset Deadline { get; init; }
     public bool DeadlinePassed { get; init; }
     public string Description { get; init; } = string.Empty;

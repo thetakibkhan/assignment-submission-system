@@ -29,7 +29,7 @@ public sealed class TeacherResponsibilitiesController : ControllerBase
             TeacherResponsibility responsibility = await _teacherResponsibilityService.CreateAsync(
                 new CreateTeacherResponsibilityCommand
                 {
-                    ClassCourseId = request.ClassCourseId,
+                    AcademicClassId = request.AcademicClassId,
                     SubjectId = request.SubjectId,
                     TeacherInstitutionalId = request.TeacherInstitutionalId
                 },

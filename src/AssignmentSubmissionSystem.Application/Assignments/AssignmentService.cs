@@ -20,8 +20,8 @@ public sealed class AssignmentService : IAssignmentService
 
     public async Task<Assignment> CreateAsync(CreateAssignmentCommand command, Guid teacherUserId, CancellationToken cancellationToken)
     {
-        await EnsureActiveScopeAsync(command.ClassCourseId, command.SubjectId, teacherUserId, cancellationToken);
-        Assignment assignment = new(Guid.CreateVersion7(), teacherUserId, command.ClassCourseId, command.SubjectId, command.Title, command.Description, command.Deadline, command.MaximumMarks, command.AllowSubmissionUpdates, DateTimeOffset.UtcNow);
+        await EnsureActiveScopeAsync(command.AcademicClassId, command.SubjectId, teacherUserId, cancellationToken);
+        Assignment assignment = new(Guid.CreateVersion7(), teacherUserId, command.AcademicClassId, command.SubjectId, command.Title, command.Description, command.Deadline, command.MaximumMarks, command.AllowSubmissionUpdates, DateTimeOffset.UtcNow);
         await _assignmentRepository.AddAsync(assignment, cancellationToken);
         return assignment;
     }
@@ -40,8 +40,8 @@ public sealed class AssignmentService : IAssignmentService
     public async Task<Assignment> UpdateAsync(Guid id, CreateAssignmentCommand command, Guid teacherUserId, CancellationToken cancellationToken)
     {
         Assignment assignment = await GetOwnedAsync(id, teacherUserId, cancellationToken);
-        await EnsureActiveScopeAsync(command.ClassCourseId, command.SubjectId, teacherUserId, cancellationToken);
-        assignment.Update(command.ClassCourseId, command.SubjectId, command.Title, command.Description, command.Deadline, command.MaximumMarks, command.AllowSubmissionUpdates, await _assignmentRepository.HasSubmissionsAsync(id, cancellationToken), DateTimeOffset.UtcNow);
+        await EnsureActiveScopeAsync(command.AcademicClassId, command.SubjectId, teacherUserId, cancellationToken);
+        assignment.Update(command.AcademicClassId, command.SubjectId, command.Title, command.Description, command.Deadline, command.MaximumMarks, command.AllowSubmissionUpdates, await _assignmentRepository.HasSubmissionsAsync(id, cancellationToken), DateTimeOffset.UtcNow);
         await _assignmentRepository.UpdateAsync(assignment, cancellationToken);
         return assignment;
     }
@@ -49,10 +49,10 @@ public sealed class AssignmentService : IAssignmentService
     public async Task PublishAsync(Guid id, Guid teacherUserId, CancellationToken cancellationToken)
     {
         Assignment assignment = await GetOwnedAsync(id, teacherUserId, cancellationToken);
-        await EnsureActiveScopeAsync(assignment.ClassCourseId, assignment.SubjectId, teacherUserId, cancellationToken);
+        await EnsureActiveScopeAsync(assignment.AcademicClassId, assignment.SubjectId, teacherUserId, cancellationToken);
         DateTimeOffset createdAt = DateTimeOffset.UtcNow;
         assignment.Publish(createdAt);
-        IReadOnlyList<Guid> studentUserIds = await _studentEnrollmentRepository.GetActiveStudentUserIdsAsync(assignment.ClassCourseId, cancellationToken);
+        IReadOnlyList<Guid> studentUserIds = await _studentEnrollmentRepository.GetActiveStudentUserIdsAsync(assignment.AcademicClassId, cancellationToken);
         IReadOnlyList<UserNotification> notifications = studentUserIds
             .Select(studentUserId => new UserNotification(Guid.CreateVersion7(), studentUserId, NotificationType.AssignmentPublished, assignment.Id, null, "A new assignment is available: " + assignment.Title, createdAt))
             .ToList();
@@ -86,11 +86,11 @@ public sealed class AssignmentService : IAssignmentService
         return assignment;
     }
 
-    private async Task EnsureActiveScopeAsync(Guid classCourseId, Guid subjectId, Guid teacherUserId, CancellationToken cancellationToken)
+    private async Task EnsureActiveScopeAsync(Guid academicClassId, Guid subjectId, Guid teacherUserId, CancellationToken cancellationToken)
     {
-        if (!await _teacherResponsibilityRepository.ExistsActiveForTeacherAsync(classCourseId, subjectId, teacherUserId, cancellationToken))
+        if (!await _teacherResponsibilityRepository.ExistsActiveForTeacherAsync(academicClassId, subjectId, teacherUserId, cancellationToken))
         {
-            throw new UnauthorizedAccessException("You are not assigned to the selected Class/Course and Subject.");
+            throw new UnauthorizedAccessException("You are not assigned to the selected Class and Subject.");
         }
     }
 }

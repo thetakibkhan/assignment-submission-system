@@ -19,14 +19,14 @@ public sealed class TeacherAssignmentEndpointTests : IClassFixture<AuthWebApplic
     public async Task CreateAndPublish_ShouldSucceed_WhenTeacherHasAnActiveAssignedScope()
     {
         using HttpClient adminClient = await CreateAuthenticatedClientAsync("ADM-001", "Admin123!");
-        (Guid classCourseId, Guid subjectId) = await CreateTeacherScopeAsync(adminClient);
+        (Guid academicClassId, Guid subjectId) = await CreateTeacherScopeAsync(adminClient);
         using HttpClient teacherClient = await CreateAuthenticatedClientAsync("TCH-001", "Teacher123!");
 
         HttpResponseMessage createResponse = await teacherClient.PostAsJsonAsync(
             "/api/teacher/assignments",
             new
             {
-                classCourseId,
+                academicClassId,
                 subjectId,
                 title = "Argumentative essay",
                 description = "Write an evidence-based argument using the assigned prompt.",
@@ -51,13 +51,13 @@ public sealed class TeacherAssignmentEndpointTests : IClassFixture<AuthWebApplic
     public async Task Create_ShouldRejectTeacher_WhenScopeIsNotAssigned()
     {
         using HttpClient adminClient = await CreateAuthenticatedClientAsync("ADM-001", "Admin123!");
-        Guid classCourseId = await CreateClassCourseAsync(adminClient);
+        Guid academicClassId = await CreateAcademicClassAsync(adminClient);
         Guid subjectId = await CreateSubjectAsync(adminClient);
         using HttpClient teacherClient = await CreateAuthenticatedClientAsync("TCH-001", "Teacher123!");
 
         HttpResponseMessage response = await teacherClient.PostAsJsonAsync(
             "/api/teacher/assignments",
-            new { classCourseId, subjectId, title = "Unauthorised draft" });
+            new { academicClassId, subjectId, title = "Unauthorised draft" });
 
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
     }
@@ -66,12 +66,12 @@ public sealed class TeacherAssignmentEndpointTests : IClassFixture<AuthWebApplic
     public async Task Update_ShouldUpdateDraft_WhenTeacherOwnsTheAssignedScope()
     {
         using HttpClient adminClient = await CreateAuthenticatedClientAsync("ADM-001", "Admin123!");
-        (Guid classCourseId, Guid subjectId) = await CreateTeacherScopeAsync(adminClient);
+        (Guid academicClassId, Guid subjectId) = await CreateTeacherScopeAsync(adminClient);
         using HttpClient teacherClient = await CreateAuthenticatedClientAsync("TCH-001", "Teacher123!");
 
         HttpResponseMessage createResponse = await teacherClient.PostAsJsonAsync(
             "/api/teacher/assignments",
-            new { classCourseId, subjectId, title = "Initial draft" });
+            new { academicClassId, subjectId, title = "Initial draft" });
         AssignmentResponse? assignment = await createResponse.Content.ReadFromJsonAsync<AssignmentResponse>();
 
         Assert.NotNull(assignment);
@@ -80,7 +80,7 @@ public sealed class TeacherAssignmentEndpointTests : IClassFixture<AuthWebApplic
             "/api/teacher/assignments/" + assignment.Id,
             new
             {
-                classCourseId,
+                academicClassId,
                 subjectId,
                 title = "Updated essay brief",
                 description = "Use evidence from the assigned reading.",
@@ -96,25 +96,25 @@ public sealed class TeacherAssignmentEndpointTests : IClassFixture<AuthWebApplic
         Assert.Equal("Updated essay brief", updatedAssignment?.Title);
     }
 
-    private async Task<(Guid ClassCourseId, Guid SubjectId)> CreateTeacherScopeAsync(HttpClient adminClient)
+    private async Task<(Guid AcademicClassId, Guid SubjectId)> CreateTeacherScopeAsync(HttpClient adminClient)
     {
-        Guid classCourseId = await CreateClassCourseAsync(adminClient);
+        Guid academicClassId = await CreateAcademicClassAsync(adminClient);
         Guid subjectId = await CreateSubjectAsync(adminClient);
         HttpResponseMessage response = await adminClient.PostAsJsonAsync(
             "/api/admin/teacher-responsibilities",
-            new { classCourseId, subjectId, teacherInstitutionalId = "TCH-001" });
+            new { academicClassId, subjectId, teacherInstitutionalId = "TCH-001" });
         response.EnsureSuccessStatusCode();
-        return (classCourseId, subjectId);
+        return (academicClassId, subjectId);
     }
 
-    private static async Task<Guid> CreateClassCourseAsync(HttpClient client)
+    private static async Task<Guid> CreateAcademicClassAsync(HttpClient client)
     {
         HttpResponseMessage response = await client.PostAsJsonAsync(
-            "/api/admin/classes-courses",
+            "/api/admin/classes",
             new { code = "CLS-" + Guid.NewGuid().ToString("N").ToUpperInvariant(), name = "Class Nine" });
         response.EnsureSuccessStatusCode();
         EntityResponse? entity = await response.Content.ReadFromJsonAsync<EntityResponse>();
-        return entity?.Id ?? throw new InvalidOperationException("The Class/Course response was empty.");
+        return entity?.Id ?? throw new InvalidOperationException("The Class response was empty.");
     }
 
     private static async Task<Guid> CreateSubjectAsync(HttpClient client)

@@ -4,7 +4,7 @@ namespace AssignmentSubmissionSystem.Api.Administration;
 
 public sealed class CreateTeacherResponsibilityRequest
 {
-    public Guid ClassCourseId { get; init; }
+    public Guid AcademicClassId { get; init; }
 
     public Guid SubjectId { get; init; }
 

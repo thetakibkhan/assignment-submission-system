@@ -3,7 +3,7 @@ namespace AssignmentSubmissionSystem.Application.AcademicSetup.TeacherResponsibi
 public sealed class DuplicateActiveTeacherResponsibilityException : Exception
 {
     public DuplicateActiveTeacherResponsibilityException()
-        : base("This Class/Course and Subject combination already has an active Teacher responsibility.")
+        : base("This Class and Subject combination already has an active Teacher responsibility.")
     {
     }
 }

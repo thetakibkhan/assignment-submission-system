@@ -29,7 +29,7 @@ public sealed class EnrollmentsController : ControllerBase
             StudentEnrollment enrollment = await _studentEnrollmentService.CreateAsync(
                 new CreateStudentEnrollmentCommand
                 {
-                    ClassCourseId = request.ClassCourseId,
+                    AcademicClassId = request.AcademicClassId,
                     StudentInstitutionalId = request.StudentInstitutionalId
                 },
                 User.GetRequiredUserId(),

@@ -5,20 +5,20 @@ public sealed class TeacherResponsibility
     public TeacherResponsibility(
         Guid id,
         Guid teacherUserId,
-        Guid classCourseId,
+        Guid academicClassId,
         Guid subjectId,
         Guid assignedByUserId,
         DateTimeOffset assignedAt)
     {
         ArgumentOutOfRangeException.ThrowIfEqual(id, Guid.Empty);
         ArgumentOutOfRangeException.ThrowIfEqual(teacherUserId, Guid.Empty);
-        ArgumentOutOfRangeException.ThrowIfEqual(classCourseId, Guid.Empty);
+        ArgumentOutOfRangeException.ThrowIfEqual(academicClassId, Guid.Empty);
         ArgumentOutOfRangeException.ThrowIfEqual(subjectId, Guid.Empty);
         ArgumentOutOfRangeException.ThrowIfEqual(assignedByUserId, Guid.Empty);
 
         Id = id;
         TeacherUserId = teacherUserId;
-        ClassCourseId = classCourseId;
+        AcademicClassId = academicClassId;
         SubjectId = subjectId;
         AssignedByUserId = assignedByUserId;
         AssignedAt = assignedAt;
@@ -28,7 +28,7 @@ public sealed class TeacherResponsibility
 
     public Guid TeacherUserId { get; private set; }
 
-    public Guid ClassCourseId { get; private set; }
+    public Guid AcademicClassId { get; private set; }
 
     public Guid SubjectId { get; private set; }
 

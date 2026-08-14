@@ -5,7 +5,7 @@ public sealed class Assignment
     public Assignment(
         Guid id,
         Guid teacherUserId,
-        Guid classCourseId,
+        Guid academicClassId,
         Guid subjectId,
         string title,
         string? description,
@@ -16,7 +16,7 @@ public sealed class Assignment
     {
         ArgumentOutOfRangeException.ThrowIfEqual(id, Guid.Empty);
         ArgumentOutOfRangeException.ThrowIfEqual(teacherUserId, Guid.Empty);
-        ArgumentOutOfRangeException.ThrowIfEqual(classCourseId, Guid.Empty);
+        ArgumentOutOfRangeException.ThrowIfEqual(academicClassId, Guid.Empty);
         ArgumentOutOfRangeException.ThrowIfEqual(subjectId, Guid.Empty);
 
         if (string.IsNullOrWhiteSpace(title))
@@ -31,7 +31,7 @@ public sealed class Assignment
 
         Id = id;
         TeacherUserId = teacherUserId;
-        ClassCourseId = classCourseId;
+        AcademicClassId = academicClassId;
         SubjectId = subjectId;
         Title = title.Trim();
         Description = NormalizeOptionalText(description);
@@ -47,7 +47,7 @@ public sealed class Assignment
 
     public Guid TeacherUserId { get; private set; }
 
-    public Guid ClassCourseId { get; private set; }
+    public Guid AcademicClassId { get; private set; }
 
     public Guid SubjectId { get; private set; }
 
@@ -119,7 +119,7 @@ public sealed class Assignment
     }
 
     public void Update(
-        Guid classCourseId,
+        Guid academicClassId,
         Guid subjectId,
         string title,
         string? description,
@@ -139,7 +139,7 @@ public sealed class Assignment
             throw new InvalidOperationException("An assignment with submissions cannot be edited through the standard workflow.");
         }
 
-        ArgumentOutOfRangeException.ThrowIfEqual(classCourseId, Guid.Empty);
+        ArgumentOutOfRangeException.ThrowIfEqual(academicClassId, Guid.Empty);
         ArgumentOutOfRangeException.ThrowIfEqual(subjectId, Guid.Empty);
 
         if (string.IsNullOrWhiteSpace(title))
@@ -152,7 +152,7 @@ public sealed class Assignment
             throw new ArgumentOutOfRangeException(nameof(maximumMarks), "Maximum marks must be positive when provided.");
         }
 
-        ClassCourseId = classCourseId;
+        AcademicClassId = academicClassId;
         SubjectId = subjectId;
         Title = title.Trim();
         Description = NormalizeOptionalText(description);

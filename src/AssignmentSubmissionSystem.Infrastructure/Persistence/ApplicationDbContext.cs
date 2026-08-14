@@ -17,7 +17,7 @@ public sealed class ApplicationDbContext : IdentityDbContext<ApplicationUser, Id
     {
     }
 
-    public DbSet<ClassCourse> ClassCourses => Set<ClassCourse>();
+    public DbSet<AcademicClass> AcademicClasses => Set<AcademicClass>();
 
     public DbSet<AccountAuditEvent> AccountAuditEvents => Set<AccountAuditEvent>();
 
@@ -78,7 +78,7 @@ public sealed class ApplicationDbContext : IdentityDbContext<ApplicationUser, Id
             entity.Property(assignment => assignment.Status).HasConversion<string>().HasMaxLength(20).IsRequired();
             entity.HasIndex(assignment => new { assignment.TeacherUserId, assignment.UpdatedAt });
             entity.HasOne<ApplicationUser>().WithMany().HasForeignKey(assignment => assignment.TeacherUserId).OnDelete(DeleteBehavior.Restrict);
-            entity.HasOne<ClassCourse>().WithMany().HasForeignKey(assignment => assignment.ClassCourseId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne<AcademicClass>().WithMany().HasForeignKey(assignment => assignment.AcademicClassId).OnDelete(DeleteBehavior.Restrict);
             entity.HasOne<Subject>().WithMany().HasForeignKey(assignment => assignment.SubjectId).OnDelete(DeleteBehavior.Restrict);
         });
 
@@ -147,15 +147,15 @@ public sealed class ApplicationDbContext : IdentityDbContext<ApplicationUser, Id
             entity.HasOne<Submission>().WithMany().HasForeignKey(notification => notification.SubmissionId).OnDelete(DeleteBehavior.Restrict);
         });
 
-        builder.Entity<ClassCourse>(entity =>
+        builder.Entity<AcademicClass>(entity =>
         {
-            entity.Property(classCourse => classCourse.Code)
+            entity.Property(academicClass => academicClass.Code)
                 .HasMaxLength(50)
                 .IsRequired();
-            entity.Property(classCourse => classCourse.Name)
+            entity.Property(academicClass => academicClass.Name)
                 .HasMaxLength(200)
                 .IsRequired();
-            entity.HasIndex(classCourse => classCourse.Code)
+            entity.HasIndex(academicClass => academicClass.Code)
                 .IsUnique();
         });
 
@@ -174,12 +174,12 @@ public sealed class ApplicationDbContext : IdentityDbContext<ApplicationUser, Id
         builder.Entity<StudentEnrollment>(entity =>
         {
             entity.Ignore(enrollment => enrollment.IsActive);
-            entity.HasIndex(enrollment => new { enrollment.StudentUserId, enrollment.ClassCourseId })
+            entity.HasIndex(enrollment => new { enrollment.StudentUserId, enrollment.AcademicClassId })
                 .HasFilter("\"EndedAt\" IS NULL")
                 .IsUnique();
-            entity.HasOne<ClassCourse>()
+            entity.HasOne<AcademicClass>()
                 .WithMany()
-                .HasForeignKey(enrollment => enrollment.ClassCourseId)
+                .HasForeignKey(enrollment => enrollment.AcademicClassId)
                 .OnDelete(DeleteBehavior.Restrict);
             entity.HasOne<ApplicationUser>()
                 .WithMany()
@@ -198,12 +198,12 @@ public sealed class ApplicationDbContext : IdentityDbContext<ApplicationUser, Id
         builder.Entity<TeacherResponsibility>(entity =>
         {
             entity.Ignore(responsibility => responsibility.IsActive);
-            entity.HasIndex(responsibility => new { responsibility.ClassCourseId, responsibility.SubjectId })
+            entity.HasIndex(responsibility => new { responsibility.AcademicClassId, responsibility.SubjectId })
                 .HasFilter("\"RevokedAt\" IS NULL")
                 .IsUnique();
-            entity.HasOne<ClassCourse>()
+            entity.HasOne<AcademicClass>()
                 .WithMany()
-                .HasForeignKey(responsibility => responsibility.ClassCourseId)
+                .HasForeignKey(responsibility => responsibility.AcademicClassId)
                 .OnDelete(DeleteBehavior.Restrict);
             entity.HasOne<Subject>()
                 .WithMany()

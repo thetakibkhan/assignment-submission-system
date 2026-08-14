@@ -2,7 +2,7 @@ namespace AssignmentSubmissionSystem.Application.Assignments;
 
 public sealed class CreateAssignmentCommand
 {
-    public Guid ClassCourseId { get; init; }
+    public Guid AcademicClassId { get; init; }
 
     public Guid SubjectId { get; init; }
 

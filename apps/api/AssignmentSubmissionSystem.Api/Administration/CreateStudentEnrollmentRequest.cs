@@ -4,7 +4,7 @@ namespace AssignmentSubmissionSystem.Api.Administration;
 
 public sealed class CreateStudentEnrollmentRequest
 {
-    public Guid ClassCourseId { get; init; }
+    public Guid AcademicClassId { get; init; }
 
     [Required]
     [StringLength(256)]

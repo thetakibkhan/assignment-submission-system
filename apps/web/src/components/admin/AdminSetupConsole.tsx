@@ -69,23 +69,23 @@ export function AdminSetupConsole({ activeSection }: { activeSection: DashboardS
   const [accountSearch, setAccountSearch] = useState("");
   const [academicSearch, setAcademicSearch] = useState("");
   const [submissionSearch, setSubmissionSearch] = useState("");
-  const [classCourses, setClassCourses] = useState<AcademicRecord[]>([]);
+  const [academicClasses, setAcademicClasses] = useState<AcademicRecord[]>([]);
   const [subjects, setSubjects] = useState<AcademicRecord[]>([]);
   const [message, setMessage] = useState("Loading academic setup…");
   const [temporaryCredential, setTemporaryCredential] = useState<CreatedAccount | null>(null);
   const [accountAction, setAccountAction] = useState<AccountAction>("manage");
   const [academicAction, setAcademicAction] = useState<AcademicStructureAction | null>(null);
   const [selectedAccountId, setSelectedAccountId] = useState("");
-  const [selectedClassCourseId, setSelectedClassCourseId] = useState("");
+  const [selectedAcademicClassId, setSelectedAcademicClassId] = useState("");
   const [selectedSubjectId, setSelectedSubjectId] = useState("");
 
   const selectedAccount = useMemo(
     () => accounts.find((account) => account.id === selectedAccountId),
     [accounts, selectedAccountId],
   );
-  const selectedClassCourse = useMemo(
-    () => classCourses.find((classCourse) => classCourse.id === selectedClassCourseId),
-    [classCourses, selectedClassCourseId],
+  const selectedAcademicClass = useMemo(
+    () => academicClasses.find((academicClass) => academicClass.id === selectedAcademicClassId),
+    [academicClasses, selectedAcademicClassId],
   );
   const selectedSubject = useMemo(
     () => subjects.find((subject) => subject.id === selectedSubjectId),
@@ -96,29 +96,29 @@ export function AdminSetupConsole({ activeSection }: { activeSection: DashboardS
   const normalizedAcademicSearch = academicSearch.trim().toLocaleLowerCase();
   const normalizedSubmissionSearch = submissionSearch.trim().toLocaleLowerCase();
   const filteredAccounts = accounts.filter((account) => (account.fullName + " " + account.institutionalId + " " + account.role).toLocaleLowerCase().includes(normalizedAccountSearch));
-  const filteredClassCourses = classCourses.filter((record) => (record.name + " " + record.code).toLocaleLowerCase().includes(normalizedAcademicSearch));
+  const filteredAcademicClasses = academicClasses.filter((record) => (record.name + " " + record.code).toLocaleLowerCase().includes(normalizedAcademicSearch));
   const filteredSubjects = subjects.filter((record) => (record.name + " " + record.code).toLocaleLowerCase().includes(normalizedAcademicSearch));
   const filteredSubmissions = submissions.filter((submission) => (submission.studentName + " " + submission.status).toLocaleLowerCase().includes(normalizedSubmissionSearch));
   const activeStudents = accounts.filter((account) => account.isActive && account.role === "Student");
   const activeTeachers = accounts.filter((account) => account.isActive && account.role === "Teacher");
-  const availableClassCourses = classCourses.filter((classCourse) => !classCourse.isArchived);
+  const availableAcademicClasses = academicClasses.filter((academicClass) => !academicClass.isArchived);
   const availableSubjects = subjects.filter((subject) => !subject.isArchived);
   const academicPanelVisibility = getAcademicStructurePanelVisibility(academicAction);
 
   const loadSetup = useCallback(async () => {
     try {
-      const [loadedAccounts, loadedClassCourses, loadedSubjects, loadedSubmissions] = await Promise.all([
+      const [loadedAccounts, loadedAcademicClasses, loadedSubjects, loadedSubmissions] = await Promise.all([
         request<Account[]>("/api/admin/users"),
-        request<AcademicRecord[]>("/api/admin/classes-courses"),
+        request<AcademicRecord[]>("/api/admin/classes"),
         request<AcademicRecord[]>("/api/admin/subjects"),
         request<Submission[]>("/api/admin/submissions"),
       ]);
       setAccounts(loadedAccounts);
-      setClassCourses(loadedClassCourses);
+      setAcademicClasses(loadedAcademicClasses);
       setSubjects(loadedSubjects);
       setSubmissions(loadedSubmissions);
       setSelectedAccountId((currentId) => currentId || loadedAccounts[0]?.id || "");
-      setSelectedClassCourseId((currentId) => currentId || loadedClassCourses[0]?.id || "");
+      setSelectedAcademicClassId((currentId) => currentId || loadedAcademicClasses[0]?.id || "");
       setSelectedSubjectId((currentId) => currentId || loadedSubjects[0]?.id || "");
       setMessage("Academic setup is ready.");
     } catch (error) {
@@ -258,7 +258,7 @@ export function AdminSetupConsole({ activeSection }: { activeSection: DashboardS
     try {
       await request("/api/admin/enrollments", {
         body: JSON.stringify({
-          classCourseId: String(form.get("classCourseId") ?? ""),
+          academicClassId: String(form.get("academicClassId") ?? ""),
           studentInstitutionalId: String(form.get("studentInstitutionalId") ?? ""),
         }),
         method: "POST",
@@ -276,7 +276,7 @@ export function AdminSetupConsole({ activeSection }: { activeSection: DashboardS
     try {
       await request("/api/admin/teacher-responsibilities", {
         body: JSON.stringify({
-          classCourseId: String(form.get("classCourseId") ?? ""),
+          academicClassId: String(form.get("academicClassId") ?? ""),
           subjectId: String(form.get("subjectId") ?? ""),
           teacherInstitutionalId: String(form.get("teacherInstitutionalId") ?? ""),
         }),
@@ -347,7 +347,7 @@ export function AdminSetupConsole({ activeSection }: { activeSection: DashboardS
           <h2>Institution overview</h2>
           <div className="overview-metrics">
             <p><strong>{accounts.length}</strong><span>Accounts</span></p>
-            <p><strong>{availableClassCourses.length}</strong><span>Active classes/courses</span></p>
+            <p><strong>{availableAcademicClasses.length}</strong><span>Active classes</span></p>
             <p><strong>{availableSubjects.length}</strong><span>Active subjects</span></p>
             <p><strong>{activeTeachers.length}</strong><span>Active teachers</span></p>
           </div>
@@ -365,11 +365,11 @@ export function AdminSetupConsole({ activeSection }: { activeSection: DashboardS
         </article>}
 
         {academicPanelVisibility.create && <article className="admin-panel admin-panel--academic">
-          <h2>Create class/course</h2>
-          <form onSubmit={(event) => void submitAcademicRecord(event, "/api/admin/classes-courses", "Class/Course")}>
+          <h2>Create class</h2>
+          <form onSubmit={(event) => void submitAcademicRecord(event, "/api/admin/classes", "Class")}>
             <label>Name<input name="name" required /></label>
             <label>Code<input name="code" required /></label>
-            <button type="submit">Add class/course</button>
+            <button type="submit">Add class</button>
           </form>
         </article>}
 
@@ -383,8 +383,8 @@ export function AdminSetupConsole({ activeSection }: { activeSection: DashboardS
         </article>}
 
         {academicPanelVisibility.manage && <article className="admin-panel admin-panel--academic">
-          <h2>Manage classes/courses</h2>
-          <label className="workspace-filter">Search academic records<input aria-label="Search academic records" onChange={(event) => setAcademicSearch(event.target.value)} placeholder="Search name or code" value={academicSearch} /></label><div className="admin-list">{filteredClassCourses.map((classCourse) => <p key={classCourse.id}><b>{classCourse.code}</b> {classCourse.name}{classCourse.isArchived ? " · archived" : ""}{!classCourse.isArchived && <button onClick={() => void archiveAcademicRecord("/api/admin/classes-courses", classCourse.id, "Class/Course")} type="button">Archive</button>}</p>)}</div>
+          <h2>Manage classes</h2>
+          <label className="workspace-filter">Search academic records<input aria-label="Search academic records" onChange={(event) => setAcademicSearch(event.target.value)} placeholder="Search name or code" value={academicSearch} /></label><div className="admin-list">{filteredAcademicClasses.map((academicClass) => <p key={academicClass.id}><b>{academicClass.code}</b> {academicClass.name}{academicClass.isArchived ? " · archived" : ""}{!academicClass.isArchived && <button onClick={() => void archiveAcademicRecord("/api/admin/classes", academicClass.id, "Class")} type="button">Archive</button>}</p>)}</div>
         </article>}
 
         {academicPanelVisibility.manage && <article className="admin-panel admin-panel--academic">
@@ -393,13 +393,13 @@ export function AdminSetupConsole({ activeSection }: { activeSection: DashboardS
         </article>}
 
         {academicPanelVisibility.update && <article className="admin-panel admin-panel--academic">
-          <h2>Update class/course</h2>
-          {selectedClassCourse && <form key={selectedClassCourse.id} onSubmit={(event) => void submitAcademicUpdate(event, "/api/admin/classes-courses", "Class/Course")}>
-            <input name="recordId" type="hidden" value={selectedClassCourse.id} />
-            <label>Class/course<select onChange={(event) => setSelectedClassCourseId(event.target.value)} value={selectedClassCourseId}>{classCourses.map((classCourse) => <option key={classCourse.id} value={classCourse.id}>{classCourse.name} · {classCourse.code}</option>)}</select></label>
-            <label>Name<input defaultValue={selectedClassCourse.name} name="name" required /></label>
-            <label>Code<input defaultValue={selectedClassCourse.code} name="code" required /></label>
-            <button disabled={selectedClassCourse.isArchived} type="submit">Save class/course</button>
+          <h2>Update class</h2>
+          {selectedAcademicClass && <form key={selectedAcademicClass.id} onSubmit={(event) => void submitAcademicUpdate(event, "/api/admin/classes", "Class")}>
+            <input name="recordId" type="hidden" value={selectedAcademicClass.id} />
+            <label>Class<select onChange={(event) => setSelectedAcademicClassId(event.target.value)} value={selectedAcademicClassId}>{academicClasses.map((academicClass) => <option key={academicClass.id} value={academicClass.id}>{academicClass.name} · {academicClass.code}</option>)}</select></label>
+            <label>Name<input defaultValue={selectedAcademicClass.name} name="name" required /></label>
+            <label>Code<input defaultValue={selectedAcademicClass.code} name="code" required /></label>
+            <button disabled={selectedAcademicClass.isArchived} type="submit">Save class</button>
           </form>}
         </article>}
 
@@ -418,8 +418,8 @@ export function AdminSetupConsole({ activeSection }: { activeSection: DashboardS
           <h2>Enroll student</h2>
           <form onSubmit={submitEnrollment}>
             <label>Student<select name="studentInstitutionalId" required>{activeStudents.map((student) => <option key={student.id} value={student.institutionalId}>{student.fullName} · {student.institutionalId}</option>)}</select></label>
-            <label>Class/course<select name="classCourseId" required>{availableClassCourses.map((classCourse) => <option key={classCourse.id} value={classCourse.id}>{classCourse.name} · {classCourse.code}</option>)}</select></label>
-            <button disabled={activeStudents.length === 0 || availableClassCourses.length === 0} type="submit">Enroll student</button>
+            <label>Class<select name="academicClassId" required>{availableAcademicClasses.map((academicClass) => <option key={academicClass.id} value={academicClass.id}>{academicClass.name} · {academicClass.code}</option>)}</select></label>
+            <button disabled={activeStudents.length === 0 || availableAcademicClasses.length === 0} type="submit">Enroll student</button>
           </form>
         </article>
 
@@ -427,9 +427,9 @@ export function AdminSetupConsole({ activeSection }: { activeSection: DashboardS
           <h2>Assign teacher</h2>
           <form onSubmit={submitResponsibility}>
             <label>Teacher<select name="teacherInstitutionalId" required>{activeTeachers.map((teacher) => <option key={teacher.id} value={teacher.institutionalId}>{teacher.fullName} · {teacher.institutionalId}</option>)}</select></label>
-            <label>Class/course<select name="classCourseId" required>{availableClassCourses.map((classCourse) => <option key={classCourse.id} value={classCourse.id}>{classCourse.name} · {classCourse.code}</option>)}</select></label>
+            <label>Class<select name="academicClassId" required>{availableAcademicClasses.map((academicClass) => <option key={academicClass.id} value={academicClass.id}>{academicClass.name} · {academicClass.code}</option>)}</select></label>
             <label>Subject<select name="subjectId" required>{availableSubjects.map((subject) => <option key={subject.id} value={subject.id}>{subject.name} · {subject.code}</option>)}</select></label>
-            <button disabled={activeTeachers.length === 0 || availableClassCourses.length === 0 || availableSubjects.length === 0} type="submit">Assign teacher</button>
+            <button disabled={activeTeachers.length === 0 || availableAcademicClasses.length === 0 || availableSubjects.length === 0} type="submit">Assign teacher</button>
           </form>
         </article>
 

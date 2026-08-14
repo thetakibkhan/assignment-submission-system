@@ -42,7 +42,7 @@ public sealed class StudentAssignmentEndpointTests : IClassFixture<AuthWebApplic
             assignments,
             item => item.Id == eligibleAssignmentId);
         Assert.Equal(eligibleAssignmentId, assignment.Id);
-        Assert.Equal(eligibleScope.ClassCourseName, assignment.ClassCourseName);
+        Assert.Equal(eligibleScope.AcademicClassName, assignment.AcademicClassName);
         Assert.Equal(eligibleScope.SubjectName, assignment.SubjectName);
         Assert.Equal("Not submitted", assignment.StudentState);
         Assert.Null(assignment.Submission);
@@ -98,9 +98,9 @@ public sealed class StudentAssignmentEndpointTests : IClassFixture<AuthWebApplic
     private async Task<AcademicScope> CreateAcademicScopeAsync(HttpClient adminClient, bool enrollStudent)
     {
         string suffix = Guid.NewGuid().ToString("N").ToUpperInvariant();
-        EntityResponse classCourse = await CreateEntityAsync(
+        EntityResponse academicClass = await CreateEntityAsync(
             adminClient,
-            "/api/admin/classes-courses",
+            "/api/admin/classes",
             "CLS-" + suffix,
             "Class " + suffix[..6]);
         EntityResponse subject = await CreateEntityAsync(
@@ -113,7 +113,7 @@ public sealed class StudentAssignmentEndpointTests : IClassFixture<AuthWebApplic
             "/api/admin/teacher-responsibilities",
             new
             {
-                classCourseId = classCourse.Id,
+                academicClassId = academicClass.Id,
                 subjectId = subject.Id,
                 teacherInstitutionalId = "TCH-001"
             });
@@ -125,15 +125,15 @@ public sealed class StudentAssignmentEndpointTests : IClassFixture<AuthWebApplic
                 "/api/admin/enrollments",
                 new
                 {
-                    classCourseId = classCourse.Id,
+                    academicClassId = academicClass.Id,
                     studentInstitutionalId = "STU-001"
                 });
             enrollmentResponse.EnsureSuccessStatusCode();
         }
 
         return new AcademicScope(
-            classCourse.Id,
-            classCourse.Name,
+            academicClass.Id,
+            academicClass.Name,
             subject.Id,
             subject.Name);
     }
@@ -161,7 +161,7 @@ public sealed class StudentAssignmentEndpointTests : IClassFixture<AuthWebApplic
             "/api/teacher/assignments",
             new
             {
-                classCourseId = scope.ClassCourseId,
+                academicClassId = scope.AcademicClassId,
                 subjectId = scope.SubjectId,
                 title,
                 description = "Complete the work described in this assignment.",
@@ -212,8 +212,8 @@ public sealed class StudentAssignmentEndpointTests : IClassFixture<AuthWebApplic
     }
 
     private sealed record AcademicScope(
-        Guid ClassCourseId,
-        string ClassCourseName,
+        Guid AcademicClassId,
+        string AcademicClassName,
         Guid SubjectId,
         string SubjectName);
 
@@ -228,7 +228,7 @@ public sealed class StudentAssignmentEndpointTests : IClassFixture<AuthWebApplic
     {
         public Guid Id { get; init; }
 
-        public string ClassCourseName { get; init; } = string.Empty;
+        public string AcademicClassName { get; init; } = string.Empty;
 
         public bool DeadlinePassed { get; init; }
 

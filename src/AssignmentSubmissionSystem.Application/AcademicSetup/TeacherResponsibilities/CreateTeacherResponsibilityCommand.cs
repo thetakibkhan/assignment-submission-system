@@ -2,7 +2,7 @@ namespace AssignmentSubmissionSystem.Application.AcademicSetup.TeacherResponsibi
 
 public sealed class CreateTeacherResponsibilityCommand
 {
-    public Guid ClassCourseId { get; init; }
+    public Guid AcademicClassId { get; init; }
 
     public Guid SubjectId { get; init; }
 

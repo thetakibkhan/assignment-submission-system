@@ -5,18 +5,18 @@ public sealed class StudentEnrollment
     public StudentEnrollment(
         Guid id,
         Guid studentUserId,
-        Guid classCourseId,
+        Guid academicClassId,
         Guid enrolledByUserId,
         DateTimeOffset enrolledAt)
     {
         ArgumentOutOfRangeException.ThrowIfEqual(id, Guid.Empty);
         ArgumentOutOfRangeException.ThrowIfEqual(studentUserId, Guid.Empty);
-        ArgumentOutOfRangeException.ThrowIfEqual(classCourseId, Guid.Empty);
+        ArgumentOutOfRangeException.ThrowIfEqual(academicClassId, Guid.Empty);
         ArgumentOutOfRangeException.ThrowIfEqual(enrolledByUserId, Guid.Empty);
 
         Id = id;
         StudentUserId = studentUserId;
-        ClassCourseId = classCourseId;
+        AcademicClassId = academicClassId;
         EnrolledByUserId = enrolledByUserId;
         EnrolledAt = enrolledAt;
     }
@@ -25,7 +25,7 @@ public sealed class StudentEnrollment
 
     public Guid StudentUserId { get; private set; }
 
-    public Guid ClassCourseId { get; private set; }
+    public Guid AcademicClassId { get; private set; }
 
     public Guid EnrolledByUserId { get; private set; }
 

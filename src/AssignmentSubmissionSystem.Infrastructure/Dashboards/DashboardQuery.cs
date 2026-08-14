@@ -20,7 +20,7 @@ public sealed class DashboardQuery : IDashboardQuery
         return new AdminDashboardSummary
         {
             ActiveAccounts = await _databaseContext.Users.CountAsync(user => user.IsActive, cancellationToken),
-            ActiveClassCourses = await _databaseContext.ClassCourses.CountAsync(classCourse => !classCourse.IsArchived, cancellationToken),
+            ActiveAcademicClasses = await _databaseContext.AcademicClasses.CountAsync(academicClass => !academicClass.IsArchived, cancellationToken),
             ActiveSubjects = await _databaseContext.Subjects.CountAsync(subject => !subject.IsArchived, cancellationToken),
             AssignmentCount = await _databaseContext.Assignments.CountAsync(cancellationToken),
             SubmissionCount = await _databaseContext.Submissions.CountAsync(cancellationToken)
@@ -47,14 +47,14 @@ public sealed class DashboardQuery : IDashboardQuery
     public async Task<StudentDashboardSummary> GetStudentAsync(Guid studentUserId, DateTimeOffset now, CancellationToken cancellationToken)
     {
         IQueryable<Guid> openAssignmentIds = from assignment in _databaseContext.Assignments.AsNoTracking()
-                                             join enrollment in _databaseContext.StudentEnrollments.AsNoTracking() on assignment.ClassCourseId equals enrollment.ClassCourseId
+                                             join enrollment in _databaseContext.StudentEnrollments.AsNoTracking() on assignment.AcademicClassId equals enrollment.AcademicClassId
                                              where enrollment.StudentUserId == studentUserId && enrollment.EndedAt == null && assignment.Status == AssignmentStatus.Published && assignment.Deadline > now
                                              select assignment.Id;
         return new StudentDashboardSummary
         {
             GradedSubmissions = await _databaseContext.Submissions.CountAsync(submission => submission.StudentUserId == studentUserId && submission.Status == SubmissionStatus.Graded, cancellationToken),
             NearestDeadline = await (from assignment in _databaseContext.Assignments.AsNoTracking()
-                                     join enrollment in _databaseContext.StudentEnrollments.AsNoTracking() on assignment.ClassCourseId equals enrollment.ClassCourseId
+                                     join enrollment in _databaseContext.StudentEnrollments.AsNoTracking() on assignment.AcademicClassId equals enrollment.AcademicClassId
                                      where enrollment.StudentUserId == studentUserId && enrollment.EndedAt == null && assignment.Status == AssignmentStatus.Published && assignment.Deadline > now
                                      orderby assignment.Deadline
                                      select assignment.Deadline).FirstOrDefaultAsync(cancellationToken),

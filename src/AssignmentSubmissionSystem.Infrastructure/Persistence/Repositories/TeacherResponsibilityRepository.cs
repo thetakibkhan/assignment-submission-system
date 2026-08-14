@@ -20,19 +20,19 @@ public sealed class TeacherResponsibilityRepository : ITeacherResponsibilityRepo
         await _databaseContext.SaveChangesAsync(cancellationToken);
     }
 
-    public Task<bool> ExistsActiveAsync(Guid classCourseId, Guid subjectId, CancellationToken cancellationToken)
+    public Task<bool> ExistsActiveAsync(Guid academicClassId, Guid subjectId, CancellationToken cancellationToken)
     {
         return _databaseContext.TeacherResponsibilities.AnyAsync(
-            responsibility => responsibility.ClassCourseId == classCourseId
+            responsibility => responsibility.AcademicClassId == academicClassId
                 && responsibility.SubjectId == subjectId
                 && responsibility.RevokedAt == null,
             cancellationToken);
     }
 
-    public Task<bool> ExistsActiveForTeacherAsync(Guid classCourseId, Guid subjectId, Guid teacherUserId, CancellationToken cancellationToken)
+    public Task<bool> ExistsActiveForTeacherAsync(Guid academicClassId, Guid subjectId, Guid teacherUserId, CancellationToken cancellationToken)
     {
         return _databaseContext.TeacherResponsibilities.AnyAsync(
-            responsibility => responsibility.ClassCourseId == classCourseId
+            responsibility => responsibility.AcademicClassId == academicClassId
                 && responsibility.SubjectId == subjectId
                 && responsibility.TeacherUserId == teacherUserId
                 && responsibility.RevokedAt == null,
@@ -49,17 +49,17 @@ public sealed class TeacherResponsibilityRepository : ITeacherResponsibilityRepo
     public async Task<IReadOnlyList<TeacherAssignmentScope>> GetActiveScopesForTeacherAsync(Guid teacherUserId, CancellationToken cancellationToken)
     {
         return await (from responsibility in _databaseContext.TeacherResponsibilities.AsNoTracking()
-                      join classCourse in _databaseContext.ClassCourses.AsNoTracking() on responsibility.ClassCourseId equals classCourse.Id
+                      join academicClass in _databaseContext.AcademicClasses.AsNoTracking() on responsibility.AcademicClassId equals academicClass.Id
                       join subject in _databaseContext.Subjects.AsNoTracking() on responsibility.SubjectId equals subject.Id
                       where responsibility.TeacherUserId == teacherUserId
                           && responsibility.RevokedAt == null
-                          && !classCourse.IsArchived
+                          && !academicClass.IsArchived
                           && !subject.IsArchived
-                      orderby classCourse.Name, subject.Name
+                      orderby academicClass.Name, subject.Name
                       select new TeacherAssignmentScope
                       {
-                          ClassCourseId = classCourse.Id,
-                          ClassCourseName = classCourse.Name,
+                          AcademicClassId = academicClass.Id,
+                          AcademicClassName = academicClass.Name,
                           SubjectId = subject.Id,
                           SubjectName = subject.Name
                       }).ToListAsync(cancellationToken);
