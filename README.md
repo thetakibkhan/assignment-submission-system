@@ -2,6 +2,12 @@
 
 A role-based academic workflow application for administrators, teachers, and students. It supports institutional-ID sign-in, academic setup, assignment publishing, student submission, teacher review, grading, and post-deadline result disclosure.
 
+## Live demo
+
+[Open the deployed application](https://assignment-submission-system-web.onrender.com)
+
+The application uses Render's free tier, so the first request after inactivity may take up to a minute while the services wake up. Use one of the [public demo accounts](#demo-accounts) to sign in.
+
 ## Run locally
 
 The Docker setup is the recommended and complete local setup. It starts the Next.js frontend, ASP.NET Core API, PostgreSQL database, migrations, and demo data together. No `.env` file is needed for the default demo.
