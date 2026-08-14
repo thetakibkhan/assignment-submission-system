@@ -121,6 +121,56 @@ public sealed class StudentSubmissionEndpointTests : IClassFixture<AuthWebApplic
     }
 
     [Fact]
+    public async Task Create_ShouldReturnEveryAcceptedAttachment()
+    {
+        Guid assignmentId = await CreatePublishedAssignmentAsync(allowSubmissionUpdates: true);
+        using HttpClient studentClient = await CreateAuthenticatedClientAsync("STU-001", "Student123!");
+        using MultipartFormDataContent content = CreateSubmissionContent("Evidence attached.");
+        content.Add(new ByteArrayContent("First"u8.ToArray()), "attachments", "first.txt");
+        content.Add(new ByteArrayContent("Second"u8.ToArray()), "attachments", "second.txt");
+
+        HttpResponseMessage response = await studentClient.PostAsync(
+            "/api/student/assignments/" + assignmentId + "/submission",
+            content);
+
+        SubmissionResponse submission = await response.Content.ReadFromJsonAsync<SubmissionResponse>()
+            ?? throw new InvalidOperationException("The submission response was empty.");
+
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        Assert.Equal(["first.txt", "second.txt"], submission.Attachments.Select(attachment => attachment.FileName));
+    }
+
+    [Fact]
+    public async Task Update_ShouldRemoveSelectedAttachmentAndKeepOtherFiles()
+    {
+        Guid assignmentId = await CreatePublishedAssignmentAsync(allowSubmissionUpdates: true);
+        using HttpClient studentClient = await CreateAuthenticatedClientAsync("STU-001", "Student123!");
+        using MultipartFormDataContent createContent = CreateSubmissionContent("Initial answer");
+        createContent.Add(new ByteArrayContent("Keep"u8.ToArray()), "attachments", "keep.txt");
+        createContent.Add(new ByteArrayContent("Remove"u8.ToArray()), "attachments", "remove.txt");
+        HttpResponseMessage createResponse = await studentClient.PostAsync(
+            "/api/student/assignments/" + assignmentId + "/submission",
+            createContent);
+        SubmissionResponse created = await createResponse.Content.ReadFromJsonAsync<SubmissionResponse>()
+            ?? throw new InvalidOperationException("The submission response was empty.");
+        AttachmentResponse removedAttachment = Assert.Single(created.Attachments, item => item.FileName == "remove.txt");
+
+        using MultipartFormDataContent updateContent = CreateSubmissionContent("Updated answer");
+        updateContent.Add(new StringContent(removedAttachment.Id.ToString()), "removedAttachmentIds");
+        updateContent.Add(new ByteArrayContent("New"u8.ToArray()), "attachments", "new.txt");
+        HttpResponseMessage updateResponse = await studentClient.PutAsync(
+            "/api/student/assignments/" + assignmentId + "/submission",
+            updateContent);
+        Assert.True(updateResponse.StatusCode == HttpStatusCode.OK, await updateResponse.Content.ReadAsStringAsync());
+        SubmissionResponse updated = await updateResponse.Content.ReadFromJsonAsync<SubmissionResponse>()
+            ?? throw new InvalidOperationException("The submission response was empty.");
+        Assert.Equal(["keep.txt", "new.txt"], updated.Attachments.Select(item => item.FileName).Order());
+        HttpResponseMessage removedDownload = await studentClient.GetAsync(
+            "/api/student/submissions/" + updated.Id + "/attachments/" + removedAttachment.Id);
+        Assert.Equal(HttpStatusCode.NotFound, removedDownload.StatusCode);
+    }
+
+    [Fact]
     public async Task DownloadAttachment_ShouldReturnOnlyTheSubmittingStudentsFile()
     {
         Guid assignmentId = await CreatePublishedAssignmentAsync(allowSubmissionUpdates: true);
@@ -395,6 +445,14 @@ public sealed class StudentSubmissionEndpointTests : IClassFixture<AuthWebApplic
         public string Status { get; init; } = string.Empty;
 
         public string? AttachmentFileName { get; init; }
+
+        public IReadOnlyList<AttachmentResponse> Attachments { get; init; } = [];
+    }
+
+    private sealed class AttachmentResponse
+    {
+        public Guid Id { get; init; }
+        public string FileName { get; init; } = string.Empty;
     }
 
     private sealed class TeacherAssignmentResponse
