@@ -22,8 +22,11 @@ services:
       ASPNETCORE_ENVIRONMENT: Development
       ConnectionStrings__DefaultConnection: Host=database;Port=5432;Database=${POSTGRES_DB:-assignment_submission};Username=${POSTGRES_USER:-assignment_app};Password=${POSTGRES_PASSWORD:-assignment-demo-postgres-password}
       Cors__AllowedOrigins__0: http://localhost:3000
+      DemoAccounts__AdminInstitutionalId: DEMO-ADM-001
       DemoAccounts__AdminPassword: ${DEMO_ADMIN_PASSWORD:-Admin!nVPT7mB4lxeZBUq2XwI}
+      DemoAccounts__TeacherInstitutionalId: DEMO-TCH-001
       DemoAccounts__TeacherPassword: ${DEMO_TEACHER_PASSWORD:-Teacher!XQt7fpdAg1jQJ7fGgSw}
+      DemoAccounts__StudentInstitutionalId: DEMO-STU-001
       DemoAccounts__StudentPassword: ${DEMO_STUDENT_PASSWORD:-Student!v5lVJbrqfRO0m93zrKQ}
       DemoData__Enabled: ${DEMO_DATA_ENABLED:-true}
       Jwt__AccessTokenLifetimeMinutes: ${JWT_ACCESS_TOKEN_LIFETIME_MINUTES:-15}

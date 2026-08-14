@@ -45,13 +45,13 @@ docker compose down -v && docker compose up
 
 ## Demo accounts
 
-These are public local-evaluation fixtures only. They are shown on the sign-in screen, and are not production credentials.
+These public evaluation fixtures are shown on the sign-in screen and are available in both the local setup and the hosted recruiter demo. Do not use this demo configuration for real institutional data.
 
 | Role | Institutional ID | Password |
 | --- | --- | --- |
-| Administrator | `ADM-001` | `Admin!nVPT7mB4lxeZBUq2XwI` |
-| Teacher | `TCH-001` | `Teacher!XQt7fpdAg1jQJ7fGgSw` |
-| Student | `STU-001` | `Student!v5lVJbrqfRO0m93zrKQ` |
+| Administrator | `DEMO-ADM-001` | `Admin!nVPT7mB4lxeZBUq2XwI` |
+| Teacher | `DEMO-TCH-001` | `Teacher!XQt7fpdAg1jQJ7fGgSw` |
+| Student | `DEMO-STU-001` | `Student!v5lVJbrqfRO0m93zrKQ` |
 
 ## Demonstration path
 
@@ -102,7 +102,7 @@ Unauthenticated requests receive `401`; authenticated users without the required
 cp .env.example .env
 ```
 
-`.env`, `appsettings.Development.json`, uploads, build output, and other local data are ignored by Git. Never use the demo values in a deployed environment. For a non-demo environment, set `DEMO_DATA_ENABLED=false` and provide deployment-specific database and JWT configuration outside source control.
+`.env`, `appsettings.Development.json`, uploads, build output, and other local data are ignored by Git. The public demo values are intentionally used by the hosted recruiter demo. For a private or real-data deployment, disable demo data and provide deployment-specific database, administrator, and JWT configuration outside source control.
 
 ## Deploying to Render
 
@@ -114,10 +114,10 @@ The repository includes a free demonstration [Render Blueprint](render.yaml). It
    - Cors__AllowedOrigins__0: the public HTTPS URL of the web service, for example https://assignment-submission-system-web.onrender.com
    - Jwt__Issuer: the API URL or another stable production issuer identifier
    - Jwt__Audience: a stable identifier for the web client, such as assignment-submission-system-web
-3. Provide BootstrapAdmin__FullName, BootstrapAdmin__InstitutionalId, BootstrapAdmin__Email, and BootstrapAdmin__Password. The API creates this administrator only when no administrator exists. Keep DemoData__Enabled=false. After confirming the first administrator can sign in, set BootstrapAdmin__Enabled=false and remove BootstrapAdmin__Password from Render.
-4. After the API is healthy at /health, verify sign-in, upload/download, and role access through the deployed web URL.
+3. The Blueprint enables the public recruiter-demo accounts listed above and keeps bootstrap administration disabled. For a private deployment, set DemoData__Enabled=false, enable BootstrapAdmin temporarily, and provide its values only through Render environment variables.
+4. After the API is healthy at /health, verify demo sign-in, upload/download, and role access through the deployed web URL.
 
-Keep the web and API services on their default onrender.com domains or on subdomains of the same custom domain so the Strict authentication cookie remains same-site. Render provides HTTPS for web services. On the free tier, attachments and ASP.NET Data Protection keys use the API service ephemeral filesystem and can disappear whenever Render restarts or redeploys that service. Free Render PostgreSQL databases also expire after 30 days. Use this configuration only for evaluation; switch the API to a paid persistent disk and use paid PostgreSQL before storing real institutional data.
+The web service proxies browser requests under /api to the API service, so the HTTP-only SameSite=Strict authentication cookie remains on the web origin even though Render uses separate service domains. Render provides HTTPS for web services. On the free tier, attachments and ASP.NET Data Protection keys use the API service ephemeral filesystem and can disappear whenever Render restarts or redeploys that service. Free Render PostgreSQL databases also expire after 30 days. Use this configuration only for evaluation; switch the API to a paid persistent disk and use paid PostgreSQL before storing real institutional data.
 
 ## Manual development commands
 
@@ -160,4 +160,4 @@ cd apps/web && npm run lint && npm run build
 - Deadlines are evaluated on the server in UTC. Late submission and updates are blocked.
 - Marks and feedback are disclosed only when the submission is **Graded** and the assignment deadline has passed.
 - A submission accepts up to five local attachments: 10 MB per file and 25 MB combined. Accepted types are PDF, DOC, DOCX, TXT, PNG, JPG, and JPEG.
-- Historical records are retained. This project intentionally does not include email/SMS, real-time delivery, reporting, exports, or deployment infrastructure.
+- Historical records are retained. This project intentionally does not include email/SMS, real-time delivery, reporting, or exports.

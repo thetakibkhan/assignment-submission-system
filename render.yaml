@@ -22,17 +22,21 @@ services:
       - key: DataProtection__KeyRingPath
         value: /tmp/data-protection-keys
       - key: DemoData__Enabled
-        value: "false"
-      - key: BootstrapAdmin__Enabled
         value: "true"
-      - key: BootstrapAdmin__FullName
-        sync: false
-      - key: BootstrapAdmin__InstitutionalId
-        sync: false
-      - key: BootstrapAdmin__Email
-        sync: false
-      - key: BootstrapAdmin__Password
-        sync: false
+      - key: DemoAccounts__AdminInstitutionalId
+        value: DEMO-ADM-001
+      - key: DemoAccounts__AdminPassword
+        value: Admin!nVPT7mB4lxeZBUq2XwI
+      - key: DemoAccounts__TeacherInstitutionalId
+        value: DEMO-TCH-001
+      - key: DemoAccounts__TeacherPassword
+        value: Teacher!XQt7fpdAg1jQJ7fGgSw
+      - key: DemoAccounts__StudentInstitutionalId
+        value: DEMO-STU-001
+      - key: DemoAccounts__StudentPassword
+        value: Student!v5lVJbrqfRO0m93zrKQ
+      - key: BootstrapAdmin__Enabled
+        value: "false"
       - key: Jwt__Issuer
         sync: false
       - key: Jwt__Audience

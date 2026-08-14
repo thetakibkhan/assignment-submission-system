@@ -55,9 +55,9 @@ public sealed class DatabaseInitializer
         await EnsureRoleAsync(RoleNames.Admin);
         await EnsureRoleAsync(RoleNames.Teacher);
         await EnsureRoleAsync(RoleNames.Student);
-        ApplicationUser administrator = await EnsureUserAsync("Nusrat Jahan", "ADM-001", "admin@assignment.local", _demoAccounts.AdminPassword, RoleNames.Admin);
-        ApplicationUser teacher = await EnsureUserAsync("Rafiq Hasan", "TCH-001", "teacher@assignment.local", _demoAccounts.TeacherPassword, RoleNames.Teacher);
-        ApplicationUser student = await EnsureUserAsync("Ayesha Rahman", "STU-001", "student@assignment.local", _demoAccounts.StudentPassword, RoleNames.Student);
+        ApplicationUser administrator = await EnsureUserAsync("Nusrat Jahan", _demoAccounts.AdminInstitutionalId, "admin@assignment.local", _demoAccounts.AdminPassword, RoleNames.Admin);
+        ApplicationUser teacher = await EnsureUserAsync("Rafiq Hasan", _demoAccounts.TeacherInstitutionalId, "teacher@assignment.local", _demoAccounts.TeacherPassword, RoleNames.Teacher);
+        ApplicationUser student = await EnsureUserAsync("Ayesha Rahman", _demoAccounts.StudentInstitutionalId, "student@assignment.local", _demoAccounts.StudentPassword, RoleNames.Student);
         await EnsureMockAcademicDataAsync(cancellationToken);
         await _demoScenarioSeeder.EnsureAsync(administrator, teacher, student, cancellationToken);
     }

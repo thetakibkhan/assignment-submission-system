@@ -3,6 +3,7 @@
 import { type FormEvent, useEffect, useRef, useState } from "react";
 import { BouncyAccordion } from "@/components/ui/be-ui-bouncy-accordion";
 import { browserApiBaseUrl } from "@/lib/api-routing";
+import { recruiterDemoAccounts, type DemoAccount } from "@/lib/demo-accounts";
 
 interface LoginResponse {
   requiresPasswordChange: boolean;
@@ -17,19 +18,7 @@ interface Particle {
   y: number;
 }
 
-interface DemoAccount {
-  institutionalId: string;
-  password: string;
-  role: string;
-}
-
 const roleRoutes = new Set(["/admin", "/change-password", "/teacher", "/student"]);
-
-const demoAccounts: DemoAccount[] = [
-  { institutionalId: "ADM-001", password: "Admin!nVPT7mB4lxeZBUq2XwI", role: "Administrator" },
-  { institutionalId: "TCH-001", password: "Teacher!XQt7fpdAg1jQJ7fGgSw", role: "Teacher" },
-  { institutionalId: "STU-001", password: "Student!v5lVJbrqfRO0m93zrKQ", role: "Student" },
-];
 
 function isLoginResponse(value: unknown): value is LoginResponse {
   if (typeof value !== "object" || value === null) {
@@ -157,7 +146,7 @@ export function MercuryLoginForm() {
     description: <div className="demo-accounts__content">
       <p>Choose an account to fill the sign-in form.</p>
       <div className="demo-accounts__list">
-        {demoAccounts.map((account) => (
+        {recruiterDemoAccounts.map((account) => (
           <button key={account.institutionalId} onClick={() => selectDemoAccount(account)} type="button">
             <span>{account.role}</span>
             <strong>{account.institutionalId}</strong>
