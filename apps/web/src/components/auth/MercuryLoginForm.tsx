@@ -1,6 +1,10 @@
 "use client";
 
 import { type FormEvent, useEffect, useRef, useState } from "react";
+import {
+  isServiceUnavailableStatus,
+  submitLoginWithColdStartRetry,
+} from "@/components/auth/login-with-cold-start-retry";
 import { BouncyAccordion } from "@/components/ui/be-ui-bouncy-accordion";
 import { browserApiBaseUrl } from "@/lib/api-routing";
 import { recruiterDemoAccounts, type DemoAccount } from "@/lib/demo-accounts";
@@ -19,6 +23,8 @@ interface Particle {
 }
 
 const roleRoutes = new Set(["/admin", "/change-password", "/teacher", "/student"]);
+const serviceStartingMessage = "The secure service is starting after a period of inactivity. This may take up to a minute. We’ll continue signing you in automatically.";
+const serviceUnavailableMessage = "The secure service could not start in time. Please wait a moment, then try again.";
 
 function isLoginResponse(value: unknown): value is LoginResponse {
   if (typeof value !== "object" || value === null) {
@@ -36,6 +42,7 @@ function isLoginResponse(value: unknown): value is LoginResponse {
 export function MercuryLoginForm() {
   const canvasReference = useRef<HTMLCanvasElement | null>(null);
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+  const [isServiceStarting, setIsServiceStarting] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [institutionalId, setInstitutionalId] = useState("");
   const [message, setMessage] = useState<string | null>(null);
@@ -98,23 +105,29 @@ export function MercuryLoginForm() {
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setIsSubmitting(true);
+    setIsServiceStarting(false);
     setMessage(null);
 
     const formData = new FormData(event.currentTarget);
     const submittedInstitutionalId = String(formData.get("institutionalId") ?? "");
     const submittedPassword = String(formData.get("password") ?? "");
+
     try {
-      const response = await fetch(browserApiBaseUrl + "/api/auth/login", {
-        body: JSON.stringify({ institutionalId: submittedInstitutionalId, password: submittedPassword }),
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
+      const response = await submitLoginWithColdStartRetry(
+        browserApiBaseUrl + "/api/auth/login",
+        { institutionalId: submittedInstitutionalId, password: submittedPassword },
+        {
+          onServiceStarting: () => {
+            setIsServiceStarting(true);
+            setMessage(serviceStartingMessage);
+          },
         },
-        method: "POST",
-      });
+      );
 
       if (!response.ok) {
-        setMessage("Sign-in failed. Check your institutional ID and password, or contact an administrator.");
+        setMessage(isServiceUnavailableStatus(response.status)
+          ? serviceUnavailableMessage
+          : "Sign-in failed. Check your institutional ID and password, or contact an administrator.");
         return;
       }
 
@@ -127,8 +140,9 @@ export function MercuryLoginForm() {
 
       window.location.assign(result.redirectPath);
     } catch {
-      setMessage("The secure sign-in service is unavailable. Please try again shortly.");
+      setMessage(serviceUnavailableMessage);
     } finally {
+      setIsServiceStarting(false);
       setIsSubmitting(false);
     }
   }
@@ -197,7 +211,7 @@ export function MercuryLoginForm() {
           </div>
 
           <button className="login-submit-button" disabled={isSubmitting} type="submit">
-            {isSubmitting ? "Signing in…" : "Sign in"}
+            {isServiceStarting ? "Starting secure service…" : isSubmitting ? "Signing in…" : "Sign in"}
           </button>
         </form>
 
