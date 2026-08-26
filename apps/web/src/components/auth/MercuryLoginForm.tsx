@@ -25,6 +25,7 @@ interface Particle {
 const roleRoutes = new Set(["/admin", "/change-password", "/teacher", "/student"]);
 const serviceStartingMessage = "The secure service is starting after a period of inactivity. This may take up to a minute. We’ll continue signing you in automatically.";
 const serviceUnavailableMessage = "The secure service could not start in time. Please wait a moment, then try again.";
+const tooManySignInAttemptsMessage = "Too many sign-in attempts were made. Please wait one minute before trying again.";
 
 function isLoginResponse(value: unknown): value is LoginResponse {
   if (typeof value !== "object" || value === null) {
@@ -125,9 +126,17 @@ export function MercuryLoginForm() {
       );
 
       if (!response.ok) {
-        setMessage(isServiceUnavailableStatus(response.status)
-          ? serviceUnavailableMessage
-          : "Sign-in failed. Check your institutional ID and password, or contact an administrator.");
+        if (isServiceUnavailableStatus(response.status)) {
+          setMessage(serviceUnavailableMessage);
+          return;
+        }
+
+        if (response.status === 429) {
+          setMessage(tooManySignInAttemptsMessage);
+          return;
+        }
+
+        setMessage("Sign-in failed. Check your institutional ID and password, or contact an administrator.");
         return;
       }
 

@@ -21,7 +21,7 @@ interface LoginRetryOptions {
   waitBeforeRetry?: () => Promise<void>;
 }
 
-const defaultMaximumAttempts = 12;
+const defaultMaximumAttempts = 8;
 const retryDelayMilliseconds = 5_000;
 const serviceUnavailableStatuses = new Set([502, 503, 504]);
 
