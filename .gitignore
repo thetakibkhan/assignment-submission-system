@@ -58,6 +58,8 @@ temp/
 
 # Local planning and decision notes (the root README remains tracked)
 docs/
+# Generated local repository graph
+graphify-out/
 
 # Editors and operating systems
 .idea/
