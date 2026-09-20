@@ -69,11 +69,16 @@ builder.Services.AddHealthChecks();
 builder.Services.AddRateLimiter(options =>
 {
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
-    options.AddFixedWindowLimiter("Authentication", limiterOptions =>
+    options.AddPolicy("Authentication", httpContext =>
     {
-        limiterOptions.PermitLimit = 10;
-        limiterOptions.Window = TimeSpan.FromMinutes(1);
-        limiterOptions.QueueLimit = 0;
+        string clientAddress = GetRateLimitClientAddress(httpContext);
+
+        return RateLimitPartition.GetFixedWindowLimiter(clientAddress, _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 10,
+            Window = TimeSpan.FromMinutes(1),
+            QueueLimit = 0
+        });
     });
 });
 builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseNpgsql(connectionString));
@@ -223,6 +228,24 @@ using (IServiceScope scope = app.Services.CreateScope())
 }
 
 app.Run();
+
+static string GetRateLimitClientAddress(HttpContext httpContext)
+{
+    string? forwardedFor = httpContext.Request.Headers["X-Forwarded-For"]
+        .FirstOrDefault();
+
+    if (!string.IsNullOrWhiteSpace(forwardedFor))
+    {
+        string forwardedClientAddress = forwardedFor.Split(',', StringSplitOptions.TrimEntries)[0];
+
+        if (!string.IsNullOrWhiteSpace(forwardedClientAddress))
+        {
+            return forwardedClientAddress;
+        }
+    }
+
+    return httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown-client";
+}
 
 static string GetConnectionString(IConfiguration configuration)
 {
